@@ -198,4 +198,4 @@ mkdocs serve        # live docs
 
 ## 📄 License
 
-**MIT** © 2025 Ruslan M. V. – contributions are welcome, PRs + issues encouraged!
+**Apache License, Version 2.0** © 2025 Ruslan M. V. – contributions are welcome, PRs + issues encouraged!
