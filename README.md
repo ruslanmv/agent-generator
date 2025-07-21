@@ -156,14 +156,19 @@ agent-generator [OPTIONS] "requirement sentence"
 FLASK_APP=agent_generator.web FLASK_ENV=development flask run
 ```
 
+
+
 Navigate to **[http://localhost:5000](http://localhost:5000)** → fill the form → generate → download code/YAML.
+
+![](assets/2025-07-22-01-24-31.png)
+
 Deployed via Docker:
 
 ```bash
-docker build -t agentgen .
-docker run -e WATSONX_API_KEY=... -p 8000:8000 agentgen
+docker build -t agent-genenerator .
+docker run -e WATSONX_API_KEY=... -p 8000:8000 agent-genenerator
 ```
-
+![](assets/2025-07-22-01-26-31.png)
 ---
 
 ## 🛠 Extending
