@@ -37,7 +37,7 @@ Designing multi‑agent systems is powerful yet verbose—boilerplate, framework
 
 | Category            | Details                                                                                       |
 |---------------------|------------------------------------------------------------------------------------------------|
-| **Multi‑framework** | CrewAI · CrewAI Flow · LangGraph · ReAct · WatsonX Orchestrate                                 |
+| **Multi‑framework** | WatsonX Orchestrate · CrewAI · CrewAI Flow · LangGraph · ReAct                                  |
 | **Provider‑agnostic** | IBM WatsonX *(default)* · OpenAI *(extra)*                                                   |
 | **MCP integration** | Python outputs include a FastAPI `/invoke` endpoint ready for MCP Gateway registration         |
 | **Web UI (Flask)**  | Form‑based generator with live diagram preview & code download                                 |
@@ -124,7 +124,7 @@ agent-generator [OPTIONS] "requirement sentence"
 
 | Option / Flag        | Default          | Description                                                      |
 | -------------------- | ---------------- | ---------------------------------------------------------------- |
-| `-f, --framework` \* | —                | crewai · crewai\_flow · langgraph · react · watsonx\_orchestrate |
+| `-f, --framework` \* | —                | watsonx\_orchestrate · crewai · crewai\_flow · langgraph · react |
 | `-p, --provider`     | watsonx          | watsonx (default) \| openai                                      |
 | `--model`            | provider default | Override LLM model                                               |
 | `--mcp / --no-mcp`   | off              | Append FastAPI MCP wrapper (Python only)                         |
