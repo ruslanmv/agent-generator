@@ -68,26 +68,51 @@ pip install "agent-generator[dev,web]"
 
 ## ⚡ Quick Start
 
-### 1 Export WatsonX credentials (or put them in .env)
+### 1 Export WatsonX credentials (or put them in .env)
+
 ```bash
 export WATSONX_API_KEY=...
 export WATSONX_PROJECT_ID=...
 export WATSONX_URL=https://us-south.ml.cloud.ibm.com
-```
+````
 
-### 2 Generate a CrewAI team as an MCP‑ready Python script
+---
+
+### 2 Generate a **WatsonX Orchestrate YAML** skill
+
 ```bash
-
 agent-generator \
   "I need a research assistant that summarises papers" \
-  --framework crewai --mcp -o research_team.py
+  --framework watsonx_orchestrate \
+  --output research_assistant.yaml
 ```
-#### 3 Run the skill locally
+
+*Import the resulting `research_assistant.yaml` via:*
 
 ```bash
-python research_team.py                 # run once
-python research_team.py serve           # FastAPI /invoke on :8080
+orchestrate agents import -f research_assistant.yaml
 ```
+
+---
+
+### 3 Generate a **CrewAI Python** skill with MCP wrapper
+
+```bash
+agent-generator \
+  "I need a research assistant that summarises papers" \
+  --framework crewai --mcp \
+  --output research_team.py
+```
+
+#### 4 Run the Python skill locally
+
+```bash
+python research_team.py          # one‑off execution
+python research_team.py serve    # FastAPI /invoke on :8080
+```
+
+
+
 
 ---
 
