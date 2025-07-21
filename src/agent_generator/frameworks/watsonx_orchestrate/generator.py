@@ -35,23 +35,25 @@ _YAML_TEMPLATE = Template(
         description: >
           {{ description }}
         instructions: |
-        {%- for line in instructions.splitlines() %}
+        {% for line in instructions.splitlines() %}
           {{ line }}
-        {%- endfor %}
+        {% endfor %}
+
         llm: "{{ llm_model }}"
         style: "{{ style }}"
         collaborators: []
         tools:
-        {%- for tool in tools %}
+        {% for tool in tools %}
           - "{{ tool.name }}"
-        {%- endfor %}
+        {% endfor %}
         knowledge_base: []
-        hidden: false
+        hidden: {{ hidden | lower }}
         """
-    ).strip("\n"),
+    ).strip(),
     trim_blocks=True,
     lstrip_blocks=True,
 )
+
 
 # ────────────────────────────────────────────────
 # Generator
@@ -101,13 +103,19 @@ class WatsonXOrchestrateGenerator(BaseFrameworkGenerator):
             else "You are a helpful AI agent."
         )
 
+        # Ensure proper model format - check if settings.model contains full path
+        model_name = settings.model
+        if not model_name.startswith("watsonx/"):
+            model_name = f"watsonx/{model_name}"
+        
         context: Dict[str, Any] = {
             "agent_name": primary_agent.id.replace("_", "-"),
             "description": primary_agent.role,
             "instructions": instructions,
-            "llm_model": f"watsonx/{settings.model}",
-            "style": "default",  # could be "react" or "planner" later
+            "llm_model": model_name,
+            "style": getattr(settings, 'agent_style', 'default'),  # could be "react" or "planner" later
             "tools": self._collect_unique_tools(workflow),
+            "hidden": getattr(settings, 'hidden', False),
         }
 
         return _YAML_TEMPLATE.render(**context) + "\n"
