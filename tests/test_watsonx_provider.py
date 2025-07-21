@@ -36,6 +36,7 @@ def _watsonx_env(monkeypatch):
 
 def test_generate_returns_completion(monkeypatch):
     """`generate()` should return the mocked text."""
+
     def _fake_post(*_a, **_kw):
         return _DummyResp({"results": [{"generated_text": "HELLO"}]})
 

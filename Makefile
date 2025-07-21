@@ -19,7 +19,8 @@ VENV    := .venv
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?##"}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?##' $(MAKEFILE_LIST) \
+		| awk 'BEGIN {FS = ":.*?##"}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 # ----------------------------------------------------------------
 #  Environment / setup
@@ -41,17 +42,17 @@ dev-install: ## Editable install with dev + web extras
 #  Code quality
 # ----------------------------------------------------------------
 lint: ## Ruff + Black --check + isort --check
-	ruff check $(SRC) $(TESTS)
-	black --check $(SRC) $(TESTS)
-	isort --check $(SRC) $(TESTS)
+	$(PYTHON) -m ruff check $(SRC) $(TESTS)
+	$(PYTHON) -m black --check $(SRC) $(TESTS)
+	$(PYTHON) -m isort --check $(SRC) $(TESTS)
 
-format: ## Ruff --fix + Black + isort
-	ruff check --fix $(SRC) $(TESTS)
-	black $(SRC) $(TESTS)
-	isort $(SRC) $(TESTS)
+format: ## Ruff --fix (incl. unsafe) + Black + isort
+	$(PYTHON) -m ruff check --fix --unsafe-fixes $(SRC) $(TESTS)
+	$(PYTHON) -m black $(SRC) $(TESTS)
+	$(PYTHON) -m isort $(SRC) $(TESTS)
 
 type: ## Static type‑checking with mypy
-	mypy $(SRC)
+	$(PYTHON) -m mypy $(SRC)
 
 # ----------------------------------------------------------------
 #  Tests
@@ -62,9 +63,23 @@ test: ## Run pytest in parallel
 # ----------------------------------------------------------------
 #  Run / Web
 # ----------------------------------------------------------------
-run: ## Quick CLI call: make run PROMPT="Your prompt" FRAMEWORK=react
-	@if [ -z "$(PROMPT)" ]; then \
-		echo "Usage: make run PROMPT='...' FRAMEWORK=<fw>"; exit 1; \
+run: ## Quick CLI call – example: make run PROMPT="Build an agent" FRAMEWORK=watsonx_orchestrate
+	@if [ -z "$(PROMPT)" ] || [ -z "$(FRAMEWORK)" ]; then \
+		echo ""; \
+		echo "⚠️  Missing variables"; \
+		echo "Usage:"; \
+		echo "  make run PROMPT='Your prompt' FRAMEWORK='<framework>'"; \
+		echo ""; \
+		echo "Supported frameworks:"; \
+		echo "  • crewai"; \
+		echo "  • crewai_flow"; \
+		echo "  • langgraph"; \
+		echo "  • react"; \
+		echo "  • watsonx_orchestrate"; \
+		echo ""; \
+		echo "Example:"; \
+		echo "  make run PROMPT='Generate a customer service agent for healthcare' FRAMEWORK=watsonx_orchestrate"; \
+		exit 1; \
 	fi
 	$(PYTHON) -m agent_generator.cli "$(PROMPT)" --framework $(FRAMEWORK)
 

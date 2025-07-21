@@ -6,55 +6,69 @@ Abstract interface + shared helpers for every LLM provider.
 
 Each concrete provider must implement:
 
-* ``generate(prompt: str, **kw) -> str``
-* ``estimate_cost(prompt_tokens: int, completion_tokens: int) -> float``
+* `generate(prompt: str, **kwargs) -> str`
+* `estimate_cost(prompt_tokens: int, completion_tokens: int) -> float`
 
-The tiny `tokenize()` helper is *good‑enough* for cost estimates; if you
-need perfect accuracy, override it in the child class.
+The tiny `tokenize()` helper is *good‑enough* for cost estimates; override
+in subclasses for greater accuracy if needed.
 """
-
 from __future__ import annotations
 
 import math
 import re
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from typing import ClassVar, Dict, Type
 
 from agent_generator.config import Settings, get_settings
 
+# Public registry populated via BaseProvider.__init_subclass__
+PROVIDERS: Dict[str, Type[BaseProvider]] = {}
+
 
 class BaseProvider(ABC):
-    """Common behaviour for all concrete providers."""
+    """Common behaviour & interface for all concrete providers."""
 
-    #: human‑readable provider name (e.g. ``"watsonx"``)
-    name: ClassVar[str]
+    #: human‑readable provider key (used in CLI flags)
+    name: ClassVar[str] = "base"
 
-    #: Per‑1K‑token cost (prompt, completion).  **Override in subclass.**
+    #: Per‑1K‑token pricing (prompt_cost, completion_cost) in USD
     PRICING_PER_1K: ClassVar[tuple[float, float]] = (0.0, 0.0)
 
+    def __init_subclass__(cls, **kwargs) -> None:  # noqa: D401
+        """
+        Automatically register subclasses into the global PROVIDERS dict.
+        Skip the abstract base itself (name=="base").
+        """
+        super().__init_subclass__(**kwargs)
+        key = getattr(cls, "name", None)
+        if not key or key == "base":
+            return
+        if key in PROVIDERS:
+            raise RuntimeError(f"Duplicate provider registration: {key}")
+        PROVIDERS[key] = cls
+
     def __init__(self, settings: Settings | None = None) -> None:
+        """Store or retrieve the global Settings."""
         self.settings = settings or get_settings()
 
-    # ───────────────────────────────────────────────
-    # Abstract interface
-    # ───────────────────────────────────────────────
-
+    # ------------------------------------------------------------------
+    # Interface
+    # ------------------------------------------------------------------
     @abstractmethod
-    def generate(self, prompt: str, **kwargs) -> str:  # noqa: D401
-        """Return the raw text completion from the LLM."""
-
-    # ───────────────────────────────────────────────
-    # Cost estimation
-    # ───────────────────────────────────────────────
-
-    def estimate_cost(
-        self, prompt_tokens: int, completion_tokens: int
-    ) -> float:  # noqa: D401
+    def generate(self, prompt: str, **kwargs) -> str:
         """
-        Rough USD cost for the request.
+        Perform the LLM call and return the raw text completion.
+        """
+        ...
 
-        Multiply the prompt‑token price and completion‑token price by
-        1K‑token blocks (rounded *up*).
+    # ------------------------------------------------------------------
+    # Cost estimation
+    # ------------------------------------------------------------------
+    def estimate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:
+        """
+        USD cost estimate based on 1K‑token pricing.
+
+        Rounds up token counts to the next 1K block.
         """
         prompt_price, comp_price = self.PRICING_PER_1K
         return (
@@ -62,11 +76,12 @@ class BaseProvider(ABC):
             + math.ceil(completion_tokens / 1000) * comp_price
         )
 
-    # ───────────────────────────────────────────────
+    # ------------------------------------------------------------------
     # Helpers
-    # ───────────────────────────────────────────────
-
+    # ------------------------------------------------------------------
     @staticmethod
-    def tokenize(text: str) -> int:  # noqa: D401
-        """Naïve whitespace tokeniser (≈ OpenAI / llama tokens ≈ 0.75 words)."""
+    def tokenize(text: str) -> int:
+        """
+        Naïve whitespace‑based token count (approx. word count).
+        """
         return len(re.findall(r"\S+", text))

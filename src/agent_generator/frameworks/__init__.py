@@ -1,17 +1,28 @@
 # ────────────────────────────────────────────────────────────────
-#  src/agent_generator/frameworks/watsonx_orchestrate/__init__.py
+#  src/agent_generator/frameworks/__init__.py
 # ────────────────────────────────────────────────────────────────
 """
-WatsonX Orchestrate framework plug‑in.
+Framework generators registry.
 
-Usage (from CLI or another generator):
-
-    from agent_generator.frameworks import FRAMEWORKS
-    yaml_src = FRAMEWORKS["watsonx_orchestrate"]().generate_code(
-        workflow, settings
-    )
+Each import below registers its subclass in the FRAMEWORKS dict
+via BaseFrameworkGenerator.__init_subclass__.
 """
 
-from .generator import WatsonXOrchestrateGenerator  # noqa: F401
+from .base import BaseFrameworkGenerator, FRAMEWORKS
 
-__all__ = ["WatsonXOrchestrateGenerator"]
+# Import each concrete generator so they register themselves:
+from .crewai import CrewAIGenerator
+from .crewai_flow import CrewAIFlowGenerator
+from .langgraph import LangGraphGenerator
+from .react import ReActGenerator
+from .watsonx_orchestrate import WatsonXOrchestrateGenerator
+
+__all__ = [
+    "BaseFrameworkGenerator",
+    "FRAMEWORKS",
+    "CrewAIGenerator",
+    "CrewAIFlowGenerator",
+    "LangGraphGenerator",
+    "ReActGenerator",
+    "WatsonXOrchestrateGenerator",
+]

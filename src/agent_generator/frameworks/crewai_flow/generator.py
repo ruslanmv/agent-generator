@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import textwrap
-from typing import Any, Dict
 
 from jinja2 import Template
 
@@ -63,7 +62,10 @@ class CrewAIFlowGenerator(BaseFrameworkGenerator):
     file_extension = "py"
 
     def _emit_core_code(self, workflow: Workflow, settings: Settings) -> str:
-        return _FLOW_TEMPLATE.render(
-            agents=workflow.agents,
-            tasks=workflow.tasks,
-        ) + "\n"
+        return (
+            _FLOW_TEMPLATE.render(
+                agents=workflow.agents,
+                tasks=workflow.tasks,
+            )
+            + "\n"
+        )

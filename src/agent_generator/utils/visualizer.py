@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import List
 
-from agent_generator.models.workflow import Workflow, WorkflowEdge, Task
+from agent_generator.models.workflow import Task, Workflow, WorkflowEdge
 
 # ────────────────────────────────────────────────
 # Mermaid

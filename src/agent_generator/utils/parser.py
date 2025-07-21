@@ -23,11 +23,10 @@ import re
 import uuid
 from typing import List
 
+from agent_generator.config import get_settings
 from agent_generator.models.agent import Agent, LLMConfig, Tool
 from agent_generator.models.task import Task
 from agent_generator.models.workflow import Workflow, WorkflowEdge
-from agent_generator.config import get_settings
-
 
 # ────────────────────────────────────────────────
 # Heuristic extraction functions
@@ -55,7 +54,9 @@ def _generate_agent(role: str) -> Agent:
     return Agent(
         id=f"agent_{uuid.uuid4().hex[:6]}",
         role=role,
-        tools=[Tool(name="default_tool", description="Auto-generated placeholder tool")],
+        tools=[
+            Tool(name="default_tool", description="Auto-generated placeholder tool")
+        ],
         llm=LLMConfig(
             provider=settings.provider,
             model=settings.model,

@@ -7,13 +7,13 @@ requires      = ["hatchling>=1.18"]
 build-backend = "hatchling.build"
 
 [project]
-name        = "agent-generator"
-version     = "0.1.0"
-description = "Turn plain‑English requirements into fully‑configured multi‑agent AI teams (CrewAI, LangGraph, ReAct, WatsonX Orchestrate)."
-readme      = "README.md"
+name            = "agent-generator"
+version         = "0.1.0"
+description     = "Turn plain‑English requirements into fully‑configured multi‑agent AI teams (CrewAI, LangGraph, ReAct, WatsonX Orchestrate)."
+readme          = "README.md"
 requires-python = ">=3.9"
-license     = { file = "LICENSE" }
-authors     = [
+license         = { file = "LICENSE" }
+authors         = [
   { name = "Ruslan M. V.", email = "ruslan@example.com" }
 ]
 keywords = [
@@ -43,6 +43,8 @@ classifiers = [
 # -----------------------------------------------------------------
 dependencies = [
   "pydantic>=2.6",
+  "pydantic-settings>=2.10",
+  "python-dotenv>=1.0",
   "typer[all]>=0.12",
   "jinja2>=3.1",
   "requests>=2.31",
@@ -72,6 +74,7 @@ dev = [
   "mypy>=1.10",
   "ruff>=0.4",
   "black>=24.4",
+  "isort>=5.0",
   "pre-commit>=3.7",
   # docs
   "mkdocs>=1.6",
@@ -91,6 +94,12 @@ agent-generator = "agent_generator.cli:_main"
 Homepage   = "https://github.com/ruslanmv/agent-generator"
 Repository = "https://github.com/ruslanmv/agent-generator"
 Issues     = "https://github.com/ruslanmv/agent-generator/issues"
+
+# -----------------------------------------------------------------
+# Ruff configuration (moved into `lint` section per new warning)
+# -----------------------------------------------------------------
+[tool.ruff.lint]
+ignore = ["F841"]
 
 # -----------------------------------------------------------------
 # Hatchling configuration (just to include package in src/)

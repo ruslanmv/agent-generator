@@ -2,20 +2,11 @@
 
 *From one plain‑English sentence to a production‑ready multi‑agent workflow.*
 
-<p align="left">
-  <a href="https://pypi.org/project/agent-generator/">
-    <img alt="PyPI Version" src="https://img.shields.io/pypi/v/agent-generator.svg">
-  </a>
-  <a href="https://img.shields.io/pypi/pyversions/agent-generator">
-    <img alt="Python 3.9+" src="https://img.shields.io/pypi/pyversions/agent-generator.svg">
-  </a>
-  <a href="https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml">
-    <img alt="CI Status" src="https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml/badge.svg">
-  </a>
-  <a href="https://github.com/ruslanmv/agent-generator/blob/master/LICENSE">
-    <img alt="MIT License" src="https://img.shields.io/badge/licence-MIT-blue.svg">
-  </a>
-</p>
+[![PyPI Version](https://img.shields.io/pypi/v/agent-generator.svg)](https://pypi.org/project/agent-generator/)
+[![Python 3.9+](https://img.shields.io/pypi/pyversions/agent-generator.svg)](https://pypi.org/project/agent-generator/)
+[![CI Status](https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml)
+[![License Apache-2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/ruslanmv/agent-generator/blob/master/LICENSE)
+
 
 ---
 

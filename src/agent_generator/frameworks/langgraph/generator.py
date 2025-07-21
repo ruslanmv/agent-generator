@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import textwrap
-from typing import Any, Dict
 
 from jinja2 import Template
 
@@ -52,7 +51,10 @@ class LangGraphGenerator(BaseFrameworkGenerator):
     file_extension = "py"
 
     def _emit_core_code(self, workflow: Workflow, settings: Settings) -> str:
-        return _LANG_TEMPLATE.render(
-            tasks=workflow.tasks,
-            edges=workflow.edges,
-        ) + "\n"
+        return (
+            _LANG_TEMPLATE.render(
+                tasks=workflow.tasks,
+                edges=workflow.edges,
+            )
+            + "\n"
+        )

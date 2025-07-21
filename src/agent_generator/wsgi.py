@@ -19,7 +19,8 @@ from __future__ import annotations
 from typing import Any
 
 try:
-    from agent_generator.web import create_app  # noqa: WPS433 (runtime import OK)
+    # Optional dependency: only present when the “web” extras are installed.
+    from agent_generator.web import create_app
 except ModuleNotFoundError as exc:  # pragma: no cover
     raise RuntimeError(
         "Flask extras are not installed. "

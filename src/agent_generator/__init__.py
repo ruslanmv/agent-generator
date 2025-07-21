@@ -27,8 +27,8 @@ __version__: str = "0.1.0"
 # Surface imports (lazy‑safe)
 # ------------------------------------------------------------------ #
 from agent_generator.config import Settings, get_settings  # noqa: E402
-from agent_generator.providers import PROVIDERS  # noqa: E402
 from agent_generator.frameworks import FRAMEWORKS  # noqa: E402
+from agent_generator.providers import PROVIDERS  # noqa: E402
 
 # Anything else you’d like to expose at package level goes here
 __all__ = [

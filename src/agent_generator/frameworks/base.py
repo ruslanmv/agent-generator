@@ -37,6 +37,7 @@ FRAMEWORKS: Dict[str, Type["BaseFrameworkGenerator"]] = {}
 # Abstract base
 # ────────────────────────────────────────────────
 
+
 class BaseFrameworkGenerator(ABC):
     """
     Abstract interface every framework generator must implement.

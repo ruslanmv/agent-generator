@@ -8,6 +8,7 @@ Flask application factory.
 from __future__ import annotations
 
 from flask import Flask
+
 from agent_generator.web.routes.api import api_bp
 from agent_generator.web.routes.main import main_bp
 

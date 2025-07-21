@@ -16,7 +16,6 @@ from pydantic import ValidationError
 
 from agent_generator.config import Settings, get_settings
 from agent_generator.frameworks import FRAMEWORKS
-from agent_generator.providers import PROVIDERS
 from agent_generator.utils.parser import parse_natural_language_to_workflow
 from agent_generator.utils.visualizer import to_mermaid
 

@@ -91,7 +91,9 @@ class WatsonXOrchestrateGenerator(BaseFrameworkGenerator):
 
         # Build human‑readable task list for instructions
         task_lines = [
-            f"- {task.goal}" for task in workflow.tasks if task.agent_id == primary_agent.id
+            f"- {task.goal}"
+            for task in workflow.tasks
+            if task.agent_id == primary_agent.id
         ]
         instructions = (
             "You are an AI agent that can:\n" + "\n".join(task_lines)

@@ -2,6 +2,7 @@ import yaml
 
 from agent_generator.config import Settings
 from agent_generator.frameworks import FRAMEWORKS
+
 from . import _dummy_workflow
 
 Gen = FRAMEWORKS["watsonx_orchestrate"]

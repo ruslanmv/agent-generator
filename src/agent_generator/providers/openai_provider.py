@@ -28,5 +28,7 @@ class OpenAIProvider(BaseProvider):  # noqa: D101
     def generate(self, prompt: str, **kwargs) -> str:  # noqa: D401
         raise NotImplementedError
 
-    def estimate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:  # noqa: D401,N802
+    def estimate_cost(
+        self, prompt_tokens: int, completion_tokens: int
+    ) -> float:  # noqa: D401,N802
         raise NotImplementedError

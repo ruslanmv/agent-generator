@@ -1,93 +1,85 @@
-# ────────────────────────────────────────────────────────────────
-#  src/agent_generator/config.py
-# ────────────────────────────────────────────────────────────────
-"""
-Centralised, typed settings that every layer of *agent‑generator* reads
-(CLI, providers, Flask UI, tests).
-
-Configuration order of precedence
----------------------------------
-1. Function arguments you pass to `Settings(**kwargs)`
-2. Environment variables prefixed with ``AGENTGEN_``
-3. Values loaded from a ``.env`` file in the project root
-4. Hard‑coded defaults below
-
-Example::
-
-    export AGENTGEN_PROVIDER=openai
-    export AGENTGEN_MODEL=gpt-4o
-    agent-generator "Write a poem" ...
-
-Anything in *all‑caps* matches the field name (upper‑snake) after the
-``AGENTGEN_`` prefix::
-
-    AGENTGEN_TEMPERATURE=0.5
-"""
-
 from __future__ import annotations
 
 import functools
 from pathlib import Path
 from typing import Literal, Optional
 
-from pydantic import BaseSettings, Field, validator
-from pydantic.env_settings import SettingsError
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict, SettingsError
 
-# ────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────────────
 # Helpers
-# ────────────────────────────────────────────────
-
-
+# ────────────────────────────────────────────────────────────────
 def _project_root() -> Path:
     """Return repo root (two levels up from this file)."""
     return Path(__file__).resolve().parents[2]
 
 
-# ────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────
 # Settings model
-# ────────────────────────────────────────────────
-
-
+# ────────────────────────────────────────────────────────────────
 class Settings(BaseSettings):
     """
     Runtime configuration for *agent‑generator*.
 
-    Environment variables are read with the ``AGENTGEN_`` prefix, e.g.:
+    Env‑vars are read with the `AGENTGEN_` prefix, e.g.:
 
-    * ``AGENTGEN_PROVIDER``
-    * ``AGENTGEN_MODEL``
+        AGENTGEN_MODEL=gpt-4o
     """
+
+    model_config = SettingsConfigDict(
+        env_prefix="AGENTGEN_",
+        env_file=str(_project_root() / ".env"),
+        case_sensitive=False,
+        extra='ignore',  # ignore unknown/legacy vars (e.g. WATSONX_MODEL)
+    )
 
     # LLM provider
     provider: Literal["watsonx", "openai"] = Field(
         default="watsonx",
-        description="Name of the default LLM provider. "
-        "May be overridden per request via CLI flags.",
+        description="Default LLM provider; can be overridden by CLI flag.",
     )
 
-    # Model + sampling
+    # Global model + sampling (may be overridden by provider-specific)
     model: str = Field(
-        default="meta-llama-3-70b-instruct",
+        default="meta-llama/llama-3-2-90b-vision-instruct",
         description="Model identifier understood by the chosen provider.",
     )
     temperature: float = Field(
         default=0.7,
         ge=0,
         le=2,
-        description="Completion sampling temperature.",
+        description="Sampling temperature.",
     )
     max_tokens: int = Field(
         default=4096,
         ge=16,
-        description="Token cap for a single completion.",
+        description="Token cap for a single call.",
     )
 
-    # Optional WatsonX credentials
+    # Provider-specific model overrides
+    watsonx_model: Optional[str] = Field(
+        default=None,
+        env="WATSONX_MODEL",
+        description="Optional override for WatsonX model ID.",
+    )
+    openai_model: Optional[str] = Field(
+        default=None,
+        env="OPENAI_MODEL",
+        description="Optional override for OpenAI model ID.",
+    )
+
+    # WatsonX credentials
     watsonx_api_key: Optional[str] = Field(
-        default=None, env="WATSONX_API_KEY", description="IBM WatsonX API key."
+        default=None,
+        env="WATSONX_API_KEY",
+        description="IBM WatsonX API key.",
     )
     watsonx_project_id: Optional[str] = Field(
-        default=None, env="WATSONX_PROJECT_ID", description="WatsonX project ID."
+        default=None,
+        env="WATSONX_PROJECT_ID",
+        description="WatsonX project ID.",
     )
     watsonx_url: str = Field(
         default="https://us-south.ml.cloud.ibm.com",
@@ -95,16 +87,17 @@ class Settings(BaseSettings):
         description="WatsonX base URL.",
     )
 
-    # Optional OpenAI credentials
+    # OpenAI credentials
     openai_api_key: Optional[str] = Field(
-        default=None, env="OPENAI_API_KEY", description="OpenAI API key."
+        default=None,
+        env="OPENAI_API_KEY",
+        description="OpenAI API key.",
     )
 
     # Misc
     log_level: str = Field(
         default="INFO",
-        regex="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$",
-        description="Root logger level.",
+        description="Root logger level (DEBUG, INFO, WARNING, ERROR, CRITICAL).",
     )
     mcp_default_port: int = Field(
         default=8080,
@@ -113,49 +106,55 @@ class Settings(BaseSettings):
         description="Port used by generated MCP servers.",
     )
 
-    class Config:  # noqa: D401, WPS306
-        env_prefix = "AGENTGEN_"
-        env_file = _project_root() / ".env"
-        case_sensitive = False
+    # ──────────────────────────────────────────────────
+    # Field validator for log_level
+    # ──────────────────────────────────────────────────
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def _normalise_log_level(cls, v: str) -> str:
+        v_up = v.upper()
+        if v_up not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+            raise ValueError(
+                "log_level must be one of DEBUG|INFO|WARNING|ERROR|CRITICAL"
+            )
+        return v_up
 
-    # ──────────────────────────────────
-    # Validators / derived helpers
-    # ──────────────────────────────────
+    # ──────────────────────────────────────────────────
+    # Model-level validator: apply overrides and check creds
+    # ──────────────────────────────────────────────────
+    @model_validator(mode="after")
+    def _apply_overrides_and_check(self):
+        # Apply provider-specific model override
+        if self.provider == "watsonx" and self.watsonx_model:
+            object.__setattr__(self, 'model', self.watsonx_model)
+        if self.provider == "openai" and self.openai_model:
+            object.__setattr__(self, 'model', self.openai_model)
 
-    @validator("provider")
-    def _validate_provider(cls, v: str) -> str:  # noqa: D401,N805
-        if v == "openai" and not cls().openai_api_key:
+        # Ensure API keys present
+        if self.provider == "openai" and not self.openai_api_key:
             raise SettingsError(
                 "Selected provider 'openai' but OPENAI_API_KEY is not set."
             )
-        if v == "watsonx" and not cls().watsonx_api_key:
+        if self.provider == "watsonx" and not self.watsonx_api_key:
             raise SettingsError(
                 "Selected provider 'watsonx' but WATSONX_API_KEY is not set."
             )
-        return v
+        return self
 
     # Convenience flags
     @property
-    def is_watsonx(self) -> bool:  # noqa: D401
+    def is_watsonx(self) -> bool:
         return self.provider == "watsonx"
 
     @property
-    def is_openai(self) -> bool:  # noqa: D401
+    def is_openai(self) -> bool:
         return self.provider == "openai"
 
 
 # ────────────────────────────────────────────────
 # Singleton accessor
 # ────────────────────────────────────────────────
-
-
 @functools.lru_cache(maxsize=1)
-def get_settings() -> Settings:  # noqa: D401
-    """
-    Return a **cached** Settings instance.
-
-    Import this function everywhere instead of constructing *Settings*
-    manually; it guarantees single‑source‑of‑truth and lazy `.env`
-    evaluation.
-    """
-    return Settings()  # type: ignore[arg-type]
+def get_settings() -> Settings:
+    """Return a *cached* Settings instance (lazy `.env` read)."""
+    return Settings()

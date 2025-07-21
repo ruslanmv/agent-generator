@@ -25,7 +25,19 @@ The CLI glues together:
 
 from __future__ import annotations
 
-import sys
+import os
+from pathlib import Path
+
+# 1) Find the project root (two levels up from here)
+project_root = Path(__file__).resolve().parents[1]
+
+# 2) Load .env if present (no-op if missing)
+from dotenv import load_dotenv  # requires python-dotenv
+load_dotenv(dotenv_path=project_root / ".env", override=False)
+
+# --- now the rest of your imports ---
+
+
 from pathlib import Path
 from typing import Optional
 
@@ -35,8 +47,8 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 from agent_generator.config import Settings, get_settings
-from agent_generator.providers import PROVIDERS
 from agent_generator.frameworks import FRAMEWORKS
+from agent_generator.providers import PROVIDERS
 from agent_generator.utils.parser import parse_natural_language_to_workflow
 
 # ────────────────────────────────────────────────────────────────
@@ -57,7 +69,9 @@ VERSION = "0.1.0"  # 🛈 bump on release
 # ---------------------------------------------------------------- #
 def _validate_choice(value: str, allowed: set[str], name: str) -> str:
     if value not in allowed:
-        console.print(f"[red]{name} '{value}' is invalid. Options: {sorted(allowed)}[/]")
+        console.print(
+            f"[red]{name} '{value}' is invalid. Options: {sorted(allowed)}[/]"
+        )
         raise typer.Exit(code=1)
     return value
 
@@ -67,7 +81,9 @@ def _write_or_echo(text: str, output: Optional[Path]) -> None:
         output.write_text(text, encoding="utf-8")
         console.print(f"[bold green]✓ Written to {output}[/]")
     else:
-        console.print(Syntax(text, "python" if text.lstrip().startswith("from") else "yaml"))
+        console.print(
+            Syntax(text, "python" if text.lstrip().startswith("from") else "yaml")
+        )
 
 
 # ---------------------------------------------------------------- #
@@ -98,7 +114,9 @@ def generate(
         help="Wrap Python output in an MCP FastAPI server.",
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Skip LLM call."),
-    show_cost: bool = typer.Option(False, "--show-cost", help="Display token/cost info."),
+    show_cost: bool = typer.Option(
+        False, "--show-cost", help="Display token/cost info."
+    ),
     version: bool = typer.Option(False, "--version", "-V", is_eager=True),
 ):
     """Generate code (or YAML) for a multi‑agent workflow."""
