@@ -19,25 +19,27 @@ _CREWAI_TEMPLATE = Template(
         # ─────────────────────────────────────────────────────────
         # Agents
         # ─────────────────────────────────────────────────────────
-        {%- for agent in agents %}
+
+        {% for agent in agents %}
         {{ agent.id }} = CrewAgent(
             role="{{ agent.role }}",
             goal="Achieve task objectives",
             verbose=True,
             allow_delegation=True,
         )
-        {%- endfor %}
+        {% endfor %}
 
         # ─────────────────────────────────────────────────────────
         # Tasks
         # ─────────────────────────────────────────────────────────
-        {%- for task in tasks %}
+
+        {% for task in tasks %}
         {{ task.id }} = CrewTask(
             description="{{ task.goal }}",
             agent={{ task.agent_id }},
             expected_output="<<fill‑in desired output here>>",
         )
-        {%- endfor %}
+        {% endfor %}
 
         # ─────────────────────────────────────────────────────────
         # Crew assembly

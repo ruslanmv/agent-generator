@@ -75,7 +75,21 @@ export WATSONX_URL=https://us-south.ml.cloud.ibm.com
 agent-generator \
   "I need a research assistant that summarises papers" \
   --framework watsonx_orchestrate \
+```
+![](assets/2025-07-22-00-50-38.png)
+
+or
+
+```bash
+agent-generator \
+  "I need a research assistant that summarises papers" \
+  --framework watsonx_orchestrate \
   --output research_assistant.yaml
+```
+You will get
+
+```bash
+✓ Written to research_assistant.yaml
 ```
 
 *Import the resulting `research_assistant.yaml` via:*
@@ -87,6 +101,14 @@ orchestrate agents import -f research_assistant.yaml
 ---
 
 ### 3 Generate a **CrewAI Python** skill with MCP wrapper
+```bash
+agent-generator \
+  "I need a research assistant that summarises papers" \
+  --framework crewai  
+```
+![](assets/2025-07-22-00-59-33.png)
+
+or
 
 ```bash
 agent-generator \
@@ -95,15 +117,16 @@ agent-generator \
   --output research_team.py
 ```
 
+```bash
+✓ Written to research_team.py
+```
+
 #### 4 Run the Python skill locally
 
 ```bash
 python research_team.py          # one‑off execution
 python research_team.py serve    # FastAPI /invoke on :8080
 ```
-
-
-
 
 ---
 
