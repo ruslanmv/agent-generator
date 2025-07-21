@@ -12,7 +12,7 @@
   <a href="https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml">
     <img alt="CI Status" src="https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml/badge.svg">
   </a>
-  <a href="https://github.com/ruslanmv/agent-generator/blob/main/LICENSE">
+  <a href="https://github.com/ruslanmv/agent-generator/blob/master/LICENSE">
     <img alt="MIT License" src="https://img.shields.io/badge/licence-MIT-blue.svg">
   </a>
 </p>
@@ -68,18 +68,23 @@ pip install "agent-generator[dev,web]"
 
 ## ⚡ Quick Start
 
+### 1 Export WatsonX credentials (or put them in .env)
 ```bash
-# 1 Export WatsonX credentials (or put them in .env)
 export WATSONX_API_KEY=...
 export WATSONX_PROJECT_ID=...
 export WATSONX_URL=https://us-south.ml.cloud.ibm.com
+```
 
-# 2 Generate a CrewAI team as an MCP‑ready Python script
+### 2 Generate a CrewAI team as an MCP‑ready Python script
+```bash
+
 agent-generator \
   "I need a research assistant that summarises papers" \
   --framework crewai --mcp -o research_team.py
+```
+#### 3 Run the skill locally
 
-# 3 Run the skill locally
+```bash
 python research_team.py                 # run once
 python research_team.py serve           # FastAPI /invoke on :8080
 ```
@@ -102,7 +107,7 @@ agent-generator [OPTIONS] "requirement sentence"
 | `--dry-run`          |                  | Build spec & code skeleton, no LLM calls                         |
 | `--show-cost`        |                  | Print token usage + USD estimate                                 |
 
-*See the full [Usage guide](https://github.com/ruslanmv/agent-generator/blob/main/docs/usage.md) for examples.*
+*See the full [Usage guide](./docs/usage.md) for examples.*
 
 ---
 
