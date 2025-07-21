@@ -1,4 +1,3 @@
-
 # Installation
 
 *agent‑generator* supports **Python ≥ 3.9** and ships with IBM WatsonX as the default LLM provider.  

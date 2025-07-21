@@ -1,118 +1,114 @@
+# Usage Guide
 
-# Installation
-
-*agent‑generator* supports **Python ≥ 3.9** and ships with IBM WatsonX as the default LLM provider.  
-Optional extras unlock OpenAI support, the Flask Web UI, and developer tooling.
+This page covers common workflows for both the **CLI** and the **Flask Web UI**.  
+For installation instructions see [Installation](installation.md).
 
 ---
 
-## 1  Basic install (WatsonX only)
+## 1  Command‑line interface
+
+### 1.1 Basic syntax
 
 ```bash
-pip install agent-generator
+agent-generator [OPTIONS] "plain‑English requirement"
 ````
 
-This gives you:
+### 1.2 Frequently used flags
 
-* CLI (`agent-generator …`)
-* Core runtime dependencies
-* WatsonX provider (meta‑llama‑3‑70b‑instruct default)
+| Flag / Option        | Description                                        | Example              |
+| -------------------- | -------------------------------------------------- | -------------------- |
+| `-f, --framework` \* | Which generator to use (`crewai`, `langgraph`, …). | `--framework crewai` |
+| `-p, --provider`     | LLM back‑end (`watsonx` default, or `openai`).     | `--provider openai`  |
+| `--model`            | Override default model for the provider.           | `--model gpt-4o`     |
+| `--temperature`      | Sampling randomness (0–2).                         | `--temperature 0.3`  |
+| `--max-tokens`       | Response length cap.                               | `--max-tokens 2048`  |
+| `--mcp / --no-mcp`   | Wrap Python output in an MCP FastAPI server.       | `--mcp`              |
+| `-o, --output PATH`  | Write result to file instead of stdout.            | `-o team.py`         |
+| `--dry-run`          | Build workflow + code skeleton but skip LLM call.  | `--dry-run`          |
+| `--show-cost`        | Print token counts & approximate USD cost.         | `--show-cost`        |
+
+### 1.3 Common recipes
+
+| Goal                                | Command                                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------ |
+| **Orchestrate YAML** from one‑liner | `agent-generator "Email summariser" -f watsonx_orchestrate -o summariser.yaml` |
+| **CrewAI Flow** with MCP wrapper    | `agent-generator "Analyse tweets" -f crewai_flow --mcp -o tweets_flow.py`      |
+| Cost estimate only                  | `agent-generator "Scrape website" -f react --dry-run --show-cost`              |
+| Use **OpenAI** instead of WatsonX   | `agent-generator "Write jokes" -f react -p openai --model gpt-4o`              |
 
 ---
 
-## 2  Optional extras
+## 2  Flask Web UI
 
-| Extra tag | Installs …                                          | When to use it                |
-| --------- | --------------------------------------------------- | ----------------------------- |
-| `openai`  | `openai` SDK                                        | Generate code with GPT models |
-| `web`     | `flask`, `gunicorn`                                 | Run the visual Web UI         |
-| `dev`     | `pytest`, `ruff`, `mypy`, `mkdocs`, `pre‑commit`, … | Contributing / testing        |
+### 2.1 Run locally
 
 ```bash
-# Core + Web UI
-pip install "agent-generator[web]"
-
-# Core + OpenAI
-pip install "agent-generator[openai]"
-
-# Everything (dev, web, openai)
-pip install "agent-generator[dev,web,openai]"
-```
-
----
-
-## 3  Environment variables
-
-Create a `.env` in the repo root (or export in your shell):
-
-```env
-# WatsonX (default provider)
-WATSONX_API_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-WATSONX_PROJECT_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-WATSONX_URL="https://us-south.ml.cloud.ibm.com"
-
-# Optional OpenAI
-OPENAI_API_KEY="sk-…"
-
-# Optional overrides
-AGENTGEN_MODEL="meta-llama-3-70b-instruct"
-AGENTGEN_TEMPERATURE="0.7"
-AGENTGEN_MAX_TOKENS="4096"
-```
-
-> **Tip**  Add `.env` to your IDE’s environment or use **direnv** for automatic loading.
-
----
-
-## 4  Verify the install
-
-```bash
-agent-generator "Say hello" --framework react --dry-run --show-cost
-```
-
-Expected output (truncated):
-
-```
-≈ prompt_tokens=7, completion_tokens=42, est. cost=$0.0001
-# Auto‑generated ReAct agent
-import json
-...
-```
-
----
-
-## 5  Running the Web UI
-
-```bash
-# Dev server with hot‑reload
 FLASK_APP=agent_generator.web FLASK_ENV=development flask run
-
-# Production (Docker)
-docker build -t agentgen .
-docker run -e WATSONX_API_KEY=... -p 8000:8000 agentgen
+# visit http://localhost:5000
 ```
 
-Browse to [http://localhost:5000](http://localhost:5000) (dev) or [http://localhost:8000](http://localhost:8000) (Docker).
+### 2.2 Workflow
+
+1. **Fill in prompt** – describe your requirement.
+2. **Pick framework & provider** – drop‑downs.
+3. *(Optional)* toggle **MCP wrapper**.
+4. Click **Generate**.
+5. Download the code/YAML or copy‑paste from the preview.
+6. Mermaid diagram appears under the code for quick validation.
+
+![UI screenshot](images/ui-screenshot.png)
 
 ---
 
-## 6  Upgrading
+## 3  Docker usage
 
 ```bash
-pip install --upgrade agent-generator
+docker build -t agent-generator .
+docker run -e WATSONX_API_KEY=... -e WATSONX_PROJECT_ID=... \
+           -p 8000:8000 agent-generator
+# Web UI → http://localhost:8000
 ```
 
-*(If extras were installed, append them again: `pip install --upgrade "agent-generator[web]"`)*
+You can also exec into the container to run the CLI:
+
+```bash
+docker run --rm agent-generator agent-generator "Say hi" -f react --dry-run
+```
 
 ---
 
-## Troubleshooting
+## 4  Serving generated MCP skills
 
-| Issue                              | Solution                                                              |
-| ---------------------------------- | --------------------------------------------------------------------- |
-| `401 Unauthorized (WatsonX)`       | Check `WATSONX_API_KEY` and `WATSONX_PROJECT_ID`.                     |
-| `ModuleNotFoundError: flask`       | `pip install "agent-generator[web]"`.                                 |
-| CLI hangs / times out              | Lower `--max-tokens`; check network; try `--provider openai`.         |
-| Mermaid diagram not rendering (UI) | Ensure internet access to CDN `unpkg.com`; or bundle Mermaid locally. |
+Every Python framework (`crewai`, `crewai_flow`, `langgraph`, `react`) can be generated with an **MCP wrapper**:
 
-Still stuck? File an issue on our [GitHub tracker](https://github.com/ruslanmv/agent-generator/issues).
+```bash
+agent-generator "...data pipeline..." -f langgraph --mcp -o pipeline.py
+python pipeline.py serve      # exposes POST /invoke on port 8080
+```
+
+Upload the packaged script or its Docker image to your MCP Gateway and then **import** it as a custom skill in WatsonX Orchestrate.
+
+---
+
+## 5  Troubleshooting
+
+| Symptom                        | Resolution                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------- |
+| *CLI raises 401* (WatsonX)     | Verify `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, region URL.                         |
+| *`ModuleNotFoundError: flask`* | `pip install "agent-generator[web]"`                                                |
+| *Diagram doesn’t render in UI* | Check browser console – Mermaid JS must load (make sure `unpkg.com` isn’t blocked). |
+| *High cost estimate*           | Lower `--max-tokens` or pick `llama‑3‑8b` instead.                                  |
+| *Gateway import fails*         | Ensure you used `--mcp` and port 8080 is exposed.                                   |
+
+Still stuck? Open an issue on the [GitHub tracker](https://github.com/ruslanmv/agent-generator/issues).
+
+---
+
+## 6  Next steps
+
+* Explore [Frameworks comparison](frameworks.md).
+* Read the API docs in the `/docs/` folder for advanced extensions.
+* Contribute improvements – see **Contributing** section in `README.md`.
+
+Happy generating! 🚀
+
