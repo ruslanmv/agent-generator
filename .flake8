@@ -1,0 +1,6 @@
+[flake8]
+# Align with Black’s default line length
+max-line-length = 88
+extend-ignore = E203,W503
+# Enable useful plugins if installed (will be auto-detected)
+select = C,E,F,W,B,B950

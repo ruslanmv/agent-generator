@@ -1,0 +1,74 @@
+# ────────────────────────────────────────────────────────────────
+#  .github/workflows/release.yml
+#  Build distributions on GitHub Release and publish to PyPI
+# ────────────────────────────────────────────────────────────────
+#
+#  • Trigger: when a GitHub release is *published* (draft → public).
+#  • Output: source‑dist + wheel attached to the release assets.
+#  • Publish: uploads both files to PyPI via OIDC‑based trusted publishing.
+#
+#  Prerequisites:
+#    • Your PyPI project has "trusted publishing" enabled.
+#    • The repository is approved as a trusted publisher.
+# ------------------------------------------------------------------
+
+name: Build & Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write   # needed to upload artefacts to the GitHub release
+  id-token: write   # required for OIDC / trusted publishing
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install build backend
+        run: |
+          python -m pip install --upgrade pip build
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Upload artefacts to the GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+
+      - name: Persist artefacts for publish job
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dists
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: pypi
+      url: https://pypi.org/project/agent-generator/
+    steps:
+      - name: Download artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dists
+          path: dist/
+
+      - name: Publish via Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@release/v1

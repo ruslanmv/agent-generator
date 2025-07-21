@@ -1,0 +1,58 @@
+# ────────────────────────────────────────────────────────────────
+#  .github/workflows/ci.yml
+#  Continuous‑integration pipeline for agent‑generator
+# ────────────────────────────────────────────────────────────────
+name: Python CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      # ----------------------------------------------------------
+      # Checkout
+      # ----------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------------
+      # Python set‑up + pip cache
+      # ----------------------------------------------------------
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # ----------------------------------------------------------
+      # Install project (editable) with dev extras
+      # ----------------------------------------------------------
+      - name: Install dependencies (core + dev)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,web,openai]"
+
+      # ----------------------------------------------------------
+      # Lint + type check (ruff includes flake8 rules)
+      # ----------------------------------------------------------
+      - name: Run linters (ruff, black --check)
+        run: make lint
+
+      - name: Run mypy
+        run: make type
+
+      # ----------------------------------------------------------
+      # Unit tests in parallel
+      # ----------------------------------------------------------
+      - name: Run pytest
+        run: make test

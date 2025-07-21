@@ -1,0 +1,42 @@
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--  src/agent_generator/web/templates/index.html                    -->
+<!-- ──────────────────────────────────────────────────────────────── -->
+{% extends "base.html" %}
+{% block content %}
+<section class="form-section">
+  <h2>Generate Multi‑Agent Workflow</h2>
+  {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="{{ url_for('main.generate_form') }}">
+    <label for="prompt">Requirement (plain English)</label>
+    <textarea id="prompt" name="prompt" placeholder="e.g., I need a research assistant…" required>{{ request.form.prompt or '' }}</textarea>
+
+    <div class="grid">
+      <div>
+        <label for="framework">Framework</label>
+        <select id="framework" name="framework">
+          <option value="crewai" {% if request.form.framework=='crewai' %}selected{% endif %}>CrewAI</option>
+          <option value="crewai_flow" {% if request.form.framework=='crewai_flow' %}selected{% endif %}>CrewAI Flow</option>
+          <option value="langgraph" {% if request.form.framework=='langgraph' %}selected{% endif %}>LangGraph</option>
+          <option value="react" {% if request.form.framework=='react' %}selected{% endif %}>ReAct</option>
+          <option value="watsonx_orchestrate" {% if request.form.framework=='watsonx_orchestrate' %}selected{% endif %}>WatsonX Orchestrate</option>
+        </select>
+      </div>
+      <div>
+        <label for="provider">Provider</label>
+        <select id="provider" name="provider">
+          <option value="watsonx" {% if request.form.provider=='watsonx' %}selected{% endif %}>IBM WatsonX</option>
+          <option value="openai" {% if request.form.provider=='openai' %}selected{% endif %}>OpenAI</option>
+        </select>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="mcp" name="mcp" {% if request.form.mcp %}checked{% endif %}>
+        <label for="mcp">Enable MCP wrapper (Python only)</label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Generate</button>
+  </form>
+</section>
+{% endblock %}

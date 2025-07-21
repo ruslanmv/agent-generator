@@ -1,0 +1,32 @@
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--  src/agent_generator/web/templates/base.html                     -->
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "agent‑generator" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <!-- Mermaid for diagram rendering -->
+  <script src="https://unpkg.com/mermaid@9/dist/mermaid.min.js"></script>
+  <script defer src="{{ url_for('static', filename='js/graph.js') }}"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1><a href="{{ url_for('main.index') }}">agent‑generator</a></h1>
+      <p>Multi‑agent code & YAML generation</p>
+    </div>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="container">
+      <small>© 2025 Ruslan M.V. · <a href="https://github.com/ruslanmv/agent-generator">GitHub</a> · MIT License</small>
+    </div>
+  </footer>
+</body>
+</html>

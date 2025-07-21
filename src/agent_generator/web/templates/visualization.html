@@ -1,0 +1,14 @@
+<!-- ──────────────────────────────────────────────────────────────── -->
+<!--  src/agent_generator/web/templates/visualization.html           -->
+<!-- ──────────────────────────────────────────────────────────────── -->
+{% extends "base.html" %}
+{% block content %}
+<section class="result-section">
+  <a href="{{ url_for('main.index') }}" class="btn btn-link">← Back</a>
+  <h2>Generated Code</h2>
+  <pre class="code-block"><code>{{ code }}</code></pre>
+
+  <h2>Workflow Diagram</h2>
+  <div class="mermaid">{{ diagram }}</div>
+</section>
+{% endblock %}
