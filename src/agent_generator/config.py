@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         env_prefix="AGENTGEN_",
         env_file=str(_project_root() / ".env"),
         case_sensitive=False,
-        extra='ignore',  # ignore unknown/legacy vars (e.g. WATSONX_MODEL)
+        extra="ignore",  # ignore unknown/legacy vars (e.g. WATSONX_MODEL)
     )
 
     # LLM provider
@@ -126,9 +126,9 @@ class Settings(BaseSettings):
     def _apply_overrides_and_check(self):
         # Apply provider-specific model override
         if self.provider == "watsonx" and self.watsonx_model:
-            object.__setattr__(self, 'model', self.watsonx_model)
+            object.__setattr__(self, "model", self.watsonx_model)
         if self.provider == "openai" and self.openai_model:
-            object.__setattr__(self, 'model', self.openai_model)
+            object.__setattr__(self, "model", self.openai_model)
 
         # Ensure API keys present
         if self.provider == "openai" and not self.openai_api_key:

@@ -2,22 +2,18 @@
 #  src/agent_generator/cli.py
 # ────────────────────────────────────────────────────────────────
 """
-Command‑line interface for **agent‑generator**.
-
+Command-line interface for **agent-generator**.
 Core command
 ------------
-```
 
-agent-generator "Build me a social‑media team"&#x20;
-\--framework crewai&#x20;
-\--provider watsonx&#x20;
-\--output social\_team.py --mcp
-
-```
+agent-generator "Build me a social-media team" \
+  --framework crewai \
+  --provider watsonx \
+  --output social_team.py --mcp
 
 The CLI glues together:
 
-* Settings (env + defaults)        → `config.py`
+* Settings (env + defaults)        → `config.py`
 * Prompt parser                    → `utils.parser`
 * Provider registry                → `providers.__init__`
 * Framework generator registry     → `frameworks.base`
@@ -25,23 +21,11 @@ The CLI glues together:
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
-# 1) Find the project root (two levels up from here)
-project_root = Path(__file__).resolve().parents[1]
-
-# 2) Load .env if present (no-op if missing)
-from dotenv import load_dotenv  # requires python-dotenv
-load_dotenv(dotenv_path=project_root / ".env", override=False)
-
-# --- now the rest of your imports ---
-
-
 from pathlib import Path
 from typing import Optional
 
 import typer
+from dotenv import load_dotenv
 from rich import print as rprint
 from rich.console import Console
 from rich.syntax import Syntax
@@ -50,6 +34,13 @@ from agent_generator.config import Settings, get_settings
 from agent_generator.frameworks import FRAMEWORKS
 from agent_generator.providers import PROVIDERS
 from agent_generator.utils.parser import parse_natural_language_to_workflow
+
+# 1) Find the project root (two levels up from here)
+project_root = Path(__file__).resolve().parents[1]
+
+# 2) Load .env if present (no-op if missing)
+
+load_dotenv(dotenv_path=project_root / ".env", override=False)
 
 # ────────────────────────────────────────────────────────────────
 # Typer app

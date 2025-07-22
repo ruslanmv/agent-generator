@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, ClassVar
+from typing import Any, ClassVar, Dict, List, Optional
 
 import requests
 from pydantic import ValidationError
@@ -24,6 +24,7 @@ class WatsonXProvider(BaseProvider):
     """
     Call IBM watsonx.ai via the foundation model inference REST API.
     """
+
     name = "watsonx"
     PRICING_PER_1K = (0.003, 0.015)  # USD per 1K tokens
 
@@ -49,10 +50,12 @@ class WatsonXProvider(BaseProvider):
 
         # Prepare HTTP session without Authorization header for now
         self._session = requests.Session()
-        self._session.headers.update({
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        })
+        self._session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
+        )
 
         # Endpoint URL (version as query param)
         self._url = (
@@ -84,7 +87,9 @@ class WatsonXProvider(BaseProvider):
 
         token = resp.json().get("access_token")
         if not token:
-            raise RuntimeError(f"IAM response did not include access_token: {resp.text}")
+            raise RuntimeError(
+                f"IAM response did not include access_token: {resp.text}"
+            )
         return token
 
     def generate(self, prompt: str, **kwargs) -> str:

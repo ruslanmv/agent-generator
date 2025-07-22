@@ -107,15 +107,17 @@ class WatsonXOrchestrateGenerator(BaseFrameworkGenerator):
         model_name = settings.model
         if not model_name.startswith("watsonx/"):
             model_name = f"watsonx/{model_name}"
-        
+
         context: Dict[str, Any] = {
             "agent_name": primary_agent.id.replace("_", "-"),
             "description": primary_agent.role,
             "instructions": instructions,
             "llm_model": model_name,
-            "style": getattr(settings, 'agent_style', 'default'),  # could be "react" or "planner" later
+            "style": getattr(
+                settings, "agent_style", "default"
+            ),  # could be "react" or "planner" later
             "tools": self._collect_unique_tools(workflow),
-            "hidden": getattr(settings, 'hidden', False),
+            "hidden": getattr(settings, "hidden", False),
         }
 
         return _YAML_TEMPLATE.render(**context) + "\n"
