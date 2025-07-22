@@ -512,7 +512,6 @@
 
 <h1 id="architecture-of-agent-generator">Architecture of agent-generator<a class="headerlink" href="#architecture-of-agent-generator" title="Permanent link">&para;</a></h1>
 <p>This document describes the overall architecture of <strong>agent-generator</strong>, with a focus on the generative pipeline that transforms plain‑English prompts into fully configured agent code or YAML for various frameworks.</p>
-<hr />
 <h2 id="1-highlevel-overview">1. High‑Level Overview<a class="headerlink" href="#1-highlevel-overview" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>User Input (CLI or Web UI)</strong>: The user provides a natural‑language requirement, selects a framework, and optionally a provider, model, and other flags.</li>
@@ -525,7 +524,6 @@
 <li><strong>Framework Generator</strong>: Another set of Jinja templates consume the <code>Workflow</code> and generate code or YAML in the target framework’s syntax, leveraging the LLM response only when needed (e.g., to fill details in templates).</li>
 <li><strong>Output</strong>: The generated code/YAML is either printed with syntax highlighting or written to a file. Token‑ and cost‑estimates are optionally shown.</li>
 </ol>
-<hr />
 <h2 id="2-component-breakdown">2. Component Breakdown<a class="headerlink" href="#2-component-breakdown" title="Permanent link">&para;</a></h2>
 <h3 id="21-cli-web-ui">2.1 CLI / Web UI<a class="headerlink" href="#21-cli-web-ui" title="Permanent link">&para;</a></h3>
 <ul>
@@ -577,7 +575,6 @@
 <li><strong>Syntax highlighting</strong> via Rich when printing.</li>
 <li><strong>MCP wrapper</strong>: Optional FastAPI server scaffold if <code>--mcp</code> is passed.</li>
 </ul>
-<hr />
 <h2 id="3-generative-pipeline-detail">3. Generative Pipeline Detail<a class="headerlink" href="#3-generative-pipeline-detail" title="Permanent link">&para;</a></h2>
 <h3 id="31-detailed-data-flow">3.1 Detailed Data Flow<a class="headerlink" href="#31-detailed-data-flow" title="Permanent link">&para;</a></h3>
 <pre><code class="language-mermaid">flowchart TD
@@ -600,7 +597,6 @@
 <li>Decouples <strong>what</strong> you ask the LLM (open‑ended natural‑language) from <strong>how</strong> you produce deterministic code templates.</li>
 <li>Future architectures can inject LLM responses deeper into code gen templates.</li>
 </ul>
-<hr />
 <h2 id="4-extensibility-customization">4. Extensibility &amp; Customization<a class="headerlink" href="#4-extensibility-customization" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Adding a Provider</strong>: Create <code>providers/my_provider.py</code> implementing <code>BaseProvider</code>, register in <code>PROVIDERS</code> in <code>providers/__init__.py</code>.</li>
@@ -608,7 +604,6 @@
 <li><strong>Custom Prompts</strong>: Modify or add Jinja templates in <code>utils/prompts.py</code>.</li>
 <li><strong>Parser tweaks</strong>: Improve <code>utils/parser.py</code> to extract richer workflows (e.g. data schemas, error handling agents).</li>
 </ul>
-<hr />
 <h2 id="5-file-locations">5. File Locations<a class="headerlink" href="#5-file-locations" title="Permanent link">&para;</a></h2>
 <pre><code>src/agent_generator/
 ├── cli.py

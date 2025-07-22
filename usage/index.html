@@ -707,7 +707,6 @@ For installation instructions see <a href="../installation/">Installation</a>.</
 </tr>
 </tbody>
 </table>
-<hr />
 <h2 id="2-flask-web-ui">2  Flask Web UI<a class="headerlink" href="#2-flask-web-ui" title="Permanent link">&para;</a></h2>
 <h3 id="21-run-locally">2.1 Run locally<a class="headerlink" href="#21-run-locally" title="Permanent link">&para;</a></h3>
 <pre><code class="language-bash">FLASK_APP=agent_generator.web FLASK_ENV=development flask run
@@ -723,7 +722,6 @@ For installation instructions see <a href="../installation/">Installation</a>.</
 <li>Mermaid diagram appears under the code for quick validation.</li>
 </ol>
 <p><img alt="UI screenshot" src="../images/ui-screenshot.png" /></p>
-<hr />
 <h2 id="3-docker-usage">3  Docker usage<a class="headerlink" href="#3-docker-usage" title="Permanent link">&para;</a></h2>
 <pre><code class="language-bash">docker build -t agent-generator .
 docker run -e WATSONX_API_KEY=... -e WATSONX_PROJECT_ID=... \
@@ -733,14 +731,12 @@ docker run -e WATSONX_API_KEY=... -e WATSONX_PROJECT_ID=... \
 <p>You can also exec into the container to run the CLI:</p>
 <pre><code class="language-bash">docker run --rm agent-generator agent-generator &quot;Say hi&quot; -f react --dry-run
 </code></pre>
-<hr />
 <h2 id="4-serving-generated-mcp-skills">4  Serving generated MCP skills<a class="headerlink" href="#4-serving-generated-mcp-skills" title="Permanent link">&para;</a></h2>
 <p>Every Python framework (<code>crewai</code>, <code>crewai_flow</code>, <code>langgraph</code>, <code>react</code>) can be generated with an <strong>MCP wrapper</strong>:</p>
 <pre><code class="language-bash">agent-generator &quot;...data pipeline...&quot; -f langgraph --mcp -o pipeline.py
 python pipeline.py serve      # exposes POST /invoke on port 8080
 </code></pre>
 <p>Upload the packaged script or its Docker image to your MCP Gateway and then <strong>import</strong> it as a custom skill in WatsonX Orchestrate.</p>
-<hr />
 <h2 id="5-troubleshooting">5  Troubleshooting<a class="headerlink" href="#5-troubleshooting" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -773,7 +769,6 @@ python pipeline.py serve      # exposes POST /invoke on port 8080
 </tbody>
 </table>
 <p>Still stuck? Open an issue on the <a href="https://github.com/ruslanmv/agent-generator/issues">GitHub tracker</a>.</p>
-<hr />
 <p>Jump in: <strong><a href="../installation/">Installation ➜</a></strong> · <strong><a href="./">Usage ➜</a></strong> · <strong><a href="../frameworks/">Frameworks ➜</a></strong></p>
 
 

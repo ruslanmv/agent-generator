@@ -558,35 +558,26 @@
 
 <h1 id="installation-guide">Installation Guide<a class="headerlink" href="#installation-guide" title="Permanent link">&para;</a></h1>
 <p><em>agent-generator</em> supports <strong>Python ≥ 3.9</strong> and ships with IBM WatsonX as the default LLM provider. Optional extras unlock OpenAI support, the Flask Web UI, and developer tooling.</p>
-<hr />
 <h2 id="windows-via-wsl">Windows (via WSL)<a class="headerlink" href="#windows-via-wsl" title="Permanent link">&para;</a></h2>
 <p>If you’re on Windows, we recommend using WSL (Windows Subsystem for Linux) to get a Linux-like environment.</p>
 <p><strong>Enable WSL</strong>
     Open PowerShell <strong>as Administrator</strong> and run:</p>
-<pre><code>```powershell
-wsl --install
-```
-
-When it finishes, reboot your PC and launch your new Linux distro (e.g., Ubuntu).
+<pre><code class="language-powershell">wsl --install
+</code></pre>
+<pre><code>When it finishes, reboot your PC and launch your new Linux distro (e.g., Ubuntu).
 </code></pre>
 <p><strong>Create &amp; activate a virtual environment</strong>
     In your WSL terminal:</p>
-<pre><code>```bash
-python3 -m venv venv
+<pre><code class="language-bash">python3 -m venv venv
 source venv/bin/activate
-```
 </code></pre>
 <p><strong>Upgrade pip &amp; install agent-generator</strong></p>
-<pre><code>```bash
-pip install --upgrade pip --break-system-packages
-pip install "agent-generator[dev,web,openai]" --break-system-packages
-```
-
-If you encounter PEP 668 “externally managed environment” errors inside the `venv`, continue using the `--break-system-packages` flag.
+<pre><code class="language-bash">pip install --upgrade pip --break-system-packages
+pip install &quot;agent-generator[dev,web,openai]&quot; --break-system-packages
 </code></pre>
+<p>If you encounter PEP 668 “externally managed environment” errors inside the <code>venv</code>, continue using the <code>--break-system-packages</code> flag.</p>
 <p><strong>Prepare the <code>.env</code> file</strong></p>
-<pre><code>At the project root (next to `Makefile`, `pyproject.toml`, etc.), create a file named `.env`:
-</code></pre>
+<p>At the project root (next to <code>Makefile</code>, <code>pyproject.toml</code>, etc.), create a file named <code>.env</code>:</p>
 <pre><code class="language-bash">WATSONX_API_KEY=your_watsonx_key
 WATSONX_PROJECT_ID=your_watsonx_project_id
 WATSONX_URL=https://us-south.ml.cloud.ibm.com
@@ -600,30 +591,25 @@ set -a &amp;&amp; source .env &amp;&amp; set +a
 # Method B: Strip Windows carriage returns and export
 export $(cat .env | tr -d '\r' | xargs)
 </code></pre>
-<pre><code>Verify that the variables were loaded correctly:
-</code></pre>
+<p>Verify that the variables were loaded correctly:</p>
 <pre><code class="language-bash">echo &quot;$WATSONX_API_KEY&quot;
 echo &quot;$WATSONX_PROJECT_ID&quot;
 </code></pre>
 <p><strong>Run the generator</strong>
     To generate an agent using the default WatsonX provider:</p>
-<pre><code>```bash
+<pre><code class="language-bash">agent-generator \
+    &quot;I need a research assistant that summarises papers&quot; \
+    --framework watsonx_orchestrate \
+    --output research_assistant.yaml
+</code></pre>
+<pre><code>Or, to use the OpenAI provider:
+</code></pre>
+<pre><code class="language-bash">export OPENAI_API_KEY=sk-...
 agent-generator \
-  "I need a research assistant that summarises papers" \
-  --framework watsonx_orchestrate \
-  --output research_assistant.yaml
-```
-
-Or, to use the OpenAI provider:
-
-```bash
-export OPENAI_API_KEY=sk-...
-agent-generator \
-  "I need a research assistant that summarises papers" \
-  --framework crewai \
-  --provider openai \
-  --output research_assistant.py
-```
+    &quot;I need a research assistant that summarises papers&quot; \
+    --framework crewai \
+    --provider openai \
+    --output research_assistant.py
 </code></pre>
 <h2 id="basic-installation">Basic Installation<a class="headerlink" href="#basic-installation" title="Permanent link">&para;</a></h2>
 <p>To install the core package with WatsonX support only, run:</p>
@@ -708,7 +694,6 @@ WATSONX_URL=&quot;https://us-south.ml.cloud.ibm.com&quot;
 import json
 ...
 </code></pre>
-<hr />
 <h2 id="running-the-web-ui">Running the Web UI<a class="headerlink" href="#running-the-web-ui" title="Permanent link">&para;</a></h2>
 <p>You can run the web interface using either the Flask development server or Docker.</p>
 <p><strong>Development Server (with hot-reload):</strong></p>
@@ -720,7 +705,6 @@ import json
 docker run -e WATSONX_API_KEY=... -p 8000:8000 agentgen
 </code></pre>
 <p>Access the UI at <code>http://localhost:8000</code>.</p>
-<hr />
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">&para;</a></h2>
 <p>To upgrade the package to the latest version:</p>
 <pre><code class="language-bash">pip install --upgrade agent-generator
@@ -730,7 +714,6 @@ docker run -e WATSONX_API_KEY=... -p 8000:8000 agentgen
 <p><code>bash
 pip install --upgrade "agent-generator[web,openai]"</code></p>
 </blockquote>
-<hr />
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
