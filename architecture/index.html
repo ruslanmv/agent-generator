@@ -1,0 +1,680 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Turn plain‑English requirements into fully‑configured multi‑agent AI teams.">
+      
+      
+        <meta name="author" content="Ruslan M. V.">
+      
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
+    
+    
+      
+        <title>Architecture of agent-generator - agent-generator</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture-of-agent-generator" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="agent-generator" class="md-header__button md-logo" aria-label="agent-generator" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            agent-generator
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture of agent-generator
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ruslanmv/agent-generator" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="agent-generator" class="md-nav__button md-logo" aria-label="agent-generator" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    agent-generator
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ruslanmv/agent-generator" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../frameworks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Frameworks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../images/architecture.svg" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-highlevel-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. High‑Level Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-component-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Component Breakdown
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Component Breakdown">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-cli-web-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 CLI / Web UI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-configuration-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 Configuration &amp; Environment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-parser-workflow-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 Parser &amp; Workflow Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-prompt-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 Prompt Rendering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-llm-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.5 LLM Providers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-framework-generators" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.6 Framework Generators
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-output-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.7 Output &amp; Utilities
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-generative-pipeline-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Generative Pipeline Detail
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Generative Pipeline Detail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-detailed-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Detailed Data Flow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Detailed Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-separate-prompt-vs-generator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why separate prompt vs generator?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-extensibility-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Extensibility &amp; Customization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-file-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. File Locations
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="architecture-of-agent-generator">Architecture of agent-generator<a class="headerlink" href="#architecture-of-agent-generator" title="Permanent link">&para;</a></h1>
+<p>This document describes the overall architecture of <strong>agent-generator</strong>, with a focus on the generative pipeline that transforms plain‑English prompts into fully configured agent code or YAML for various frameworks.</p>
+<hr />
+<h2 id="1-highlevel-overview">1. High‑Level Overview<a class="headerlink" href="#1-highlevel-overview" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>User Input (CLI or Web UI)</strong>: The user provides a natural‑language requirement, selects a framework, and optionally a provider, model, and other flags.</li>
+<li><strong>Env Loader</strong>: <code>.env</code> variables are loaded into the process environment.</li>
+<li><strong>Pre‑flight Check</strong>: Credentials for the chosen provider (WatsonX or OpenAI) are validated; helpful messages are printed if missing.</li>
+<li><strong>Settings Loader</strong>: Pydantic reads <code>AGENTGEN_</code> environment variables and <code>.env</code> to build a <code>Settings</code> object, applying defaults and provider‑specific overrides (e.g., defaulting <code>gpt-4o</code> for OpenAI).</li>
+<li><strong>Parser</strong>: The natural‑language prompt is parsed into a <strong>Workflow</strong> graph: a set of <code>Agent</code>, <code>Task</code>, and <code>Edge</code> objects that represent the multi‑agent workflow.</li>
+<li><strong>Prompt Renderer</strong>: A Jinja template combines the workflow, settings, and framework instructions into a single string prompt for the LLM.</li>
+<li><strong>LLM Provider</strong>: The prompt is sent to the selected LLM provider (WatsonX REST API or OpenAI SDK). The raw completion is returned.</li>
+<li><strong>Framework Generator</strong>: Another set of Jinja templates consume the <code>Workflow</code> and generate code or YAML in the target framework’s syntax, leveraging the LLM response only when needed (e.g., to fill details in templates).</li>
+<li><strong>Output</strong>: The generated code/YAML is either printed with syntax highlighting or written to a file. Token‑ and cost‑estimates are optionally shown.</li>
+</ol>
+<hr />
+<h2 id="2-component-breakdown">2. Component Breakdown<a class="headerlink" href="#2-component-breakdown" title="Permanent link">&para;</a></h2>
+<h3 id="21-cli-web-ui">2.1 CLI / Web UI<a class="headerlink" href="#21-cli-web-ui" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>src/agent_generator/cli.py</code></strong>: Typer‑based CLI entrypoint for terminal usage.</li>
+<li><strong><code>src/agent_generator/web/</code></strong>: Flask application providing a browser UI with forms for prompt, framework, and provider selection.</li>
+</ul>
+<h3 id="22-configuration-environment">2.2 Configuration &amp; Environment<a class="headerlink" href="#22-configuration-environment" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>config.py</code></strong>: Defines <code>Settings</code> model reading from <code>AGENTGEN_*</code> vars. Handles provider defaults, model overrides, and credential checks.</li>
+<li><strong><code>.env</code> support</strong>: Load dotenv at startup to override environment values locally.</li>
+</ul>
+<h3 id="23-parser-workflow-model">2.3 Parser &amp; Workflow Model<a class="headerlink" href="#23-parser-workflow-model" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>utils/parser.py</code></strong>: Converts free‑form English into a structured <code>Workflow</code>:</p>
+</li>
+<li>
+<p><code>Agent</code> model: <code>id</code>, <code>role</code>, <code>tools</code>, <code>llm_config</code>.</p>
+</li>
+<li><code>Task</code> model: <code>id</code>, <code>goal</code>, <code>inputs</code>, <code>outputs</code>, <code>agent_id</code>.</li>
+<li><code>Edge</code> model (future extension): dependencies between tasks.</li>
+</ul>
+<h3 id="24-prompt-rendering">2.4 Prompt Rendering<a class="headerlink" href="#24-prompt-rendering" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>utils/prompts.py</code></strong>: Jinja templates to render the full LLM prompt, injecting workflow and settings. Although currently not always used for code generation, it standardizes prompt creation.</li>
+</ul>
+<h3 id="25-llm-providers">2.5 LLM Providers<a class="headerlink" href="#25-llm-providers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>providers/watsonx_provider.py</code></strong>: Thin wrapper around IBM WatsonX REST API.</li>
+<li><strong><code>providers/openai_provider.py</code></strong>: Wraps the OpenAI Python SDK; defaults to <code>gpt-4o</code> if no override.</li>
+<li><strong><code>providers/base.py</code></strong>: Shared interface (<code>generate</code>, <code>tokenize</code>, <code>estimate_cost</code>).</li>
+</ul>
+<h3 id="26-framework-generators">2.6 Framework Generators<a class="headerlink" href="#26-framework-generators" title="Permanent link">&para;</a></h3>
+<p>Each framework lives in <code>src/agent_generator/frameworks/&lt;name&gt;/generator.py</code> and implements:</p>
+<ul>
+<li><strong><code>file_extension</code></strong>: <code>py</code> or <code>yaml</code>.</li>
+<li><strong><code>generate_code(workflow, settings, mcp)</code></strong>: Renders Jinja templates (<code>agent.jinja2</code>, <code>task.jinja2</code>, <code>main.jinja2</code>).</li>
+</ul>
+<p>Supported frameworks:</p>
+<ul>
+<li>CrewAI (Python SDK)</li>
+<li>CrewAI Flow (event‑driven)</li>
+<li>LangGraph (DAG API)</li>
+<li>ReAct (reason‑act pattern)</li>
+<li>WatsonX Orchestrate (native YAML)</li>
+</ul>
+<h3 id="27-output-utilities">2.7 Output &amp; Utilities<a class="headerlink" href="#27-output-utilities" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Syntax highlighting</strong> via Rich when printing.</li>
+<li><strong>MCP wrapper</strong>: Optional FastAPI server scaffold if <code>--mcp</code> is passed.</li>
+</ul>
+<hr />
+<h2 id="3-generative-pipeline-detail">3. Generative Pipeline Detail<a class="headerlink" href="#3-generative-pipeline-detail" title="Permanent link">&para;</a></h2>
+<h3 id="31-detailed-data-flow">3.1 Detailed Data Flow<a class="headerlink" href="#31-detailed-data-flow" title="Permanent link">&para;</a></h3>
+<pre><code class="language-mermaid">flowchart TD
+  P[User Prompt] --&gt; Parse
+  Parse[Parser → Workflow] --&gt; PromptRender
+  PromptRender[Template Prompt] --&gt; LLM
+  LLM[LLM Provider] --&gt; Completion
+  Completion --&gt; Generator[Framework Generator]
+  Generator --&gt; Code[Generated Code/YAML]
+</code></pre>
+<ol>
+<li><strong>Parser</strong>: Breaks text into structured data.</li>
+<li><strong>PromptRender</strong>: Applies Jinja to produce the text sent to the LLM.</li>
+<li><strong>LLM</strong>: Returns a completion string with e.g. helper instructions or detailed sub‑prompts.</li>
+<li><strong>Generator</strong>: Ignores most LLM output, instead using static templates to turn the <code>Workflow</code> graph into code.</li>
+<li><strong>Code</strong>: Final output, ready to run or deploy.</li>
+</ol>
+<h4 id="why-separate-prompt-vs-generator">Why separate prompt vs generator?<a class="headerlink" href="#why-separate-prompt-vs-generator" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Decouples <strong>what</strong> you ask the LLM (open‑ended natural‑language) from <strong>how</strong> you produce deterministic code templates.</li>
+<li>Future architectures can inject LLM responses deeper into code gen templates.</li>
+</ul>
+<hr />
+<h2 id="4-extensibility-customization">4. Extensibility &amp; Customization<a class="headerlink" href="#4-extensibility-customization" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Adding a Provider</strong>: Create <code>providers/my_provider.py</code> implementing <code>BaseProvider</code>, register in <code>PROVIDERS</code> in <code>providers/__init__.py</code>.</li>
+<li><strong>Adding a Framework</strong>: Create <code>frameworks/my_framework/generator.py</code>, add templates under that folder, register in <code>FRAMEWORKS</code> in <code>frameworks/__init__.py</code>.</li>
+<li><strong>Custom Prompts</strong>: Modify or add Jinja templates in <code>utils/prompts.py</code>.</li>
+<li><strong>Parser tweaks</strong>: Improve <code>utils/parser.py</code> to extract richer workflows (e.g. data schemas, error handling agents).</li>
+</ul>
+<hr />
+<h2 id="5-file-locations">5. File Locations<a class="headerlink" href="#5-file-locations" title="Permanent link">&para;</a></h2>
+<pre><code>src/agent_generator/
+├── cli.py
+├── config.py
+├── frameworks/
+│   └── &lt;framework&gt;/generator.py
+├── providers/
+│   └── *_provider.py
+└── utils/
+    ├── parser.py
+    └── prompts.py
+</code></pre>
+<p>Jump in: <strong><a href="../installation/">Installation ➜</a></strong> · <strong><a href="../usage/">Usage ➜</a></strong> · <strong><a href="../frameworks/">Frameworks ➜</a></strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
+      
+    
+  </body>
+</html>
