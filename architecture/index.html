@@ -13,6 +13,8 @@
       
       
       
+        <link rel="prev" href="../frameworks/">
+      
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +22,7 @@
     
     
       
-        <title>Architecture of agent-generator - agent-generator</title>
+        <title>Architecture - agent-generator</title>
       
     
     
@@ -98,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Architecture of agent-generator
+              Architecture
             
           </span>
         </div>
@@ -303,10 +305,32 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../images/architecture.svg" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -317,6 +341,170 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-highlevel-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. High‑Level Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-component-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Component Breakdown
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Component Breakdown">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-cli-web-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 CLI / Web UI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-configuration-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 Configuration &amp; Environment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-parser-workflow-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 Parser &amp; Workflow Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-prompt-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 Prompt Rendering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-llm-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.5 LLM Providers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-framework-generators" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.6 Framework Generators
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-output-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.7 Output &amp; Utilities
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-generative-pipeline-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Generative Pipeline Detail
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Generative Pipeline Detail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-detailed-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Detailed Data Flow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Detailed Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-separate-prompt-vs-generator" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why separate prompt vs generator?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-extensibility-customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Extensibility &amp; Customization
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-file-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. File Locations
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
