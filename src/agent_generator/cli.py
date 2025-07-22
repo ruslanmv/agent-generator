@@ -53,7 +53,7 @@ app = typer.Typer(
 
 console = Console()
 
-VERSION = "0.1.0"  # 🛈 bump on release
+VERSION = "0.1.1"  # 🛈 bump on release
 
 
 # ---------------------------------------------------------------- #
