@@ -8,8 +8,7 @@ Each import below registers its subclass in the FRAMEWORKS dict
 via BaseFrameworkGenerator.__init_subclass__.
 """
 
-from .base import FRAMEWORKS, BaseFrameworkGenerator
-# Import each concrete generator so they register themselves:
+from .base import BaseFrameworkGenerator, FRAMEWORKS
 from .crewai import CrewAIGenerator
 from .crewai_flow import CrewAIFlowGenerator
 from .langgraph import LangGraphGenerator
