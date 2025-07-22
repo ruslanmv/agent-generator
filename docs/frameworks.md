@@ -35,7 +35,7 @@ agent-generator [OPTIONS] "plain‑English requirement"
 | Cost estimate only                  | `agent-generator "Scrape website" -f react --dry-run --show-cost`              |
 | Use **OpenAI** instead of WatsonX   | `agent-generator "Write jokes" -f react -p openai --model gpt-4o`              |
 
----
+
 
 ## 2  Flask Web UI
 
@@ -57,7 +57,6 @@ FLASK_APP=agent_generator.web FLASK_ENV=development flask run
 
 ![UI screenshot](images/ui-screenshot.png)
 
----
 
 ## 3  Docker usage
 
@@ -74,7 +73,7 @@ You can also exec into the container to run the CLI:
 docker run --rm agent-generator agent-generator "Say hi" -f react --dry-run
 ```
 
----
+
 
 ## 4  Serving generated MCP skills
 
@@ -87,7 +86,7 @@ python pipeline.py serve      # exposes POST /invoke on port 8080
 
 Upload the packaged script or its Docker image to your MCP Gateway and then **import** it as a custom skill in WatsonX Orchestrate.
 
----
+
 
 ## 5  Troubleshooting
 

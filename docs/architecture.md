@@ -2,7 +2,7 @@
 
 This document describes the overall architecture of **agent-generator**, with a focus on the generative pipeline that transforms plain‑English prompts into fully configured agent code or YAML for various frameworks.
 
----
+
 
 ## 1. High‑Level Overview
 
@@ -16,7 +16,7 @@ This document describes the overall architecture of **agent-generator**, with a 
 8. **Framework Generator**: Another set of Jinja templates consume the `Workflow` and generate code or YAML in the target framework’s syntax, leveraging the LLM response only when needed (e.g., to fill details in templates).
 9. **Output**: The generated code/YAML is either printed with syntax highlighting or written to a file. Token‑ and cost‑estimates are optionally shown.
 
----
+
 
 ## 2. Component Breakdown
 
@@ -68,7 +68,7 @@ Supported frameworks:
 * **Syntax highlighting** via Rich when printing.
 * **MCP wrapper**: Optional FastAPI server scaffold if `--mcp` is passed.
 
----
+
 
 ## 3. Generative Pipeline Detail
 
@@ -95,7 +95,7 @@ flowchart TD
 * Decouples **what** you ask the LLM (open‑ended natural‑language) from **how** you produce deterministic code templates.
 * Future architectures can inject LLM responses deeper into code gen templates.
 
----
+
 
 ## 4. Extensibility & Customization
 
@@ -104,7 +104,7 @@ flowchart TD
 * **Custom Prompts**: Modify or add Jinja templates in `utils/prompts.py`.
 * **Parser tweaks**: Improve `utils/parser.py` to extract richer workflows (e.g. data schemas, error handling agents).
 
----
+
 
 ## 5. File Locations
 

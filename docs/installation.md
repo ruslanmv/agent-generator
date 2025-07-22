@@ -3,7 +3,6 @@
 
 *agent-generator* supports **Python ≥ 3.9** and ships with IBM WatsonX as the default LLM provider. Optional extras unlock OpenAI support, the Flask Web UI, and developer tooling.
 
------
 
 ## Windows (via WSL)
 
@@ -12,32 +11,32 @@ If you’re on Windows, we recommend using WSL (Windows Subsystem for Linux) to 
 **Enable WSL**
     Open PowerShell **as Administrator** and run:
 
-    ```powershell
-    wsl --install
-    ```
+```powershell
+wsl --install
+```
 
     When it finishes, reboot your PC and launch your new Linux distro (e.g., Ubuntu).
 
 **Create & activate a virtual environment**
     In your WSL terminal:
 
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
 **Upgrade pip & install agent-generator**
 
-    ```bash
-    pip install --upgrade pip --break-system-packages
-    pip install "agent-generator[dev,web,openai]" --break-system-packages
-    ```
+```bash
+pip install --upgrade pip --break-system-packages
+pip install "agent-generator[dev,web,openai]" --break-system-packages
+```
 
-    If you encounter PEP 668 “externally managed environment” errors inside the `venv`, continue using the `--break-system-packages` flag.
+If you encounter PEP 668 “externally managed environment” errors inside the `venv`, continue using the `--break-system-packages` flag.
 
 **Prepare the `.env` file**
 
-    At the project root (next to `Makefile`, `pyproject.toml`, etc.), create a file named `.env`:
+At the project root (next to `Makefile`, `pyproject.toml`, etc.), create a file named `.env`:
 
 ```bash
 WATSONX_API_KEY=your_watsonx_key
@@ -57,7 +56,7 @@ set -a && source .env && set +a
 # Method B: Strip Windows carriage returns and export
 export $(cat .env | tr -d '\r' | xargs)
 ```
-    Verify that the variables were loaded correctly:
+Verify that the variables were loaded correctly:
 
 ```bash
 echo "$WATSONX_API_KEY"
@@ -67,23 +66,23 @@ echo "$WATSONX_PROJECT_ID"
 **Run the generator**
     To generate an agent using the default WatsonX provider:
 
-    ```bash
-    agent-generator \
-      "I need a research assistant that summarises papers" \
-      --framework watsonx_orchestrate \
-      --output research_assistant.yaml
-    ```
+```bash
+agent-generator \
+    "I need a research assistant that summarises papers" \
+    --framework watsonx_orchestrate \
+    --output research_assistant.yaml
+```
 
     Or, to use the OpenAI provider:
 
-    ```bash
-    export OPENAI_API_KEY=sk-...
-    agent-generator \
-      "I need a research assistant that summarises papers" \
-      --framework crewai \
-      --provider openai \
-      --output research_assistant.py
-    ```
+```bash
+export OPENAI_API_KEY=sk-...
+agent-generator \
+    "I need a research assistant that summarises papers" \
+    --framework crewai \
+    --provider openai \
+    --output research_assistant.py
+```
 
 ## Basic Installation
 
@@ -95,9 +94,9 @@ pip install agent-generator
 
 This gives you:
 
-  * The CLI (`agent-generator …`)
-  * Core runtime dependencies
-  * The WatsonX provider (default model: `meta-llama/llama-3-3-70b-instruct`)
+* The CLI (`agent-generator …`)
+* Core runtime dependencies
+* The WatsonX provider (default model: `meta-llama/llama-3-3-70b-instruct`)
 
 -----
 
@@ -170,8 +169,6 @@ import json
 ...
 ```
 
------
-
 ## Running the Web UI
 
 You can run the web interface using either the Flask development server or Docker.
@@ -193,7 +190,6 @@ docker run -e WATSONX_API_KEY=... -p 8000:8000 agentgen
 
 Access the UI at `http://localhost:8000`.
 
------
 
 ## Upgrading
 
@@ -209,7 +205,6 @@ pip install --upgrade agent-generator
 > pip install --upgrade "agent-generator[web,openai]"
 > ```
 
------
 
 ## Troubleshooting
 
@@ -219,7 +214,6 @@ pip install --upgrade agent-generator
 | `ModuleNotFoundError: flask` | You need the `web` extra. Run `pip install "agent-generator[web]"`. |
 | CLI hangs or times out | Lower the value of `--max-tokens`, check your network connection, or try a different provider like `--provider openai`. |
 | Mermaid diagram not rendering (UI) | Ensure your browser has internet access to the CDN at `unpkg.com`. |
-
 
 
 Jump in: **[Installation ➜](installation.md)** · **[Usage ➜](usage.md)** · **[Frameworks ➜](frameworks.md)**

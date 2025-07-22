@@ -98,6 +98,9 @@ docs: ## MkDocs live‑reload
 docs-build: ## Build static docs into site/
 	mkdocs build
 
+docs-deploy: ## Deploy documentation in production 
+	mkdocs gh-deploy --clean
+
 # ----------------------------------------------------------------
 #  Distribution
 # ----------------------------------------------------------------

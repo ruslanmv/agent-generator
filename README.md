@@ -5,6 +5,7 @@
 [![PyPI Version](https://img.shields.io/pypi/v/agent-generator.svg)](https://pypi.org/project/agent-generator/)
 [![Python 3.9+](https://img.shields.io/pypi/pyversions/agent-generator.svg)](https://pypi.org/project/agent-generator/)
 [![CI Status](https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/static/v1?label=docs&message=mkdocs&color=blue&logo=mkdocs)](https://ruslanmv.github.io/agent-generator/)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/ruslanmv/agent-generator/blob/master/LICENSE)
 
 
@@ -190,6 +191,11 @@ pre-commit install
 make lint test
 mkdocs serve        # live docs
 ```
+
+## Documentation
+
+[https://ruslanmv.com/agent-generator/](https://ruslanmv.com/agent-generator/)
+
 
 ---
 
