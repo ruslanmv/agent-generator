@@ -6,19 +6,6 @@ This document describes the overall architecture of **agent-generator**, with a 
 
 ## 1. High‑Level Overview
 
-```mermaid
-flowchart LR
-  A[User Input] --> B(CLI / Web UI)
-  B --> C(Env Loader)
-  C --> D(Pre‑flight Check)
-  D --> E(Settings Loader)
-  E --> F(Parser)
-  F --> G(Prompt Renderer)
-  G --> H(LLM Provider)
-  H --> I(Framework Generator)
-  I --> J(Output)
-```
-
 1. **User Input (CLI or Web UI)**: The user provides a natural‑language requirement, selects a framework, and optionally a provider, model, and other flags.
 2. **Env Loader**: `.env` variables are loaded into the process environment.
 3. **Pre‑flight Check**: Credentials for the chosen provider (WatsonX or OpenAI) are validated; helpful messages are printed if missing.

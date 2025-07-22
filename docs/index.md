@@ -1,8 +1,11 @@
-# agent‑generator 🛠️🤖
+
+# 🛠️ agent‑generator 
 
 *A one‑line prompt … a fully configured multi‑agent team, served via an MCP Gateway.*
 
-![architecture](images/architecture.svg)
+
+![logo](images/logo.png)
+
 
 `agent‑generator` converts plain‑English requirements into runnable code or YAML workflows for:
 
