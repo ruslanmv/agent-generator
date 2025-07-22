@@ -13,7 +13,7 @@ nav:
   - Installation: installation.md
   - Usage: usage.md
   - Frameworks: frameworks.md
-  - Architecture: images/architecture.svg
+  - Architecture: architecture.md
 
 theme:
   name: material
