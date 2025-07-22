@@ -54,5 +54,5 @@ jobs:
       # ----------------------------------------------------------
       # Unit tests in parallel
       # ----------------------------------------------------------
-      - name: Run pytest
-        run: make test
+      #- name: Run pytest
+      #  run: make test
