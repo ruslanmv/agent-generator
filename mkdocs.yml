@@ -1,0 +1,27 @@
+# mkdocs.yml — configuration for your documentation site
+
+site_name: agent-generator
+site_description: Turn plain‑English requirements into fully‑configured multi‑agent AI teams.
+site_author: Ruslan M. V.
+repo_url: https://github.com/ruslanmv/agent-generator
+
+docs_dir: docs
+site_dir: site
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Frameworks: frameworks.md
+  - Architecture: images/architecture.svg
+
+theme:
+  name: material
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true

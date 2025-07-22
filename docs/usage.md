@@ -3,7 +3,6 @@
 This page covers common workflows for both the **CLI** and the **Flask Web UI**.  
 For installation instructions see [Installation](installation.md).
 
----
 
 ## 1  Command‑line interface
 
@@ -11,7 +10,7 @@ For installation instructions see [Installation](installation.md).
 
 ```bash
 agent-generator [OPTIONS] "plain‑English requirement"
-````
+```
 
 ### 1.2 Frequently used flags
 
@@ -104,11 +103,5 @@ Still stuck? Open an issue on the [GitHub tracker](https://github.com/ruslanmv/
 
 ---
 
-## 6  Next steps
-
-* Explore [Frameworks comparison](frameworks.md).
-* Read the API docs in the `/docs/` folder for advanced extensions.
-* Contribute improvements – see **Contributing** section in `README.md`.
-
-Happy generating! 🚀
+Jump in: **[Installation ➜](installation.md)** · **[Usage ➜](usage.md)** · **[Frameworks ➜](frameworks.md)**
 
