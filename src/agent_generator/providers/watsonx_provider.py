@@ -113,7 +113,7 @@ class WatsonXProvider(BaseProvider):
         _LOG.debug("WatsonX payload: %s", body)
 
         # 3) Call the text‑generation endpoint
-        resp = self._session.post(self._url, data=json.dumps(body), timeout=60)
+        resp = self._session.post(self._url, data=json.dumps(body), timeout=300)
         try:
             resp.raise_for_status()
         except requests.HTTPError as exc:

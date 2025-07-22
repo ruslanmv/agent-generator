@@ -35,8 +35,11 @@ $(VENV)/bin/activate: pyproject.toml
 install: ## Editable install (core only)
 	$(PIP) install -e .
 
-dev-install: ## Editable install with dev + web extras
-	$(PIP) install -e ".[dev,web]"
+dev-install: ## Editable install with dev + web + openai extras
+	$(PIP) install -e ".[dev,web,openai]"
+
+install-extras: ## Install optional extras (web, openai) in editable mode
+	$(PIP) install -e ".[web,openai]"
 
 # ----------------------------------------------------------------
 #  Code quality

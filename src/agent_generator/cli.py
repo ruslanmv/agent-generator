@@ -38,9 +38,7 @@ from agent_generator.providers import PROVIDERS
 from agent_generator.utils.parser import parse_natural_language_to_workflow
 
 # 1) Find the project root (two levels up from this file)
-project_root = (
-    Path(__file__).resolve().parents[2]
-)  # ← was parents[1], now correct to two levels
+project_root = Path(__file__).resolve().parents[2]  # ← was parents[1], now correct
 
 # 2) Load .env if present (no-op if missing)
 load_dotenv(dotenv_path=project_root / ".env", override=False)
@@ -120,7 +118,7 @@ def generate(
 
     # ────────────── Pre‑flight env check ──────────────
     provider_name = provider or os.getenv("AGENTGEN_PROVIDER", "watsonx")
-    required = []
+    required: list[str] = []
     if provider_name == "watsonx":
         required = ["WATSONX_API_KEY", "WATSONX_PROJECT_ID"]
     elif provider_name == "openai":
@@ -171,7 +169,11 @@ def generate(
 
     # ───────── Render prompt + call LLM ─────────
     provider_cls = PROVIDERS[_provider_name]
-    provider_inst = provider_cls(settings)
+    try:
+        provider_inst = provider_cls(settings)
+    except ImportError as e:
+        console.print(f"\n[red]⚠️ {e}[/red]\n")
+        raise typer.Exit(code=1)
 
     framework_cls = FRAMEWORKS[framework]
     generator = framework_cls()

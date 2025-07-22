@@ -35,7 +35,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # LLM provider ─ default is *watsonx* when nothing is specified
+    # LLM provider ─ default is *watsonx*
     provider: Literal["watsonx", "openai"] = Field(
         default="watsonx",
         description="Default LLM provider; can be overridden by CLI flag or env.",
@@ -43,7 +43,8 @@ class Settings(BaseSettings):
 
     # Global model + sampling
     model: str = Field(
-        default="meta-llama/llama-3-2-90b-vision-instruct",
+        # default model, may be overridden per-provider
+        default="meta-llama/llama-3-3-70b-instruct",
         description="Model identifier understood by the chosen provider.",
     )
     temperature: float = Field(default=0.7, ge=0, le=2)
@@ -83,15 +84,21 @@ class Settings(BaseSettings):
         # Apply provider-specific model override
         if self.provider == "watsonx" and self.watsonx_model:
             object.__setattr__(self, "model", self.watsonx_model)
-        if self.provider == "openai" and self.openai_model:
-            object.__setattr__(self, "model", self.openai_model)
+
+        # For OpenAI, use explicit override or default to gpt-4o
+        if self.provider == "openai":
+            if self.openai_model:
+                object.__setattr__(self, "model", self.openai_model)
+            else:
+                object.__setattr__(self, "model", "gpt-4o")
 
         # Credential checks with copy-pasteable guidance
         if self.provider == "openai":
             if not self.openai_api_key:
                 raise SettingsError(
                     "OPENAI_API_KEY is required.\n"
-                    "Set it in your environment or .env file, e.g.\n"
+                    "Run  pip install 'agent-generator[openai]'  to enable OpenAI support.\n"
+                    "Set it in your environment or .env file, e.g.:\n"
                     "  export OPENAI_API_KEY=sk-your-key-here"
                 )
 
@@ -101,8 +108,6 @@ class Settings(BaseSettings):
                 missing.append("WATSONX_API_KEY")
             if not self.watsonx_project_id:
                 missing.append("WATSONX_PROJECT_ID")
-            # watsonx_url has a default, so it's never technically missing, but we
-            # still show the recommended export in the error message for clarity.
             if missing:
                 raise SettingsError(
                     "Watsonx credentials missing: " + ", ".join(missing) + ".\n"
