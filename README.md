@@ -65,6 +65,7 @@ pip install "agent-generator[dev,web]"
 export WATSONX_API_KEY=...
 export WATSONX_PROJECT_ID=...
 export WATSONX_URL=https://us-south.ml.cloud.ibm.com
+AGENTGEN_PROVIDER="watsonx"                   
 ````
 
 ---
