@@ -73,9 +73,7 @@ export AGENTGEN_PROVIDER=watsonx
 ### 2 Generate a **WatsonX Orchestrate YAML** skill
 
 ```bash
-agent-generator \
-  "I need a research assistant that summarises papers" \
-  --framework watsonx_orchestrate \
+agent-generator "I need a research assistant that summarises papers" --framework watsonx_orchestrate 
 ```
 ![](assets/2025-07-22-00-50-38.png)
 
