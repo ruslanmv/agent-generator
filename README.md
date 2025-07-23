@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="https://github.com/ruslanmv/agent-generator/blob/master/docs/images/logo.png" alt="Agent-Generator Logo" width="300">
+</p>
+
 # 🔧 agent‑generator
 
 *From one plain‑English sentence to a production‑ready multi‑agent workflow.*
