@@ -55,3 +55,4 @@ site/
 .env
 *.pem
 /temp
+.DS_Store

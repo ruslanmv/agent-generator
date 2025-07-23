@@ -4,16 +4,14 @@ import functools
 from pathlib import Path
 from typing import Literal, Optional
 
+from dotenv import load_dotenv
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict, SettingsError
 
-
 # ────────────────────────────────────────────────────────────────
-# Helpers
+# Immediately load .env from the current working directory
 # ────────────────────────────────────────────────────────────────
-def _project_root() -> Path:
-    """Return repo root (two levels up from this file)."""
-    return Path(__file__).resolve().parents[2]
+load_dotenv(dotenv_path=Path.cwd() / ".env", override=False)
 
 
 # ────────────────────────────────────────────────────────────────
@@ -30,7 +28,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="AGENTGEN_",
-        env_file=str(_project_root() / ".env"),
+        env_file=str(Path.cwd() / ".env"),
         case_sensitive=False,
         extra="ignore",
     )
