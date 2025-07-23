@@ -37,10 +37,10 @@ from agent_generator.frameworks import FRAMEWORKS
 from agent_generator.providers import PROVIDERS
 from agent_generator.utils.parser import parse_natural_language_to_workflow
 
-# 1) Find the project root (two levels up from this file)
-project_root = Path(__file__).resolve().parents[2]  # ← was parents[1], now correct
+# 1) Treat the current working directory as the project root
+project_root = Path.cwd()
 
-# 2) Load .env if present (no-op if missing)
+# 2) Load .env **only** from the current working directory
 load_dotenv(dotenv_path=project_root / ".env", override=False)
 
 # ────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ app = typer.Typer(
 
 console = Console()
 
-VERSION = "0.1.1"  # 🛈 bump on release
+VERSION = "0.1.2"  # 🛈 bump on release
 
 
 # ---------------------------------------------------------------- #
@@ -151,6 +151,26 @@ def generate(
     framework = _validate_choice(framework, set(FRAMEWORKS), "Framework")
     _provider_name = provider or defaults.provider
     _provider_name = _validate_choice(_provider_name, set(PROVIDERS), "Provider")
+
+    # ───────── Dry‑run shortcut ─────────
+    if dry_run:
+        console.print(
+            "[yellow]Dry‑run only → generating code without LLM calls or env checks.[/]"
+        )
+        defaults = get_settings()
+        workflow = parse_natural_language_to_workflow(prompt)
+        code = FRAMEWORKS[framework]().generate_code(
+            workflow,
+            Settings(
+                provider=defaults.provider,
+                model=defaults.model,
+                temperature=defaults.temperature,
+                max_tokens=defaults.max_tokens,
+            ),
+            mcp=mcp,
+        )
+        _write_or_echo(code, output)
+        return
 
     # ───────── Load mutable settings ─────────
     try:
