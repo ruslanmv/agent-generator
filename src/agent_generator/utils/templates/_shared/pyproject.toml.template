@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "{project_name}"
+version = "0.1.0"
+description = "A project in the {build_category} category."
+authors = ["{author_name}"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "{python_version}"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.4.4"
+black = "^24.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -36,6 +36,12 @@ from agent_generator.config import Settings, get_settings
 from agent_generator.frameworks import FRAMEWORKS
 from agent_generator.providers import PROVIDERS
 from agent_generator.utils.parser import parse_natural_language_to_workflow
+from agent_generator.utils.builder import (
+    generate_agent_code_for_review,
+   build_accepted_project,
+)
+
+
 
 # 1) Treat the current working directory as the project root
 project_root = Path.cwd()
@@ -53,7 +59,7 @@ app = typer.Typer(
 
 console = Console()
 
-VERSION = "0.1.2"  # 🛈 bump on release
+VERSION = "0.1.3"  # 🛈 bump on release
 
 
 # ---------------------------------------------------------------- #
@@ -109,6 +115,14 @@ def generate(
     show_cost: bool = typer.Option(
         False, "--show-cost", help="Display token/cost info."
     ),
+
+    build: bool = typer.Option(
+        False,
+        "--build",
+        help="Also scaffold a full runnable project after code generation.",
+    ),
+
+
     version: bool = typer.Option(False, "--version", "-V", is_eager=True),
 ):
     """Generate code (or YAML) for a multi‑agent workflow."""
@@ -202,11 +216,20 @@ def generate(
         console.print("[yellow]Dry‑run only → skipping LLM call.[/]")
         code = generator.generate_code(workflow, settings, mcp=mcp)
     else:
-        from agent_generator.utils.prompts import render_prompt
+        #from agent_generator.utils.prompts import render_prompt
+        #prompt_str = render_prompt(workflow, settings, framework)
+        #provider_inst.generate(prompt_str)
+        #code = generator.generate_code(workflow, settings, mcp=mcp)
 
-        prompt_str = render_prompt(workflow, settings, framework)
-        provider_inst.generate(prompt_str)
-        code = generator.generate_code(workflow, settings, mcp=mcp)
+        code = generate_agent_code_for_review(
+            prompt=prompt,
+            framework_name=framework,
+            provider_name=_provider_name,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            mcp=mcp,
+        )
 
     # ───────── Cost estimate ─────────
     if show_cost and not dry_run:
@@ -223,6 +246,19 @@ def generate(
     if output is None and not dry_run:
         output = None
     _write_or_echo(code, output)
+
+
+    # ───────── Stage 2: Optional scaffolding ─────────
+    if build:
+        project_name = typer.prompt("Project name", default=f"{framework}-agent")
+        build_accepted_project(
+            project_name=project_name,
+            framework_name=framework,
+            approved_code=code,
+        )
+        console.print(
+            f"\n[green]✨ Project '{project_name}' scaffolded successfully![/]"
+        )
 
 
 # ---------------------------------------------------------------- #

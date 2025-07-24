@@ -1,0 +1,11 @@
+FROM python:3.11-slim as builder
+WORKDIR /app
+RUN pip install poetry
+COPY poetry.lock pyproject.toml ./
+RUN poetry install --no-dev --no-interaction --no-ansi
+FROM python:3.11-slim as final
+WORKDIR /app
+COPY --from=builder /app/.venv /.venv
+ENV PATH="/app/.venv/bin:$PATH"
+COPY src/ .
+CMD ["python", "main.py"]

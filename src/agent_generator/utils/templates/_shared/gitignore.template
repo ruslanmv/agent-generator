@@ -1,0 +1,10 @@
+# Environments & Caches
+.venv
+.env
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# IDE files
+.idea/
+.vscode/

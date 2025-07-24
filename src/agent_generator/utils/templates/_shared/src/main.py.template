@@ -1,0 +1,8 @@
+# This is the main entry point for the {project_name} application.
+# The agent generator will inject the final code here.
+
+def main():
+    print("Hello from the '{project_name}' project!")
+
+if __name__ == "__main__":
+    main()

@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name            = "agent-generator"
-version         = "0.1.2"
+version         = "0.1.3"
 description     = "Turn plain‑English requirements into fully‑configured multi‑agent AI teams (CrewAI, LangGraph, ReAct, WatsonX Orchestrate)."
 readme          = "README.md"
 requires-python = ">=3.9"
@@ -53,6 +53,9 @@ dependencies = [
   "fastapi>=0.110",        # MCP wrapper
   "uvicorn>=0.29",
   "pyyaml>=6.0",           # YAML generator & tests
+  "openai>=1.30",
+  "tiktoken>=0.3.0",
+
 ]
 
 # -----------------------------------------------------------------
@@ -68,6 +71,15 @@ web = [
   "gunicorn>=21.2",
   "jinja2>=3.1",
 ]
+
+all = [
+  "openai>=1.30",
+  "tiktoken>=0.3.0",
+  "flask>=3.0",
+  "gunicorn>=21.2",
+  "jinja2>=3.1",
+]
+
 dev = [
   # testing & linting
   "pytest>=8.2",
