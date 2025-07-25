@@ -72,21 +72,9 @@ def generate_agent_code_for_review(
     raw_code = generator.generate_code(workflow, settings, mcp=mcp)
     code = _extract_code_block(raw_code)
 
-    # 6) If it looks truncated (no trailing newline), ask to continue
-   # if not code.endswith("\n"):
-   #     cont_prompt = prompt_str + "\n\nPlease continue the code."
-   #     provider_inst.generate(cont_prompt)
-   #     cont_raw = generator.generate_code(workflow, settings, mcp=mcp)
-   #     code += "\n" + _extract_code_block(cont_raw)
-   # if not code.endswith("\n"):
-   #     # ask the FrameworkGenerator to continue the same prompt
-   #     cont_raw = generator.generate_code(workflow, settings, mcp=mcp)
-   #     code += "\n" + _extract_code_block(cont_raw)
-
-    # Guarantee exactly one trailing newline
+    # 6) If it looks truncated (no trailing newline), ensure a single newline
     if not code.endswith("\n"):
         code += "\n"
-
 
     return code
 
@@ -116,3 +104,67 @@ def build_accepted_project(
     add_all_dependencies(project_path, config)
 
     print(f"✅ Build complete!  cd {project_path} && make install && make run")
+
+
+# ───── ✨ NEW LOGIC  (insert near the bottom of builder.py) ────────────────
+# The BeeAI backend now returns an ordered build‑plan. If we receive that
+# plan we can *skip* all LLM parsing / prompt rendering and simply execute
+# the tasks in order.  Nothing else in the existing file is untouched.
+# -------------------------------------------------------------------------
+
+def _run_preplanned_tasks(build_tasks: list[dict], framework: str) -> None:
+    """
+    Execute backend‑supplied build tasks (python_tool / mcp_tool / yaml_agent).
+
+    Parameters
+    ----------
+    build_tasks:
+        A list of dicts exactly as returned by the BeeAI backend.  Example:
+        {"kind": "python_tool", "name": "pdf_summariser"}
+    framework:
+        The framework folder to write under (e.g. "watsonx_orchestrate").
+    """
+    root = Path("build") / framework
+    root.mkdir(parents=True, exist_ok=True)
+
+    for task in build_tasks:
+        kind = task.get("kind")
+        if kind == "python_tool":
+            # delegate to existing scaffold helper
+            create_project_from_template(
+                base_path=root / "tool_sources",
+                category="python_tool",
+                project_name=task["name"],
+                author="Agent Generator",
+            )
+        elif kind == "mcp_tool":
+            gw_dir = root / "mcp_servers" / task.get("gateway")
+            gw_dir.mkdir(parents=True, exist_ok=True)
+            (gw_dir / ".placeholder").touch()
+        elif kind == "yaml_agent":
+            agents = root / "agents"
+            agents.mkdir(parents=True, exist_ok=True)
+            (agents / task.get("filename")).write_text(task.get("content"))
+        else:
+            raise ValueError(f"Unknown task kind: {kind}")
+
+
+# Patch‑hook: If *generate_agent_code_for_review* receives a dict instead of str
+# we overload to _run_preplanned_tasks.
+
+def generate_or_execute(
+    plan_or_prompt: str | dict,
+    framework_name: str,
+    **kwargs
+) -> str:
+    """
+    Overloaded helper:
+      • If first arg is `dict`  → treat as backend plan, run tasks.
+      • Else                    → fall back to old path (LLM prompt).
+    """
+    if isinstance(plan_or_prompt, dict) and "build_tasks" in plan_or_prompt:
+        _run_preplanned_tasks(plan_or_prompt["build_tasks"], framework_name)
+        return "🛈  Pre‑planned build tasks executed; no code returned."
+    return generate_agent_code_for_review(
+        plan_or_prompt, framework_name, **kwargs
+    )

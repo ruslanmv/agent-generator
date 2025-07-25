@@ -1,126 +1,190 @@
-# Architecture of agent-generator
+# Architecture of agent‑generator
 
-This document describes the overall architecture of **agent-generator**, with a focus on the generative pipeline that transforms plain‑English prompts into fully configured agent code or YAML for various frameworks.
+This document describes the overall architecture of **agent‑generator**, with a focus on the generative pipeline that transforms plain‑English prompts into fully configured agent code or YAML for various frameworks, and on the BeeAI multi‑agent backend used for planning and building.
 
-
+---
 
 ## 1. High‑Level Overview
 
-1. **User Input (CLI or Web UI)**: The user provides a natural‑language requirement, selects a framework, and optionally a provider, model, and other flags.
-2. **Env Loader**: `.env` variables are loaded into the process environment.
-3. **Pre‑flight Check**: Credentials for the chosen provider (WatsonX or OpenAI) are validated; helpful messages are printed if missing.
-4. **Settings Loader**: Pydantic reads `AGENTGEN_` environment variables and `.env` to build a `Settings` object, applying defaults and provider‑specific overrides (e.g., defaulting `gpt-4o` for OpenAI).
-5. **Parser**: The natural‑language prompt is parsed into a **Workflow** graph: a set of `Agent`, `Task`, and `Edge` objects that represent the multi‑agent workflow.
-6. **Prompt Renderer**: A Jinja template combines the workflow, settings, and framework instructions into a single string prompt for the LLM.
-7. **LLM Provider**: The prompt is sent to the selected LLM provider (WatsonX REST API or OpenAI SDK). The raw completion is returned.
-8. **Framework Generator**: Another set of Jinja templates consume the `Workflow` and generate code or YAML in the target framework’s syntax, leveraging the LLM response only when needed (e.g., to fill details in templates).
-9. **Output**: The generated code/YAML is either printed with syntax highlighting or written to a file. Token‑ and cost‑estimates are optionally shown.
+1. **User Input (CLI or Web UI)**  
+   The user provides a natural‑language requirement, selects a framework, and optionally a provider, model, and other flags.
+2. **Env Loader**  
+   `.env` variables are loaded into the process environment.
+3. **Pre‑flight Check**  
+   Credentials for the chosen provider (WatsonX or OpenAI) are validated; helpful messages printed if missing.
+4. **Settings Loader**  
+   Pydantic reads environment variables and `.env` to build a `Settings` object, applying defaults and provider‑specific overrides.
+5. **Parser**  
+   The natural‑language prompt is parsed into a **Workflow** graph: a set of `Agent`, `Task`, and `Edge` objects.
+6. **Prompt Renderer**  
+   A Jinja template combines the workflow, settings, and framework instructions into a single text prompt for the LLM.
+7. **LLM Provider**  
+   The prompt is sent to the selected LLM (WatsonX REST API or OpenAI SDK). The raw completion is returned.
+8. **Framework Generator**  
+   Static Jinja templates consume the `Workflow` graph to produce code or YAML in the target framework’s syntax, optionally using the LLM response for detail.
+9. **Output**  
+   The generated code/YAML is printed with syntax highlighting or written to a file. Token and cost estimates are displayed if requested.
 
-
+---
 
 ## 2. Component Breakdown
 
 ### 2.1 CLI / Web UI
 
-* **`src/agent_generator/cli.py`**: Typer‑based CLI entrypoint for terminal usage.
-* **`src/agent_generator/web/`**: Flask application providing a browser UI with forms for prompt, framework, and provider selection.
+- **`src/agent_generator/cli.py`**  
+  Typer‑based CLI; zero‑flag wizard + `create` command.
+- **`src/agent_generator/web/`**  
+  Flask UI for browser‑based interaction.
 
 ### 2.2 Configuration & Environment
 
-* **`config.py`**: Defines `Settings` model reading from `AGENTGEN_*` vars. Handles provider defaults, model overrides, and credential checks.
-* **`.env` support**: Load dotenv at startup to override environment values locally.
+- **`src/agent_generator/config.py`**  
+  Defines `Settings`; loads from `.env` or environment.
+- **`.env` support**  
+  Loaded at startup for local overrides.
 
 ### 2.3 Parser & Workflow Model
 
-* **`utils/parser.py`**: Converts free‑form English into a structured `Workflow`:
-
-  * `Agent` model: `id`, `role`, `tools`, `llm_config`.
-  * `Task` model: `id`, `goal`, `inputs`, `outputs`, `agent_id`.
-  * `Edge` model (future extension): dependencies between tasks.
+- **`src/agent_generator/utils/parser.py`**  
+  Converts English into a structured `Workflow` (agents, tasks).
 
 ### 2.4 Prompt Rendering
 
-* **`utils/prompts.py`**: Jinja templates to render the full LLM prompt, injecting workflow and settings. Although currently not always used for code generation, it standardizes prompt creation.
+- **`src/agent_generator/utils/prompts.py`**  
+  Jinja templates to render the LLM prompt.
 
 ### 2.5 LLM Providers
 
-* **`providers/watsonx_provider.py`**: Thin wrapper around IBM WatsonX REST API.
-* **`providers/openai_provider.py`**: Wraps the OpenAI Python SDK; defaults to `gpt-4o` if no override.
-* **`providers/base.py`**: Shared interface (`generate`, `tokenize`, `estimate_cost`).
+- **`src/agent_generator/providers/`**  
+  - WatsonX provider (REST API wrapper)  
+  - OpenAI provider (SDK wrapper)
 
 ### 2.6 Framework Generators
 
-Each framework lives in `src/agent_generator/frameworks/<name>/generator.py` and implements:
+- **`src/agent_generator/frameworks/<name>/generator.py`**  
+  Implements:
+  - `file_extension`: `py` or `yaml`  
+  - `generate_code(workflow, settings, mcp)`  
 
-* **`file_extension`**: `py` or `yaml`.
-* **`generate_code(workflow, settings, mcp)`**: Renders Jinja templates (`agent.jinja2`, `task.jinja2`, `main.jinja2`).
+Supported frameworks:  
+WatsonX Orchestrate, CrewAI, LangGraph, ReAct, BeeAI.
 
-Supported frameworks:
-
-* CrewAI (Python SDK)
-* CrewAI Flow (event‑driven)
-* LangGraph (DAG API)
-* ReAct (reason‑act pattern)
-* WatsonX Orchestrate (native YAML)
-
-### 2.7 Output & Utilities
-
-* **Syntax highlighting** via Rich when printing.
-* **MCP wrapper**: Optional FastAPI server scaffold if `--mcp` is passed.
-
-
+---
 
 ## 3. Generative Pipeline Detail
 
-### 3.1 Detailed Data Flow
-
 ```mermaid
 flowchart TD
-  P[User Prompt] --> Parse
-  Parse[Parser → Workflow] --> PromptRender
-  PromptRender[Template Prompt] --> LLM
-  LLM[LLM Provider] --> Completion
-  Completion --> Generator[Framework Generator]
+  UI[User Prompt] --> Parser
+  Parser --> PromptRender
+  PromptRender --> LLM
+  LLM --> Workflow[Workflow Graph]
+  Workflow --> Generator
   Generator --> Code[Generated Code/YAML]
+````
+
+* **Parser**: builds the workflow graph
+* **PromptRender**: prepares LLM input
+* **LLM**: returns completion
+* **Generator**: stamps out code from templates
+
+---
+
+## 4. BeeAI Multi‑Agent Backend
+
+The BeeAI backend can run **in‑process** (`GENERATOR_BACKEND_URL=local`) or as a standalone HTTP service.
+
+### 4.1 Endpoints
+
+* **`POST /plan`** → returns a build plan
+* **`POST /build`** → executes build tasks, returns artefact tree
+
+### 4.2 Agents & Flow
+
+```text
+┌──────────────────────────┐          ┌───────────────────────┐
+│      REQUEST ROUTER      │  plan    │   PLANNING AGENT      │
+│  (FastAPI or in‑proc)    │─────────►│ ("Architect")         │
+└──────────────────────────┘          └────────┬──────────────┘
+               ▲                               │ build_tasks
+               │ /build                        ▼
+               │                    ┌───────────────────────────┐
+               └────────────────────┤  BUILDER MANAGER AGENT    │
+                                    └────────┬──────────────────┘
+                                             │ spawns
+         ┌──────────────────────────┐        │
+         │  PY_TOOL_BUILDER agent   │◄───────┘
+         ├──────────────────────────┤
+         │  MCP_TOOL_BUILDER agent  │◄─┐
+         ├──────────────────────────┤  │
+         │  YAML_AGENT_WRITER agent │◄─┤   (parallel)
+         └──────────────────────────┘  │
+                                       │
+                               ┌───────▼────────┐
+                               │  MERGER AGENT  │
+                               └────────┬───────┘
+                                        ▼
+                           writes to build/<framework>/
 ```
 
-1. **Parser**: Breaks text into structured data.
-2. **PromptRender**: Applies Jinja to produce the text sent to the LLM.
-3. **LLM**: Returns a completion string with e.g. helper instructions or detailed sub‑prompts.
-4. **Generator**: Ignores most LLM output, instead using static templates to turn the `Workflow` graph into code.
-5. **Code**: Final output, ready to run or deploy.
+* **Planning Agent**
+  Uses GPT to decide which existing MCP gateways to reuse and which Python tools to scaffold.
+* **Builder Manager**
+  Fans out tasks (`python_tool`, `mcp_tool`, `yaml_agent`) via `asyncio.gather`.
+* **Py-Tool Builder**
+  Scaffolds minimal Python packages under `tool_sources/`.
+* **MCP-Tool Builder**
+  References or clones existing MCP gateways under `mcp_servers/`.
+* **YAML Agent Writer**
+  Writes the final agent YAML under `agents/`.
+* **Merger Agent**
+  Walks the `build/` directory returning a sorted artefact tree.
 
-#### Why separate prompt vs generator?
+---
 
-* Decouples **what** you ask the LLM (open‑ended natural‑language) from **how** you produce deterministic code templates.
-* Future architectures can inject LLM responses deeper into code gen templates.
+## 5. Post‑Build Artifact
 
+Each build produces:
 
+```
+build/<framework>/
+├── agents/
+│   └── <agent>.yaml
+├── tool_sources/
+│   └── <tool_name>/src/<tool_name>/main.py
+└── mcp_servers/
+    └── <gateway_name>/.placeholder
+```
 
-## 4. Extensibility & Customization
+This bundle can run as its own MCP server and be imported directly into WatsonX Orchestrate.
 
-* **Adding a Provider**: Create `providers/my_provider.py` implementing `BaseProvider`, register in `PROVIDERS` in `providers/__init__.py`.
-* **Adding a Framework**: Create `frameworks/my_framework/generator.py`, add templates under that folder, register in `FRAMEWORKS` in `frameworks/__init__.py`.
-* **Custom Prompts**: Modify or add Jinja templates in `utils/prompts.py`.
-* **Parser tweaks**: Improve `utils/parser.py` to extract richer workflows (e.g. data schemas, error handling agents).
+---
 
+## 6. Extensibility
 
+* **Add a Provider**: implement `BaseProvider`, register in `providers/`.
+* **Add a Framework**: add generator module under `frameworks/` and templates.
+* **Extend Planner**: update the `_ARCH_PROMPT` or switch models.
 
-## 5. File Locations
+---
+
+## 7. File Locations
 
 ```
 src/agent_generator/
 ├── cli.py
 ├── config.py
+├── orchestrator_proxy.py
+├── wizard.py
 ├── frameworks/
 │   └── <framework>/generator.py
 ├── providers/
 │   └── *_provider.py
 └── utils/
     ├── parser.py
-    └── prompts.py
+    ├── prompts.py
+    └── scaffold.py
 ```
-
 
 Jump in: **[Installation ➜](installation.md)** · **[Usage ➜](usage.md)** · **[Frameworks ➜](frameworks.md)**
 

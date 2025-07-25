@@ -13,6 +13,7 @@ nav:
   - Installation: installation.md
   - Usage: usage.md
   - Frameworks: frameworks.md
+  - Backend: backend.md
   - Architecture: architecture.md
 
 theme:

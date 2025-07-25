@@ -1,5 +1,4 @@
-# ────────────────────────────────────────────────────────────────
-#  src/agent_generator/cli.py
+# src/agent_generator/cli.py
 # ────────────────────────────────────────────────────────────────
 """
 Command-line interface for **agent-generator**.
@@ -23,7 +22,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any, Dict
 
 import typer
 from dotenv import load_dotenv
@@ -32,13 +31,19 @@ from rich import print as rprint
 from rich.console import Console
 from rich.syntax import Syntax
 
+# ───── ✨ NEW / MODIFIED IMPORTS ──────────────────────────────────────
+from agent_generator.wizard import launch_wizard
+from agent_generator.constants import SUPPORTED_FRAMEWORKS, Framework
+from agent_generator.orchestrator_proxy import OrchestratorProxy
+# ────────────────────────────────────────────────────────────────────
+
 from agent_generator.config import Settings, get_settings
 from agent_generator.frameworks import FRAMEWORKS
 from agent_generator.providers import PROVIDERS
 from agent_generator.utils.parser import parse_natural_language_to_workflow
 from agent_generator.utils.builder import (
     generate_agent_code_for_review,
-   build_accepted_project,
+    build_accepted_project,
 )
 
 
@@ -59,7 +64,81 @@ app = typer.Typer(
 
 console = Console()
 
-VERSION = "0.1.3"  # 🛈 bump on release
+VERSION = "0.2.0"  # 🛈 bump on release (updated for new features)
+
+
+# ────────────────────────────────────────────────────────────────
+#  Zero‑flag behaviour: invoke the wizard by default
+# ────────────────────────────────────────────────────────────────
+@app.callback(invoke_without_command=True)
+def _default(ctx: typer.Context) -> None:
+    """
+    If invoked without a sub‑command, launch the interactive wizard
+    to collect a free‑text use‑case and framework choice.
+    """
+    if ctx.invoked_subcommand is None:
+        launch_wizard()
+
+
+# ────────────────────────────────────────────────────────────────
+#  New “create” command – power‑user one‑liner
+# ────────────────────────────────────────────────────────────────
+@app.command(
+    "create",
+    help="Create an agent from a single prompt in one shot "
+         "(optionally confirm via wizard).",
+)
+def create(
+    description: str = typer.Argument(..., help="Free‑text use‑case prompt."),
+    framework: str = typer.Option(
+        Framework.default().value,
+        "--framework",
+        "-f",
+        show_choices=True,
+        help="Target framework runtime.",
+    ),
+    build: bool = typer.Option(
+        False,
+        "--build",
+        help="After planning, open the wizard for final confirmation.",
+    ),
+) -> None:
+    """
+    Non‑interactive (or semi‑interactive) entry‑point.
+
+    • Validates the framework against constants.
+    • Calls BeeAI backend /plan to get a build plan.
+    • If --build is given, hands the plan to the wizard for preview;
+      otherwise executes /build directly and prints the bundle path.
+    """
+    framework = framework.lower()
+    if framework not in SUPPORTED_FRAMEWORKS:
+        console.print(
+            f"[red]Framework '{framework}' is not supported.\n"
+            f"Choices: {', '.join(SUPPORTED_FRAMEWORKS)}[/]"
+        )
+        raise typer.Exit(code=1)
+
+    # Load CLI settings (includes gateways list)
+    cfg = get_settings()
+    proxy = OrchestratorProxy()
+
+    # Ask backend to craft a plan
+    plan: Dict[str, Any] = proxy.plan_agent(
+        use_case=description,
+        preferred_framework=framework,
+        mcp_catalog=cfg.gateways,
+    )
+
+    # Preview & confirm or build immediately
+    if build:
+        launch_wizard(preloaded_spec=plan)
+    else:
+        summary = proxy.execute_build(plan)
+        console.print(
+            f"\n[green]✔ Build complete.[/] "
+            f"Bundle written to [bold]build/{summary['summary']['framework']}[/]\n"
+        )
 
 
 # ---------------------------------------------------------------- #
@@ -80,12 +159,15 @@ def _write_or_echo(text: str, output: Optional[Path]) -> None:
         console.print(f"[bold green]✓ Written to {output}[/]")
     else:
         console.print(
-            Syntax(text, "python" if text.lstrip().startswith("from") else "yaml")
+            Syntax(
+                text,
+                "python" if text.lstrip().startswith("from") else "yaml",
+            )
         )
 
 
 # ---------------------------------------------------------------- #
-# generate command
+# generate command (unchanged from v0.1.3)
 # ---------------------------------------------------------------- #
 @app.command()
 def generate(
@@ -104,7 +186,7 @@ def generate(
         "--output",
         "-o",
         help="Write result to file instead of stdout. "
-        "File extension inferred from framework if omitted.",
+             "File extension inferred from framework if omitted.",
     ),
     mcp: bool = typer.Option(
         False,
@@ -115,14 +197,11 @@ def generate(
     show_cost: bool = typer.Option(
         False, "--show-cost", help="Display token/cost info."
     ),
-
     build: bool = typer.Option(
         False,
         "--build",
         help="Also scaffold a full runnable project after code generation.",
     ),
-
-
     version: bool = typer.Option(False, "--version", "-V", is_eager=True),
 ):
     """Generate code (or YAML) for a multi‑agent workflow."""
@@ -141,7 +220,8 @@ def generate(
     missing = [v for v in required if not os.getenv(v)]
     if missing:
         console.print(
-            f"\n[red]⚠️  Missing environment variables for provider '{provider_name}':[/red]\n"
+            f"\n[red]⚠️  Missing environment variables for provider "
+            f"'{provider_name}':[/red]\n"
             + "\n".join(f"  • {v}" for v in missing)
             + "\n\nPlease set them (or add to your .env), for example:\n"
             + (
@@ -216,11 +296,6 @@ def generate(
         console.print("[yellow]Dry‑run only → skipping LLM call.[/]")
         code = generator.generate_code(workflow, settings, mcp=mcp)
     else:
-        #from agent_generator.utils.prompts import render_prompt
-        #prompt_str = render_prompt(workflow, settings, framework)
-        #provider_inst.generate(prompt_str)
-        #code = generator.generate_code(workflow, settings, mcp=mcp)
-
         code = generate_agent_code_for_review(
             prompt=prompt,
             framework_name=framework,
@@ -243,10 +318,7 @@ def generate(
 
     # ───────── Output ─────────
     ext = ".yaml" if generator.file_extension == "yaml" else ".py"
-    if output is None and not dry_run:
-        output = None
     _write_or_echo(code, output)
-
 
     # ───────── Stage 2: Optional scaffolding ─────────
     if build:
