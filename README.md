@@ -11,6 +11,7 @@
 [![CI Status](https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/ruslanmv/agent-generator/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/static/v1?label=docs&message=mkdocs&color=blue&logo=mkdocs)](https://ruslanmv.github.io/agent-generator/)
 [![License Apache-2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/ruslanmv/agent-generator/blob/master/LICENSE)
+  <a href="https://github.com/agent-matrix/matrix-hub"><img src="https://img.shields.io/badge/Powered%20by-matrix--hub-brightgreen" alt="Powered by matrix-hub"></a>
 
 
 ---
