@@ -90,11 +90,19 @@ all = [
   "gunicorn>=21.2",
   "jinja2>=3.1",
   "beeai-framework>=0.1.29",
+  "matrix-python-sdk>=0.1.0",
+]
+beeai = [
+  "beeai-framework>=0.1.29"
+]
+matrix = [
+  "matrix-python-sdk>=0.1.0"
 ]
 
 dev = [
   # testing & linting
   "pytest>=8.2",
+  "pytest-asyncio>=1.0",
   "pytest-xdist>=3.5",
   "mypy>=1.10",
   "ruff>=0.4",
@@ -104,7 +112,9 @@ dev = [
   # docs
   "mkdocs>=1.6",
   "mkdocs-material>=9.5",
-]
+  "beeai-framework>=0.1.29",
+  "matrix-python-sdk>=0.1.0",
+  ]
 
 # -----------------------------------------------------------------
 # CLI entry‑point
@@ -133,4 +143,12 @@ ignore = ["F841"]
 packages = [
   "src/agent_generator",
   "backend"
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-q"
+markers = [
+  "asyncio: mark async tests to be run with pytest-asyncio",
+  "integration: mark slow/integration tests",
 ]

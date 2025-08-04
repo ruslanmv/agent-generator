@@ -1,3 +1,4 @@
+# src/agent_generator/config.py
 from __future__ import annotations
 
 import functools
@@ -126,6 +127,17 @@ class Settings(BaseSettings):
     def is_openai(self) -> bool:
         return self.provider == "openai"
 
+    # ──────────────────────────────────────────────────
+    # Back-compat aliases (do NOT remove)
+    # ──────────────────────────────────────────────────
+    @property
+    def agentgen_provider(self) -> str:
+        """
+        Backwards-compatible alias for older code that expected
+        `settings.agentgen_provider`. Mirrors `provider`.
+        """
+        return self.provider
+
 
 # ────────────────────────────────────────────────
 # Singleton accessor
@@ -137,6 +149,6 @@ def get_settings() -> Settings:
 
 
 # ────────────────────────────────────────────────
-# Back‑compat alias for wizard / CLI
+# Back-compat alias for wizard / CLI
 # ────────────────────────────────────────────────
-load_config = get_settings  # ← add this line
+load_config = get_settings  # ← retain this alias for older imports

@@ -31,7 +31,7 @@ def generate_agent_code_for_review(
     mcp: bool = False,
 ) -> str:
     """
-    Stage 1: replicate the CLI generate flow to produce clean Python code:
+    Stage 1: replicate the CLI generate flow to produce clean Python code:
       1. Load defaults + overrides from Settings
       2. Parse NL → workflow
       3. Render the prompt template
@@ -62,10 +62,6 @@ def generate_agent_code_for_review(
     framework_cls = FRAMEWORKS[framework_name]
     generator = framework_cls()
 
-    # 4) Render prompt and invoke LLM
-    # prompt_str = render_prompt(workflow, settings, framework_name)
-    # provider_inst.generate(prompt_str)
-
     # 5) Produce the code artifact
     raw_code = generator.generate_code(workflow, settings, mcp=mcp)
     code = _extract_code_block(raw_code)
@@ -79,7 +75,7 @@ def generate_agent_code_for_review(
 
 def build_accepted_project(project_name: str, framework_name: str, approved_code: str):
     """
-    Stage 2: scaffold a full project based on templates/<framework_name>,
+    Stage 2: scaffold a full project based on templates/<framework_name>,
     then inject all dependencies from its config.toml.
     """
     base = Path.cwd()
@@ -87,13 +83,38 @@ def build_accepted_project(project_name: str, framework_name: str, approved_code
     config = toml.load(tpl_dir / "config.toml")
 
     print(f"🔨 Building project '{project_name}' ({framework_name})…")
-    project_path = create_project_from_template(
-        base_path=base,
-        category=framework_name,
-        project_name=project_name,
-        author="AI Agent Generator",
-        code_content=approved_code,
-    )
+
+    # Attempt to scaffold, but if the directory already exists, prompt to overwrite
+    try:
+        project_path = create_project_from_template(
+            base_path=base,
+            category=framework_name,
+            project_name=project_name,
+            author="AI Agent Generator",
+            code_content=approved_code,
+        )
+    except FileExistsError as e:
+        import typer
+
+        # Extract the path from the exception message
+        path = str(e).split(": ", 1)[1]
+        if typer.confirm(
+            f"⚠ Project directory already exists:\n  {path}\nDo you want to overwrite it?"
+        ):
+            from shutil import rmtree
+
+            rmtree(path)
+            # Retry scaffolding after removal
+            project_path = create_project_from_template(
+                base_path=base,
+                category=framework_name,
+                project_name=project_name,
+                author="AI Agent Generator",
+                code_content=approved_code,
+            )
+        else:
+            typer.echo("Aborted — project not overwritten.")
+            raise typer.Exit(code=1)
 
     add_all_dependencies(project_path, config)
 
@@ -101,7 +122,7 @@ def build_accepted_project(project_name: str, framework_name: str, approved_code
 
 
 # ───── ✨ NEW LOGIC  (insert near the bottom of builder.py) ────────────────
-# The BeeAI backend now returns an ordered build‑plan. If we receive that
+# The BeeAI backend now returns an ordered build-plan. If we receive that
 # plan we can *skip* all LLM parsing / prompt rendering and simply execute
 # the tasks in order.  Nothing else in the existing file is untouched.
 # -------------------------------------------------------------------------
@@ -109,7 +130,7 @@ def build_accepted_project(project_name: str, framework_name: str, approved_code
 
 def _run_preplanned_tasks(build_tasks: list[dict], framework: str) -> None:
     """
-    Execute backend‑supplied build tasks (python_tool / mcp_tool / yaml_agent).
+    Execute backend-supplied build tasks (python_tool / mcp_tool / yaml_agent).
 
     Parameters
     ----------
@@ -137,15 +158,11 @@ def _run_preplanned_tasks(build_tasks: list[dict], framework: str) -> None:
             gw_dir.mkdir(parents=True, exist_ok=True)
             (gw_dir / ".placeholder").touch()
         elif kind == "yaml_agent":
-            agents = root / "agents"
-            agents.mkdir(parents=True, exist_ok=True)
-            (agents / task.get("filename")).write_text(task.get("content"))
+            agents_dir = root / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            (agents_dir / task.get("filename")).write_text(task.get("content"))
         else:
             raise ValueError(f"Unknown task kind: {kind}")
-
-
-# Patch‑hook: If *generate_agent_code_for_review* receives a dict instead of str
-# we overload to _run_preplanned_tasks.
 
 
 def generate_or_execute(
@@ -158,5 +175,5 @@ def generate_or_execute(
     """
     if isinstance(plan_or_prompt, dict) and "build_tasks" in plan_or_prompt:
         _run_preplanned_tasks(plan_or_prompt["build_tasks"], framework_name)
-        return "🛈  Pre‑planned build tasks executed; no code returned."
+        return "🛈  Pre-planned build tasks executed; no code returned."
     return generate_agent_code_for_review(plan_or_prompt, framework_name, **kwargs)

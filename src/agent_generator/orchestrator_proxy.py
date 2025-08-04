@@ -1,235 +1,287 @@
 # src/agent_generator/orchestrator_proxy.py
-# ---------------------------------------------------------------------------#
-#  Resilient client for the Bee‑AI multi‑agent backend.                      #
-#  • local   – import & call backend.agents.* directly                       #
-#  • remote  – HTTP POST /plan /build ; will auto‑start backend if needed    #
-# ---------------------------------------------------------------------------#
-
 from __future__ import annotations
 
 import asyncio
-import atexit
-import json
-import logging
+import contextlib
 import os
-import socket
-import subprocess
-import sys
-import time
-from pathlib import Path
-from typing import Any, Dict, Mapping
+from dataclasses import dataclass
+from importlib import metadata
+from typing import Any, Dict, Optional
 
-import httpx
+from packaging.version import InvalidVersion, Version
 
-logger = logging.getLogger(__name__)
+from agent_generator.exceptions import (PlanningExhaustedError,
+                                        UpdateRequiredError)
 
-# --------------------------------------------------------------------------- #
-# Configuration                                                               #
-# --------------------------------------------------------------------------- #
+# ... keep your existing imports (requests/httpx/fastapi/whatever you use)
 
-_ENV_VAR = "GENERATOR_BACKEND_URL"
-_DEFAULT_URL = "http://localhost:8000"  # port picked by backend/main.py
-_BACKEND_CWD = Path(__file__).resolve().parent.parent.parent / "backend"
-
-# --------------------------------------------------------------------------- #
-# Helpers                                                                     #
-# --------------------------------------------------------------------------- #
+# --- Compatibility policy (tune in future releases) -------------------------
+MIN_BEEAI_SDK = "0.1.29"  # minimal compatible beeai_framework version
+REC_BEEAI_SDK = "0.1.34"  # recommended (prints soft warning if lower)
+# If you expose a remote orchestrator health endpoint, set the path here:
+ORCH_HEALTH_PATH = "/healthz"  # GET → {"version": "1.2.3", "status": "ok"}
+ORCH_VERSION_PATH = "/version"  # GET → {"version": "1.2.3"}
 
 
-def _backend_url() -> str:
-    url = os.getenv(_ENV_VAR, _DEFAULT_URL).rstrip("/")
-    if not url.startswith(("http://", "https://")):
-        logger.warning("GENERATOR_BACKEND_URL missing scheme; prepending http://")
-        url = f"http://{url}"
-    return url
+def _safe_version(s: Optional[str]) -> Optional[Version]:
+    if not s:
+        return None
+    try:
+        return Version(s)
+    except InvalidVersion:
+        return None
 
 
-def _port_open(host: str, port: int) -> bool:
-    """Return True if TCP port is accepting connections."""
-    with socket.socket() as s:
-        s.settimeout(0.4)
-        return s.connect_ex((host, port)) == 0
+def _get_local_beeai_version() -> Optional[str]:
+    try:
+        return metadata.version("beeai_framework")
+    except metadata.PackageNotFoundError:
+        return None
 
 
-# --------------------------------------------------------------------------- #
-# Attempt to import backend modules                                           #
-# --------------------------------------------------------------------------- #
-_import_error_details = None
+def _is_url(s: str) -> bool:
+    return s.startswith("http://") or s.startswith("https://")
 
-try:
-    from backend.agents.builder_manager import BuilderManager
-    from backend.agents.planning_agent import PlanRequest, PlanResponse
-    from backend.agents.planning_agent import plan as _local_plan
-except ImportError as e:  # noqa: BLE001
-    _local_plan = None
-    BuilderManager = None  # type: ignore[assignment]
-    _import_error_details = e
 
-# --------------------------------------------------------------------------- #
-# OrchestratorProxy                                                           #
-# --------------------------------------------------------------------------- #
+@dataclass
+class PlanRequest:
+    use_case: str
+    preferred_framework: str
+    mcp_catalog: Dict[str, Any] | None = None
+
+
+@dataclass
+class PlanResponse:
+    project_tree: list[str]
+    summary: Dict[str, Any]
 
 
 class OrchestratorProxy:
-    """
-    Modes
-    -----
-    • *local*   – run embedded backend in‑process (fastest for dev)
-    • *remote*  – HTTP JSON → backend; will auto‑start backend if port free
-    """
+    def __init__(self):
+        self.backend_url = os.getenv("GENERATOR_BACKEND_URL", "local")
+        # If you maintain an HTTP client, initialize lazily; do not create sessions at import.
 
-    def __init__(self, *, base_url: str | None = None, timeout: float = 60.0) -> None:
-        configured = base_url or os.getenv(_ENV_VAR, "")
-        if not configured or configured.lower() == "local":
-            self._init_local()
-        else:
-            self._init_remote(configured, timeout)
-
-    # ──────────────────────────────────────────────────────────────
-    #  Local‑mode setup
-    # ──────────────────────────────────────────────────────────────
-    def _init_local(self) -> None:
-        if _local_plan is None or BuilderManager is None:
-            raise RuntimeError(
-                "\nLocal mode requested but backend modules could not be imported.\n"
-                "Run the project in *editable* mode:\n\n"
-                "   pip install -e .[backend]\n\n"
-                f"Original import error: {_import_error_details}"
-            )
-
-        self._mode = "local"
-        self._plan_fn = _local_plan
-        self._builder_mgr = BuilderManager()
-        logger.debug("OrchestratorProxy running in LOCAL mode")
-
-    # ──────────────────────────────────────────────────────────────
-    #  Remote‑mode setup   (auto‑spawns backend if port closed)
-    # ──────────────────────────────────────────────────────────────
-    def _init_remote(self, configured: str, timeout: float) -> None:
-        # Resolve URL
-        self.base_url = configured if "://" in configured else _backend_url()
-        host, port_str = (
-            self.base_url.replace("http://", "").replace("https://", "").split(":")
-        )
-        port = int(port_str)
-
-        # Auto‑start backend if nothing is listening
-        if not _port_open(host, port):
-            logger.info(
-                "No backend on %s → starting uvicorn in background", self.base_url
-            )
-            self._backend_proc = subprocess.Popen(
-                [
-                    sys.executable,
-                    "-m",
-                    "uvicorn",
-                    "backend.main:app",
-                    "--host",
-                    host,
-                    "--port",
-                    str(port),
-                    "--log-level",
-                    "warning",
-                ],
-                cwd=_BACKEND_CWD,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.STDOUT,
-            )
-
-            # Wait up to 5 s for port to accept
-            for _ in range(10):
-                if _port_open(host, port):
-                    break
-                time.sleep(0.5)
-            else:
-                raise RuntimeError("BeeAI backend failed to bind to %s", self.base_url)
-
-            # Ensure shutdown on exit
-            atexit.register(self._backend_proc.terminate)
-            logger.info("BeeAI backend started (pid=%s)", self._backend_proc.pid)
-
-        # Ready
-        self._mode = "remote"
-        self._client = httpx.Client(timeout=timeout)
-        logger.debug("OrchestratorProxy in REMOTE mode (base_url=%s)", self.base_url)
-
-    # ------------------------------------------------------------------ #
-    # Public client API                                                  #
-    # ------------------------------------------------------------------ #
-
+    # --------------- Public API ----------------
     def plan_agent(
         self,
-        *,
         use_case: str,
         preferred_framework: str,
-        mcp_catalog: Mapping[str, Any],
+        mcp_catalog: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        payload = {
-            "use_case": use_case,
-            "preferred_framework": preferred_framework,
-            "mcp_catalog": mcp_catalog,
-        }
-        if self._mode == "local":
-            req = PlanRequest(**payload)
-            resp: PlanResponse = asyncio.run(self._plan_fn(req))
-            return resp.dict()
+        """
+        Synchronous wrapper used by CLI/wizard. Internally runs async planner.
+        Performs version checks and maps backend errors to friendly exceptions.
+        """
+        # 1) pre-flight compatibility check
+        self._preflight_compat_or_warn()
 
-        return self._post_json("/plan", payload)
-
-    def execute_build(self, plan: Mapping[str, Any]) -> Dict[str, Any]:
-        if self._mode == "local":
-            summary = asyncio.run(self._builder_mgr.build(plan))  # type: ignore[arg-type]
-            return {"status": "ok", "summary": summary}
-
-        result = self._post_json("/build", plan)
-        if result.get("status") != "ok":
-            raise RuntimeError(f"Backend reported failure: {result}")
-        return result
-
-    # ------------------------------------------------------------------ #
-    # Internals                                                          #
-    # ------------------------------------------------------------------ #
-
-    def _post_json(self, path: str, payload: Mapping[str, Any]) -> Dict[str, Any]:
-        url = f"{self.base_url}{path}"
+        req = PlanRequest(
+            use_case=use_case,
+            preferred_framework=preferred_framework,
+            mcp_catalog=mcp_catalog or {},
+        )
         try:
-            r = self._client.post(url, json=payload)
-            r.raise_for_status()
-            return r.json()
-        except (httpx.HTTPError, json.JSONDecodeError) as exc:
-            raise RuntimeError("Cannot contact backend") from exc
+            return asyncio.run(self._run_and_cleanup(self._plan(req)))
+        except PlanningExhaustedError:
+            # Re-raise for the wizard to render a nice panel; already user-friendly
+            raise
+        except UpdateRequiredError:
+            # Re-raise; wizard prints tailored guidance
+            raise
+        except Exception as e:
+            # Last resort mapping
+            raise RuntimeError(
+                f"Unexpected error while planning: {type(e).__name__}: {e}"
+            ) from e
 
-    # ------------------------------------------------------------------ #
-    # Context‑manager helpers                                            #
-    # ------------------------------------------------------------------ #
-    def __enter__(self) -> "OrchestratorProxy":  # noqa: D401
-        return self
+    def execute_build(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Same pattern as plan_agent: wrap async and ensure cleanup.
+        """
+        return asyncio.run(self._run_and_cleanup(self._build(plan)))
 
-    def __exit__(self, exc_type, exc, tb) -> None:  # noqa: D401, ANN001
-        self.close()
+    # --------------- Async cores (implementation-specific) ----------------
+    async def _plan(self, req: PlanRequest) -> Dict[str, Any]:
+        """
+        Call your local in-process BeeAI planner or remote orchestrator.
+        Map known errors to PlanningExhaustedError / UpdateRequiredError.
+        """
+        # Example: local path uses internal Python call; remote path uses HTTP.
+        try:
+            if self.backend_url == "local":
+                # ---- LOCAL: call your existing async planner code here ----
+                # e.g., from backend.agents.planning_agent import plan
+                from backend.agents.planning_agent import \
+                    plan as _plan_async  # lazy import
 
-    def close(self) -> None:
-        if self._mode == "remote" and hasattr(self, "_client"):
-            self._client.close()
+                result = await _plan_async(
+                    use_case=req.use_case,
+                    preferred_framework=req.preferred_framework,
+                    mcp_catalog=req.mcp_catalog,
+                )
+                return result
+            else:
+                # ---- REMOTE: GET/POST to an orchestrator endpoint ----
+                # Replace with your real HTTP client logic
+                import aiohttp
 
-    # ------------------------------------------------------------------ #
-    # Nice repr                                                          #
-    # ------------------------------------------------------------------ #
-    def __repr__(self) -> str:  # noqa: D401
-        base = getattr(self, "base_url", "N/A (local)")
-        return f"OrchestratorProxy(mode={self._mode}, base_url={base})"
+                async with aiohttp.ClientSession() as session:
+                    url = self.backend_url.rstrip("/") + "/plan"
+                    payload = {
+                        "use_case": req.use_case,
+                        "preferred_framework": req.preferred_framework,
+                        "mcp_catalog": req.mcp_catalog,
+                    }
+                    async with session.post(url, json=payload, timeout=120) as resp:
+                        if resp.status == 426:  # 426 Upgrade Required
+                            body = await resp.json()
+                            raise UpdateRequiredError(
+                                local_version=_get_local_beeai_version(),
+                                remote_version=body.get("version"),
+                                detail=body.get("message")
+                                or "Remote orchestrator requires an update.",
+                            )
+                        resp.raise_for_status()
+                        return await resp.json()
+
+        except Exception as e:
+            # ----------- FRIENDLY ERROR MAPPING -----------
+            # Map known BeeAI “iteration exhausted” errors
+            if (
+                e.__class__.__name__ == "AgentError"
+                and "resolve the task in" in str(e)
+                and "iterations" in str(e)
+            ):
+                # Extract iteration count if present
+                iterations = _extract_iterations(str(e)) or 10
+                raise PlanningExhaustedError(
+                    iterations=iterations, message=str(e)
+                ) from e
+
+            # Version drift hint: if local beeai_framework is below MIN, advise update
+            local_v = _safe_version(_get_local_beeai_version())
+            min_v = _safe_version(MIN_BEEAI_SDK)
+            if local_v and min_v and local_v < min_v:
+                raise UpdateRequiredError(
+                    local_version=str(local_v),
+                    remote_version=None,
+                    detail=(
+                        "Your local BeeAI SDK is below the minimum supported version "
+                        f"({MIN_BEEAI_SDK}). Please update the SDK and/or backend orchestrator."
+                    ),
+                ) from e
+            # Fallback
+            raise
+
+    async def _build(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        # Implement similarly to _plan, using local builder or remote endpoint.
+        if self.backend_url == "local":
+            from backend.agents.merger_agent import \
+                build as _build_async  # example name
+
+            return await _build_async(plan)
+        else:
+            import aiohttp
+
+            async with aiohttp.ClientSession() as session:
+                url = self.backend_url.rstrip("/") + "/build"
+                async with session.post(url, json=plan, timeout=None) as resp:
+                    resp.raise_for_status()
+                    return await resp.json()
+
+    # --------------- Utilities ----------------
+    async def _run_and_cleanup(self, coro):
+        """
+        Run an async coroutine and make sure to flush/close any left-over tasks
+        to avoid 'Unclosed client session' noise in third-party libs.
+        """
+        try:
+            return await coro
+        finally:
+            # Best-effort cleanup: cancel stray tasks
+            pending = [
+                t for t in asyncio.all_tasks() if t is not asyncio.current_task()
+            ]
+            for t in pending:
+                t.cancel()
+            # Allow cancellations to propagate
+            if pending:
+                with contextlib.suppress(Exception):
+                    await asyncio.gather(*pending, return_exceptions=True)
+
+    def _preflight_compat_or_warn(self) -> None:
+        """
+        Check local SDK version; if remote URL is configured, try to fetch orchestrator version.
+        Raise UpdateRequiredError when clearly incompatible; otherwise warn softly.
+        """
+        local_str = _get_local_beeai_version()
+        local_v = _safe_version(local_str)
+        min_v = _safe_version(MIN_BEEAI_SDK)
+        rec_v = _safe_version(REC_BEEAI_SDK)
+
+        if local_v and min_v and local_v < min_v:
+            raise UpdateRequiredError(
+                local_version=str(local_v),
+                remote_version=None,
+                detail=(
+                    f"Installed beeai_framework {local_v} is below the minimum supported {MIN_BEEAI_SDK}.\n"
+                    "Please update your local SDK (and backend orchestrator if applicable)."
+                ),
+            )
+
+        # Soft warning if below recommended
+        if local_v and rec_v and local_v < rec_v:
+            rmsg = (
+                f"[yellow]Warning[/] beeai_framework {local_v} detected; "
+                f"{REC_BEEAI_SDK}+ is recommended for best results."
+            )
+            try:
+                # print only when running in CLI/tty
+                from rich import print as rprint
+
+                rprint(rmsg)
+            except Exception:
+                print(rmsg)
+
+        # If remote backend URL is configured, try a cheap health/version probe
+        if self.backend_url != "local" and _is_url(self.backend_url):
+            try:
+                import requests
+
+                for path in (ORCH_HEALTH_PATH, ORCH_VERSION_PATH):
+                    u = self.backend_url.rstrip("/") + path
+                    resp = requests.get(u, timeout=2.5)
+                    if resp.ok:
+                        data = (
+                            resp.json()
+                            if resp.headers.get("content-type", "").startswith(
+                                "application/json"
+                            )
+                            else {}
+                        )
+                        remote_v = _safe_version(data.get("version"))
+                        if remote_v and local_v and min_v and local_v < min_v:
+                            raise UpdateRequiredError(
+                                local_version=str(local_v),
+                                remote_version=str(remote_v),
+                                detail=(
+                                    f"Local SDK {local_v} incompatible with remote orchestrator {remote_v}. "
+                                    "Please update the backend SDK/orchestrator."
+                                ),
+                            )
+                        break  # one successful probe is enough
+            except Exception:
+                # Swallow: inability to probe shouldn't block local mode
+                pass
 
 
-# --------------------------------------------------------------------------- #
-# Minimal health‑check                                                        #
-# --------------------------------------------------------------------------- #
-if __name__ == "__main__":  # pragma: no cover
-    logging.basicConfig(level="INFO", stream=sys.stderr)
-    proxy = OrchestratorProxy()
-    plan = proxy.plan_agent(
-        use_case="ping", preferred_framework="react", mcp_catalog={}
-    )
-    print("plan →", plan["selected_framework"])
-    build = proxy.execute_build(plan)
-    print("artefacts:", len(build["summary"]["tree"]))
-    proxy.close()
+def _extract_iterations(message: str) -> Optional[int]:
+    import re
+
+    m = re.search(r"in (\d+)\s+iterations", message)
+    if m:
+        try:
+            return int(m.group(1))
+        except ValueError:
+            return None
+    return None
