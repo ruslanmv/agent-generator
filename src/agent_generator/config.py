@@ -134,7 +134,9 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return a *cached* Settings instance (lazy `.env` read)."""
     return Settings()
+
+
 # ────────────────────────────────────────────────
 # Back‑compat alias for wizard / CLI
 # ────────────────────────────────────────────────
-load_config = get_settings        # ← add this line
+load_config = get_settings  # ← add this line

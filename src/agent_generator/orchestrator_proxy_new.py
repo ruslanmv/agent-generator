@@ -20,7 +20,6 @@ import sys
 from typing import Any, Dict, Mapping
 
 import httpx
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +48,13 @@ _import_error_details = None
 
 # Import Pydantic models for in‑process calls
 try:
-    from backend.agents.planning_agent import PlanRequest, PlanResponse, plan as _local_plan
     from backend.agents.builder_manager import BuilderManager
+    from backend.agents.planning_agent import PlanRequest, PlanResponse
+    from backend.agents.planning_agent import plan as _local_plan
 except ImportError as e:
     _local_plan = None  # will only work in remote mode
     BuilderManager = None  # type: ignore[name-defined]
-    _import_error_details = e # Store the exception so we can show it to the user
+    _import_error_details = e  # Store the exception so we can show it to the user
 
 
 class OrchestratorProxy:
@@ -101,7 +101,10 @@ class OrchestratorProxy:
             self._mode = "remote"
             self.base_url = configured if "://" in configured else _backend_url()
             self._client = httpx.Client(timeout=timeout)
-            logger.debug("OrchestratorProxy initialised in REMOTE mode (base_url=%s)", self.base_url)
+            logger.debug(
+                "OrchestratorProxy initialised in REMOTE mode (base_url=%s)",
+                self.base_url,
+            )
 
     # ------------------------------------------------------------------ #
     # Public API                                                         #
@@ -199,8 +202,12 @@ class OrchestratorProxy:
             self._client.close()
 
     def __repr__(self) -> str:
-        mode = getattr(self, '_mode', 'unknown')
-        base_url = getattr(self, 'base_url', 'N/A (local mode)') if mode == 'remote' else 'N/A (local mode)'
+        mode = getattr(self, "_mode", "unknown")
+        base_url = (
+            getattr(self, "base_url", "N/A (local mode)")
+            if mode == "remote"
+            else "N/A (local mode)"
+        )
         return f"OrchestratorProxy(mode='{mode}', base_url='{base_url}')"
 
 
@@ -211,7 +218,9 @@ if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level="INFO", stream=sys.stderr)
     proxy = OrchestratorProxy()
     try:
-        plan = proxy.plan_agent(use_case="ping", preferred_framework="local", mcp_catalog={})
+        plan = proxy.plan_agent(
+            use_case="ping", preferred_framework="local", mcp_catalog={}
+        )
         print("Plan:", plan)
         build = proxy.execute_build(plan)
         print("Build summary:", build)

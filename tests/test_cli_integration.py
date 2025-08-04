@@ -1,10 +1,11 @@
 # tests/test_cli_integration.py
-import json
 import shutil
-from click.testing import CliRunner
 from pathlib import Path
 
+from click.testing import CliRunner
+
 from agent_generator.cli import app
+
 
 def test_generate_and_build(tmp_path, monkeypatch):
     runner = CliRunner()
@@ -23,12 +24,15 @@ def test_generate_and_build(tmp_path, monkeypatch):
         [
             "generate",
             "Say hello",
-            "--framework", "dummy",
-            "--provider", "dummy",
+            "--framework",
+            "dummy",
+            "--provider",
+            "dummy",
             "--build",
-            "--output", "out.py"
+            "--output",
+            "out.py",
         ],
-        input="\nmyproj\n"  # for the project name prompt
+        input="\nmyproj\n",  # for the project name prompt
     )
 
     assert result.exit_code == 0

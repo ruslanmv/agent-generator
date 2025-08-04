@@ -20,7 +20,6 @@ import sys
 from typing import Any, Dict, Mapping
 
 import httpx
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +45,9 @@ def _backend_url() -> str:
 
 # Import Pydantic models for in‑process calls
 try:
-    from backend.agents.planning_agent import PlanRequest, PlanResponse, plan as _local_plan
     from backend.agents.builder_manager import BuilderManager
+    from backend.agents.planning_agent import PlanRequest, PlanResponse
+    from backend.agents.planning_agent import plan as _local_plan
 except ImportError:
     _local_plan = None  # will only work in remote mode
     BuilderManager = None  # type: ignore[name-defined]
@@ -85,7 +85,10 @@ class OrchestratorProxy:
             self._mode = "remote"
             self.base_url = configured if "://" in configured else _backend_url()
             self._client = httpx.Client(timeout=timeout)
-            logger.debug("OrchestratorProxy initialised in REMOTE mode (base_url=%s)", self.base_url)
+            logger.debug(
+                "OrchestratorProxy initialised in REMOTE mode (base_url=%s)",
+                self.base_url,
+            )
 
     # ------------------------------------------------------------------ #
     # Public API                                                         #
@@ -192,7 +195,9 @@ if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level="INFO", stream=sys.stderr)
     proxy = OrchestratorProxy()
     try:
-        plan = proxy.plan_agent(use_case="ping", preferred_framework="local", mcp_catalog={})
+        plan = proxy.plan_agent(
+            use_case="ping", preferred_framework="local", mcp_catalog={}
+        )
         print("Plan:", plan)
         build = proxy.execute_build(plan)
         print("Build summary:", build)

@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from enum import Enum, unique
-from typing import Tuple, Final
+from typing import Final, Tuple
 
 __all__ = ["Framework", "SUPPORTED_FRAMEWORKS"]
 

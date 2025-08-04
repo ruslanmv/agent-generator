@@ -1,18 +1,21 @@
 # src/agent_generator/utils/scaffold.py
 # A professional, template-driven project scaffolder capable of handling complex directory trees.
 
-import toml
 from pathlib import Path
+
+import toml
 
 # --- Constants ---
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 # --- Private Helper Functions ---
 
+
 def _render_content(content: str, context: dict) -> str:
     """Replaces placeholders in a string with context values."""
     # Use .format_map to avoid errors if a placeholder is missing in the context
     return content.format_map(context)
+
 
 def _scaffold_from_directory_tree(
     project_path: Path,
@@ -45,11 +48,13 @@ def _scaffold_from_directory_tree(
             template_content = item.read_text()
             rendered_content = _render_content(template_content, context)
             dest_path.write_text(rendered_content)
-    
+
     # The generated code for watsonx is usually a set of YAML/config files,
     # so we write the "code_content" (e.g., a primary agent YAML) to a default file.
     if "code_content" in context and context["code_content"]:
-         (project_path / "agents" / f"{context['project_name']}_agent.yaml").write_text(context["code_content"])
+        (project_path / "agents" / f"{context['project_name']}_agent.yaml").write_text(
+            context["code_content"]
+        )
 
     print("   ✓ Successfully scaffolded project from directory tree.")
 
@@ -68,7 +73,7 @@ def _scaffold_simple(
         "Makefile": "Makefile.template",
         "Dockerfile": "Dockerfile.template",
         ".gitignore": "gitignore.template",
-        "pyproject.toml": "pyproject.toml.template", # Render the TOML from a template
+        "pyproject.toml": "pyproject.toml.template",  # Render the TOML from a template
     }
 
     for dest_name, tmpl_name in files_to_render.items():
@@ -80,7 +85,7 @@ def _scaffold_simple(
     # The generated code is passed in the context and written to main.py
     if "code_content" in context:
         (src_path / "main.py").write_text(context["code_content"])
-        
+
     print("   ✓ Successfully scaffolded simple project.")
 
 
@@ -100,12 +105,12 @@ def add_all_dependencies(project_path: Path, config: dict):
         # Ensure the dependencies section exists
         if "dependencies" not in data.get("tool", {}).get("poetry", {}):
             data["tool"]["poetry"]["dependencies"] = {}
-        
+
         data["tool"]["poetry"]["dependencies"].update(deps)
-        
+
         with pyproject_path.open("w") as f:
             toml.dump(data, f)
-            
+
         print("   ✓ Injected Poetry dependencies.")
         return
 
@@ -114,7 +119,7 @@ def add_all_dependencies(project_path: Path, config: dict):
     if req_path.exists():
         existing_content = req_path.read_text()
         dep_lines = [f"{pkg}{ver}" for pkg, ver in deps.items()]
-        
+
         final_deps = existing_content.splitlines()
         for dep in dep_lines:
             if dep not in final_deps:
@@ -122,14 +127,12 @@ def add_all_dependencies(project_path: Path, config: dict):
         req_path.write_text("\n".join(final_deps))
         print("   ✓ Appended requirements.txt dependencies.")
 
+
 # --- Public API ---
 
+
 def create_project_from_template(
-    base_path: Path,
-    category: str,
-    project_name: str,
-    author: str,
-    code_content: str
+    base_path: Path, category: str, project_name: str, author: str, code_content: str
 ) -> Path:
     """
     Generates a project by dynamically choosing a scaffolding method
@@ -140,14 +143,18 @@ def create_project_from_template(
         raise FileExistsError(f"Project directory already exists: {project_path}")
 
     print(f"✨ Creating project '{project_name}' in category '{category}'...")
-    
+
     config_path = TEMPLATES_DIR / category / "config.toml"
     if not config_path.exists():
-        raise FileNotFoundError(f"Configuration file 'config.toml' not found for category '{category}'.")
-        
+        raise FileNotFoundError(
+            f"Configuration file 'config.toml' not found for category '{category}'."
+        )
+
     config = toml.load(config_path)
     scaffold_type = config.get("scaffold_type", "simple")
-    print(f"   ✓ Loaded configuration for '{category}'. Scaffolding type: {scaffold_type}.")
+    print(
+        f"   ✓ Loaded configuration for '{category}'. Scaffolding type: {scaffold_type}."
+    )
 
     # Get the python version from the config, with a sensible default
     python_version = config.get("project", {}).get("python", "^3.11")
@@ -164,7 +171,9 @@ def create_project_from_template(
     if scaffold_type == "tree_copy":
         tree_dir = TEMPLATES_DIR / category / "project_template"
         if not tree_dir.is_dir():
-            raise NotADirectoryError(f"The 'tree_copy' type requires a 'project_template' directory for '{category}'.")
+            raise NotADirectoryError(
+                f"The 'tree_copy' type requires a 'project_template' directory for '{category}'."
+            )
         _scaffold_from_directory_tree(project_path, tree_dir, context)
     else:
         _scaffold_simple(project_path, context)
@@ -174,6 +183,7 @@ def create_project_from_template(
 
     print(f"\n✅ Project '{project_name}' created successfully!")
     return project_path
+
 
 __all__ = [
     "create_project_from_template",

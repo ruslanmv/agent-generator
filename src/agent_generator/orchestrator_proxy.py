@@ -28,12 +28,13 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------------------------------- #
 
 _ENV_VAR = "GENERATOR_BACKEND_URL"
-_DEFAULT_URL = "http://localhost:8000"          # port picked by backend/main.py
+_DEFAULT_URL = "http://localhost:8000"  # port picked by backend/main.py
 _BACKEND_CWD = Path(__file__).resolve().parent.parent.parent / "backend"
 
 # --------------------------------------------------------------------------- #
 # Helpers                                                                     #
 # --------------------------------------------------------------------------- #
+
 
 def _backend_url() -> str:
     url = os.getenv(_ENV_VAR, _DEFAULT_URL).rstrip("/")
@@ -56,20 +57,18 @@ def _port_open(host: str, port: int) -> bool:
 _import_error_details = None
 
 try:
-    from backend.agents.planning_agent import (
-        PlanRequest,
-        PlanResponse,
-        plan as _local_plan,
-    )
     from backend.agents.builder_manager import BuilderManager
-except ImportError as e:                       # noqa: BLE001
+    from backend.agents.planning_agent import PlanRequest, PlanResponse
+    from backend.agents.planning_agent import plan as _local_plan
+except ImportError as e:  # noqa: BLE001
     _local_plan = None
-    BuilderManager = None                      # type: ignore[assignment]
+    BuilderManager = None  # type: ignore[assignment]
     _import_error_details = e
 
 # --------------------------------------------------------------------------- #
 # OrchestratorProxy                                                           #
 # --------------------------------------------------------------------------- #
+
 
 class OrchestratorProxy:
     """
@@ -109,12 +108,16 @@ class OrchestratorProxy:
     def _init_remote(self, configured: str, timeout: float) -> None:
         # Resolve URL
         self.base_url = configured if "://" in configured else _backend_url()
-        host, port_str = self.base_url.replace("http://", "").replace("https://", "").split(":")
+        host, port_str = (
+            self.base_url.replace("http://", "").replace("https://", "").split(":")
+        )
         port = int(port_str)
 
         # Auto‑start backend if nothing is listening
         if not _port_open(host, port):
-            logger.info("No backend on %s → starting uvicorn in background", self.base_url)
+            logger.info(
+                "No backend on %s → starting uvicorn in background", self.base_url
+            )
             self._backend_proc = subprocess.Popen(
                 [
                     sys.executable,
@@ -223,7 +226,9 @@ class OrchestratorProxy:
 if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level="INFO", stream=sys.stderr)
     proxy = OrchestratorProxy()
-    plan = proxy.plan_agent(use_case="ping", preferred_framework="react", mcp_catalog={})
+    plan = proxy.plan_agent(
+        use_case="ping", preferred_framework="react", mcp_catalog={}
+    )
     print("plan →", plan["selected_framework"])
     build = proxy.execute_build(plan)
     print("artefacts:", len(build["summary"]["tree"]))

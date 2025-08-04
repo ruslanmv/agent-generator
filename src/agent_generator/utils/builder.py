@@ -1,17 +1,15 @@
 # src/agent_generator/utils/builder.py
 import re
 from pathlib import Path
+
 import toml
 
-from agent_generator.config import get_settings, Settings, SettingsError
-from agent_generator.utils.prompts import render_prompt
-from agent_generator.utils.parser import parse_natural_language_to_workflow
+from agent_generator.config import Settings, SettingsError, get_settings
 from agent_generator.frameworks import FRAMEWORKS
 from agent_generator.providers import PROVIDERS
-from agent_generator.utils.scaffold import (
-    create_project_from_template,
-    add_all_dependencies,
-)
+from agent_generator.utils.parser import parse_natural_language_to_workflow
+from agent_generator.utils.scaffold import (add_all_dependencies,
+                                            create_project_from_template)
 
 
 def _extract_code_block(llm_output: str) -> str:
@@ -30,7 +28,7 @@ def generate_agent_code_for_review(
     model: str | None = None,
     temperature: float | None = None,
     max_tokens: int | None = None,
-    mcp: bool = False
+    mcp: bool = False,
 ) -> str:
     """
     Stage 1: replicate the CLI generate flow to produce clean Python code:
@@ -52,7 +50,7 @@ def generate_agent_code_for_review(
         provider=provider_key,
         model=model or defaults.model,
         temperature=temperature if temperature is not None else defaults.temperature,
-        max_tokens=max_tokens or defaults.max_tokens
+        max_tokens=max_tokens or defaults.max_tokens,
     )
 
     # 2) Convert prompt into structured workflow
@@ -65,8 +63,8 @@ def generate_agent_code_for_review(
     generator = framework_cls()
 
     # 4) Render prompt and invoke LLM
-    #prompt_str = render_prompt(workflow, settings, framework_name)
-    #provider_inst.generate(prompt_str)
+    # prompt_str = render_prompt(workflow, settings, framework_name)
+    # provider_inst.generate(prompt_str)
 
     # 5) Produce the code artifact
     raw_code = generator.generate_code(workflow, settings, mcp=mcp)
@@ -79,11 +77,7 @@ def generate_agent_code_for_review(
     return code
 
 
-def build_accepted_project(
-    project_name: str,
-    framework_name: str,
-    approved_code: str
-):
+def build_accepted_project(project_name: str, framework_name: str, approved_code: str):
     """
     Stage 2: scaffold a full project based on templates/<framework_name>,
     then inject all dependencies from its config.toml.
@@ -98,7 +92,7 @@ def build_accepted_project(
         category=framework_name,
         project_name=project_name,
         author="AI Agent Generator",
-        code_content=approved_code
+        code_content=approved_code,
     )
 
     add_all_dependencies(project_path, config)
@@ -111,6 +105,7 @@ def build_accepted_project(
 # plan we can *skip* all LLM parsing / prompt rendering and simply execute
 # the tasks in order.  Nothing else in the existing file is untouched.
 # -------------------------------------------------------------------------
+
 
 def _run_preplanned_tasks(build_tasks: list[dict], framework: str) -> None:
     """
@@ -152,10 +147,9 @@ def _run_preplanned_tasks(build_tasks: list[dict], framework: str) -> None:
 # Patch‑hook: If *generate_agent_code_for_review* receives a dict instead of str
 # we overload to _run_preplanned_tasks.
 
+
 def generate_or_execute(
-    plan_or_prompt: str | dict,
-    framework_name: str,
-    **kwargs
+    plan_or_prompt: str | dict, framework_name: str, **kwargs
 ) -> str:
     """
     Overloaded helper:
@@ -165,6 +159,4 @@ def generate_or_execute(
     if isinstance(plan_or_prompt, dict) and "build_tasks" in plan_or_prompt:
         _run_preplanned_tasks(plan_or_prompt["build_tasks"], framework_name)
         return "🛈  Pre‑planned build tasks executed; no code returned."
-    return generate_agent_code_for_review(
-        plan_or_prompt, framework_name, **kwargs
-    )
+    return generate_agent_code_for_review(plan_or_prompt, framework_name, **kwargs)

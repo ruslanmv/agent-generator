@@ -1,13 +1,12 @@
 # tests/utils/test_scaffold.py
-import toml
-from pathlib import Path
 import shutil
-import pytest
+from pathlib import Path
 
-from agent_generator.utils.scaffold import (
-    create_project_from_template,
-    add_all_dependencies,
-)
+import pytest
+import toml
+
+from agent_generator.utils.scaffold import create_project_from_template
+
 
 @pytest.fixture
 def tmp_templates(tmp_path):
@@ -17,9 +16,11 @@ def tmp_templates(tmp_path):
     shutil.copytree(src, dest)
     return dest
 
+
 def test_scaffold_simple(tmp_path, tmp_templates, monkeypatch):
     # Monkey‑patch TEMPLATES_DIR
     import agent_generator.utils.scaffold as s
+
     monkeypatch.setattr(s, "TEMPLATES_DIR", tmp_templates)
 
     # Create a dummy config for a "crewai"-style simple scaffold
@@ -35,13 +36,14 @@ def test_scaffold_simple(tmp_path, tmp_templates, monkeypatch):
         category="crewai",
         project_name="testproj",
         author="Tester",
-        code_content="print('hello')\n"
+        code_content="print('hello')\n",
     )
 
     # Assertions:
     assert (project / "src/main.py").read_text().startswith("print('hello')")
     pyproj = toml.load(project / "pyproject.toml")
     assert "foo" in pyproj["tool"]["poetry"]["dependencies"]
+
 
 def test_scaffold_tree_copy(tmp_path, tmp_templates, monkeypatch):
     # Similar for tree_copy: ensure that project_template is fully copied,

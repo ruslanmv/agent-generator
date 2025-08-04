@@ -21,9 +21,11 @@ The CLI glues together:
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
+import click  # used by Typer for command resolution
 import typer
 from dotenv import load_dotenv
 from pydantic_settings import SettingsError
@@ -31,21 +33,18 @@ from rich import print as rprint
 from rich.console import Console
 from rich.syntax import Syntax
 
-# ───── ✨ NEW / MODIFIED IMPORTS ──────────────────────────────────────
-from agent_generator.wizard import launch_wizard
-from agent_generator.constants import SUPPORTED_FRAMEWORKS, Framework
-from agent_generator.orchestrator_proxy import OrchestratorProxy
-# ────────────────────────────────────────────────────────────────────
-
 from agent_generator.config import Settings, get_settings
+from agent_generator.constants import SUPPORTED_FRAMEWORKS, Framework
 from agent_generator.frameworks import FRAMEWORKS
+from agent_generator.orchestrator_proxy import OrchestratorProxy
 from agent_generator.providers import PROVIDERS
+from agent_generator.utils.builder import (build_accepted_project,
+                                           generate_agent_code_for_review)
 from agent_generator.utils.parser import parse_natural_language_to_workflow
-from agent_generator.utils.builder import (
-    generate_agent_code_for_review,
-    build_accepted_project,
-)
+# ───── EXISTING IMPORTS (kept) ──────────────────────────────────
+from agent_generator.wizard import launch_wizard
 
+# ────────────────────────────────────────────────────────────────
 
 
 # 1) Treat the current working directory as the project root
@@ -54,42 +53,72 @@ project_root = Path.cwd()
 # 2) Load .env **only** from the current working directory
 load_dotenv(dotenv_path=project_root / ".env", override=False)
 
+
 # ────────────────────────────────────────────────────────────────
 # Typer app
+#   Minimal change: implement a "default command" router so a bare
+#   prompt is routed to `generate` (keeps Makefile invocation working):
+#     python -m agent_generator.cli "…prompt…" --framework X
 # ────────────────────────────────────────────────────────────────
+class _DefaultCommandGroup(typer.core.TyperGroup):
+    """Route unknown first token to the 'generate' command."""
+
+    DEFAULT_CMD = "generate"
+
+    def resolve_command(self, ctx: click.Context, args):
+        # Try normal resolution first
+        try:
+            return super().resolve_command(ctx, args)
+        except click.UsageError:
+            # If no args (pure zero-flag), re-raise so callback runs wizard
+            if not args:
+                raise
+            # Prepend the default command name and resolve again
+            args = [self.DEFAULT_CMD] + list(args)
+            return super().resolve_command(ctx, args)
+
+
 app = typer.Typer(
     add_completion=False,
-    help="Transform plain English into fully configured multi‑agent teams.",
+    no_args_is_help=False,  # allow zero-args so our callback can launch the wizard
+    help="Transform plain English into fully configured multi-agent teams.",
+    cls=_DefaultCommandGroup,  # enable default-command routing
 )
 
 console = Console()
 
-VERSION = "0.2.0"  # 🛈 bump on release (updated for new features)
+VERSION = "0.2.0"  # 🛈 bump on release
 
 
 # ────────────────────────────────────────────────────────────────
-#  Zero‑flag behaviour: invoke the wizard by default
+#  Zero-flag behaviour: invoke the wizard by default
+#   (only when truly no args; if a prompt is passed, let generate run)
 # ────────────────────────────────────────────────────────────────
 @app.callback(invoke_without_command=True)
 def _default(ctx: typer.Context) -> None:
     """
-    If invoked without a sub‑command, launch the interactive wizard
-    to collect a free‑text use‑case and framework choice.
+    If invoked without a sub-command or positional args, launch the interactive wizard.
+    If a positional prompt is present, the default-command router will handle it.
     """
     if ctx.invoked_subcommand is None:
-        launch_wizard()
+        # When called simply as `agent-generator` or `python -m agent_generator.cli`
+        # there are typically only 1–2 argv items (module + script). If the user
+        # passed a prompt, argv will contain more; in that case, do not start wizard.
+        if len(sys.argv) <= 2:
+            launch_wizard()
+        # else: let the default-command routing (→ generate) handle the prompt
 
 
 # ────────────────────────────────────────────────────────────────
-#  New “create” command – power‑user one‑liner
+#  New “create” command – power-user one-liner
 # ────────────────────────────────────────────────────────────────
 @app.command(
     "create",
     help="Create an agent from a single prompt in one shot "
-         "(optionally confirm via wizard).",
+    "(optionally confirm via wizard).",
 )
 def create(
-    description: str = typer.Argument(..., help="Free‑text use‑case prompt."),
+    description: str = typer.Argument(..., help="Free-text use-case prompt."),
     framework: str = typer.Option(
         Framework.default().value,
         "--framework",
@@ -104,7 +133,7 @@ def create(
     ),
 ) -> None:
     """
-    Non‑interactive (or semi‑interactive) entry‑point.
+    Non-interactive (or semi-interactive) entry-point.
 
     • Validates the framework against constants.
     • Calls BeeAI backend /plan to get a build plan.
@@ -156,7 +185,7 @@ def _validate_choice(value: str, allowed: set[str], name: str) -> str:
 def _write_or_echo(text: str, output: Optional[Path]) -> None:
     if output:
         output.write_text(text, encoding="utf-8")
-        console.print(f"[bold green]✓ Written to {output}[/]")
+        console.print(f"[bold green]✓ Written to {output}[/]")
     else:
         console.print(
             Syntax(
@@ -171,7 +200,7 @@ def _write_or_echo(text: str, output: Optional[Path]) -> None:
 # ---------------------------------------------------------------- #
 @app.command()
 def generate(
-    prompt: str = typer.Argument(..., help="Natural‑language requirement sentence(s)."),
+    prompt: str = typer.Argument(..., help="Natural-language requirement sentence(s)."),
     framework: str = typer.Option(
         ..., "--framework", "-f", help="Target framework.", show_choices=False
     ),
@@ -186,7 +215,7 @@ def generate(
         "--output",
         "-o",
         help="Write result to file instead of stdout. "
-             "File extension inferred from framework if omitted.",
+        "File extension inferred from framework if omitted.",
     ),
     mcp: bool = typer.Option(
         False,
@@ -204,12 +233,12 @@ def generate(
     ),
     version: bool = typer.Option(False, "--version", "-V", is_eager=True),
 ):
-    """Generate code (or YAML) for a multi‑agent workflow."""
+    """Generate code (or YAML) for a multi-agent workflow."""
     if version:
-        rprint(f"[bold]agent‑generator {VERSION}[/]")
+        rprint(f"[bold]agent-generator {VERSION}[/]")
         raise typer.Exit()
 
-    # ────────────── Pre‑flight env check ──────────────
+    # ────────────── Pre-flight env check ──────────────
     provider_name = provider or os.getenv("AGENTGEN_PROVIDER", "watsonx")
     required: list[str] = []
     if provider_name == "watsonx":
@@ -246,10 +275,10 @@ def generate(
     _provider_name = provider or defaults.provider
     _provider_name = _validate_choice(_provider_name, set(PROVIDERS), "Provider")
 
-    # ───────── Dry‑run shortcut ─────────
+    # ───────── Dry-run shortcut ─────────
     if dry_run:
         console.print(
-            "[yellow]Dry‑run only → generating code without LLM calls or env checks.[/]"
+            "[yellow]Dry-run only → generating code without LLM calls or env checks.[/]"
         )
         defaults = get_settings()
         workflow = parse_natural_language_to_workflow(prompt)
@@ -293,7 +322,7 @@ def generate(
     generator = framework_cls()
 
     if dry_run:
-        console.print("[yellow]Dry‑run only → skipping LLM call.[/]")
+        console.print("[yellow]Dry-run only → skipping LLM call.[/]")
         code = generator.generate_code(workflow, settings, mcp=mcp)
     else:
         code = generate_agent_code_for_review(
@@ -320,7 +349,7 @@ def generate(
     ext = ".yaml" if generator.file_extension == "yaml" else ".py"
     _write_or_echo(code, output)
 
-    # ───────── Stage 2: Optional scaffolding ─────────
+    # ───────── Stage 2: Optional scaffolding ─────────
     if build:
         project_name = typer.prompt("Project name", default=f"{framework}-agent")
         build_accepted_project(
