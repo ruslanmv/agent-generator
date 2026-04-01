@@ -1,0 +1,21 @@
+from crewai.tools import tool
+import os
+import requests
+
+
+@tool("Web Search")
+def web_search(query: str) -> str:
+    """Search the web and return relevant results."""
+    api_key = os.environ.get("{{ api_key_env_var | default('SERP_API_KEY') }}")
+    if not api_key:
+        return f"Search API key not configured. Query was: {query}"
+    resp = requests.get(
+        "https://serpapi.com/search",
+        params={"q": query, "api_key": api_key, "num": 5},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    results = resp.json().get("organic_results", [])
+    return "\n".join(
+        f"- {r.get('title', '')}: {r.get('snippet', '')}" for r in results[:5]
+    )

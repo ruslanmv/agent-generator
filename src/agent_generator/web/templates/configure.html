@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Configure - {{ plan.name }} - Agent Generator{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-8">
+    <!-- Step Indicator -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 40px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--cyan);">1</div>
+            <span style="font-size: 13px; color: var(--text-muted);">Describe</span>
+        </div>
+        <div style="width: 40px; height: 1px; background: var(--cyan);"></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--cyan);">2</div>
+            <span style="font-size: 13px; color: var(--text-muted);">Plan</span>
+        </div>
+        <div style="width: 40px; height: 1px; background: var(--cyan);"></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white;">3</div>
+            <span style="font-size: 13px; color: var(--text-primary); font-weight: 600;">Configure</span>
+        </div>
+        <div style="width: 40px; height: 1px; background: var(--glass-border);"></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--glass-bg); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-muted);">4</div>
+            <span style="font-size: 13px; color: var(--text-muted);">Generate</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 28px; font-weight: 700; margin-bottom: 4px;" class="gradient-text">Configure Generation</h1>
+        <p style="color: var(--text-secondary); font-size: 14px;">Choose framework, artifact mode, tools, and provider for <strong style="color: var(--text-primary);">{{ plan.name }}</strong>.</p>
+    </div>
+
+    <form action="/generate" method="POST" id="configForm">
+        <input type="hidden" name="plan_json" value='{{ plan_json }}'>
+        <input type="hidden" name="prompt" value="{{ prompt }}">
+
+        <div style="display: grid; grid-template-columns: 1fr 320px; gap: 24px;">
+            <!-- Left: Configuration Options -->
+            <div>
+                <!-- Framework Selection -->
+                <div class="glass" style="padding: 24px; margin-bottom: 20px;">
+                    <h2 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                        Framework
+                    </h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">
+                        {% for fw_id, fw_label in frameworks.items() %}
+                        <label class="glass-light" style="padding: 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; transition: all 0.2s ease;"
+                               onmouseover="this.style.borderColor='rgba(6, 182, 212, 0.3)'"
+                               onmouseout="this.style.borderColor=''">
+                            <input type="radio" name="framework" value="{{ fw_id }}"
+                                   {% if fw_id == plan.framework %}checked{% endif %}
+                                   style="margin-top: 3px; -webkit-appearance: auto; width: auto; height: auto; border-radius: 50%;">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">{{ fw_label }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                                    {% if fw_id == 'crewai' %}Multi-agent teams with YAML config
+                                    {% elif fw_id == 'langgraph' %}State-based DAG workflows
+                                    {% elif fw_id == 'watsonx_orchestrate' %}IBM ADK-compliant YAML agents
+                                    {% elif fw_id == 'crewai_flow' %}Sequential flow pipelines
+                                    {% elif fw_id == 'react' %}Reasoning + acting loop
+                                    {% endif %}
+                                </div>
+                                <div style="display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap;">
+                                    {% set caps = framework_capabilities.get(fw_id, {}) %}
+                                    {% if caps.get('yaml') %}<span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(6, 182, 212, 0.15); color: var(--cyan);">YAML</span>{% endif %}
+                                    {% if caps.get('tools') %}<span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(34, 197, 94, 0.15); color: var(--green);">Tools</span>{% endif %}
+                                    {% if caps.get('multi_agent') %}<span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(139, 92, 246, 0.15); color: var(--purple);">Multi-Agent</span>{% endif %}
+                                    {% if caps.get('flow') %}<span style="font-size: 10px; padding: 1px 6px; border-radius: 4px; background: rgba(236, 72, 153, 0.15); color: var(--pink);">Flow</span>{% endif %}
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Artifact Mode + Provider -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="glass" style="padding: 24px;">
+                        <h2 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Artifact Mode
+                        </h2>
+                        <select name="artifact_mode" style="width: 100%;">
+                            <option value="code_and_yaml" {% if plan.get('artifact_mode') == 'code_and_yaml' %}selected{% endif %}>Code + YAML</option>
+                            <option value="code_only" {% if plan.get('artifact_mode') == 'code_only' %}selected{% endif %}>Code Only</option>
+                            <option value="yaml_only" {% if plan.get('artifact_mode') == 'yaml_only' %}selected{% endif %}>YAML Only</option>
+                        </select>
+                    </div>
+                    <div class="glass" style="padding: 24px;">
+                        <h2 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                            LLM Provider
+                        </h2>
+                        <select name="provider" style="width: 100%;">
+                            <option value="watsonx">IBM WatsonX</option>
+                            <option value="ollama">Ollama (Local LLM)</option>
+                            <option value="ollabridge">OllaBridge (Remote LLM)</option>
+                            <option value="openai">OpenAI</option>
+                        </select>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                            Configure connection details in Settings (gear icon).
+                            Ollama/OllaBridge enable sandbox testing with a real LLM.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tools Selection -->
+                <div class="glass" style="padding: 24px; margin-bottom: 20px;">
+                    <h2 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                        Tools
+                    </h2>
+                    {% for category, tools_list in tool_categories.items() %}
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">{{ category }}</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;">
+                            {% for tool in tools_list %}
+                            <label class="glass-light" style="padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" name="tools" value="{{ tool.id }}"
+                                       {% if tool.id in selected_tools %}checked{% endif %}>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 500; color: var(--text-primary);">{{ tool.label }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">{{ tool.desc }}</div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Right: File Tree Preview -->
+            <div>
+                <div class="glass" style="position: sticky; top: 80px; overflow: hidden;">
+                    <div style="padding: 16px; border-bottom: 1px solid var(--glass-border);">
+                        <h3 style="font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            File Preview
+                        </h3>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Expected output structure</p>
+                    </div>
+                    <div style="padding: 8px; max-height: 500px; overflow-y: auto;">
+                        {% for item in preview_tree %}
+                        {% if item.type == 'dir' %}
+                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); padding-left: {{ (item.depth * 16) + 8 }}px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" style="opacity: 0.5;"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            {{ item.name }}/
+                        </div>
+                        {% else %}
+                        <div style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); padding-left: {{ (item.depth * 16) + 8 }}px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.4;"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            {{ item.name }}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Plan Summary Card -->
+                <div class="glass" style="margin-top: 16px; padding: 16px;">
+                    <h3 style="font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Plan Summary</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Agents</span>
+                            <span style="color: var(--cyan); font-weight: 600;">{{ plan.agents | length }}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Tasks</span>
+                            <span style="color: var(--purple); font-weight: 600;">{{ plan.tasks | length }}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Tools</span>
+                            <span style="color: var(--green); font-weight: 600;">{{ plan.tools | length }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 24px;">
+            <button type="button" onclick="history.back()" class="btn-glass">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Plan
+            </button>
+            <button type="submit" id="generateBtn" class="btn-gradient" style="font-size: 16px; padding: 14px 32px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span id="btnText">Generate Project</span>
+                <div id="btnSpinner" class="spinner" style="display: none;"></div>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Loading state on submit
+    var configForm = document.getElementById('configForm');
+    var generateBtn = document.getElementById('generateBtn');
+    if (configForm && generateBtn) {
+        configForm.addEventListener('submit', function() {
+            generateBtn.disabled = true;
+            var btnText = document.getElementById('btnText');
+            var btnSpinner = document.getElementById('btnSpinner');
+            if (btnText) btnText.textContent = 'Generating...';
+            if (btnSpinner) btnSpinner.style.display = 'inline-block';
+            var svgIcon = generateBtn.querySelector('svg');
+            if (svgIcon) svgIcon.style.display = 'none';
+        });
+    }
+</script>
+{% endblock %}

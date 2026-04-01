@@ -1,0 +1,30 @@
+from crewai.tools import tool
+from PyPDF2 import PdfReader
+
+
+@tool("PDF Reader")
+def pdf_reader(file_path: str) -> str:
+    """Extract text content from a PDF file.
+
+    Args:
+        file_path: Path to the PDF file to read.
+
+    Returns:
+        Extracted text from all pages, separated by page markers.
+    """
+    try:
+        reader = PdfReader(file_path)
+    except FileNotFoundError:
+        return f"Error: file not found — {file_path}"
+    except Exception as exc:
+        return f"Error reading PDF: {exc}"
+
+    pages: list[str] = []
+    for idx, page in enumerate(reader.pages, start=1):
+        text = page.extract_text()
+        if text:
+            pages.append(f"--- Page {idx} ---\n{text.strip()}")
+
+    if not pages:
+        return "The PDF contains no extractable text (it may be scanned/image-based)."
+    return "\n\n".join(pages)

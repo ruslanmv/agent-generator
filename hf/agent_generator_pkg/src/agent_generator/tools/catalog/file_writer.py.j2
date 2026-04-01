@@ -1,0 +1,45 @@
+from crewai.tools import tool
+import os
+from pathlib import Path
+
+
+_OUTPUT_DIR = "{{ output_dir | default('./output') }}"
+
+
+@tool("File Writer")
+def file_writer(filename: str, content: str) -> str:
+    """Write content to a file inside the configured output directory.
+
+    Args:
+        filename: Name of the file to create (no path separators allowed).
+        content: Text content to write.
+
+    Returns:
+        Confirmation message with the absolute path of the written file.
+    """
+    # Sanitize filename: strip path traversal components
+    safe_name = Path(filename).name
+    if not safe_name or safe_name in {".", ".."}:
+        return f"Invalid filename: {filename}"
+
+    # Reject hidden files and overly long names
+    if safe_name.startswith("."):
+        return f"Hidden filenames are not allowed: {safe_name}"
+    if len(safe_name) > 255:
+        return "Filename exceeds maximum length of 255 characters."
+
+    output_path = Path(_OUTPUT_DIR).resolve()
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    target = output_path / safe_name
+
+    # Final check: resolved path must remain inside output directory
+    if not str(target.resolve()).startswith(str(output_path)):
+        return "Path traversal detected — write rejected."
+
+    try:
+        target.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        return f"Failed to write file: {exc}"
+
+    return f"File written successfully: {target.resolve()}"

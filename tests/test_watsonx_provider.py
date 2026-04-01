@@ -1,5 +1,5 @@
 """
-WatsonXProvider unit test – fully mocked, no network traffic.
+WatsonXProvider unit test - fully mocked, no network traffic.
 """
 
 from typing import Any, Dict
@@ -10,7 +10,7 @@ from agent_generator.providers.watsonx_provider import WatsonXProvider
 
 
 class _DummyResp:
-    """Tiny stand‑in for `requests.Response`."""
+    """Tiny stand-in for `requests.Response`."""
 
     status_code = 200
 
@@ -31,7 +31,10 @@ def _watsonx_env(monkeypatch):
     """Ensure mandatory env vars exist so Settings validation passes."""
     monkeypatch.setenv("WATSONX_API_KEY", "dummy")
     monkeypatch.setenv("WATSONX_PROJECT_ID", "proj123")
+    from agent_generator.config import get_settings
+    get_settings.cache_clear()
     yield
+    get_settings.cache_clear()
 
 
 def test_generate_returns_completion(monkeypatch):
@@ -40,7 +43,11 @@ def test_generate_returns_completion(monkeypatch):
     def _fake_post(*_a, **_kw):
         return _DummyResp({"results": [{"generated_text": "HELLO"}]})
 
-    # Patch the network call
+    # Patch both the IAM token request and the Session.post call
+    monkeypatch.setattr(
+        "agent_generator.providers.watsonx_provider.requests.post",
+        lambda *a, **kw: _DummyResp({"access_token": "fake-token"}),
+    )
     monkeypatch.setattr(
         "agent_generator.providers.watsonx_provider.requests.Session.post",
         _fake_post,

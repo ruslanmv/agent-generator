@@ -1,103 +1,152 @@
-# Usage Guide
+# Supported Frameworks
 
-This page covers common workflows for both the **CLI** and the **Flask Web UI**.  
-For installation instructions see [Installation](installation.md).
+## CrewAI
 
+**Versions:** crewai 1.12+
 
-## 1  Command‑line interface
+**Artifact modes:** `code_only`, `yaml_only`, `code_and_yaml`
 
-### 1.1 Basic syntax
+**What it generates (code_and_yaml mode):**
 
-```bash
-agent-generator [OPTIONS] "plain‑English requirement"
+```
+project/
+  config/
+    agents.yaml     # Agent role, goal, backstory
+    tasks.yaml      # Task description, expected_output, agent
+  src/
+    crew.py         # @CrewBase class with @agent, @task, @crew
+    main.py         # Entry point
+    tools/          # Tool implementations from catalog
+  tests/
+    test_smoke.py   # Basic import/instantiation test
+  pyproject.toml    # With crewai==1.12.2 dependency
+  README.md
+  .env.example
+  .gitignore
 ```
 
-### 1.2 Frequently used flags
-
-| Flag / Option        | Description                                        | Example              |
-| -------------------- | -------------------------------------------------- | -------------------- |
-| `-f, --framework` \* | Which generator to use (`crewai`, `langgraph`, …). | `--framework crewai` |
-| `-p, --provider`     | LLM back‑end (`watsonx` default, or `openai`).     | `--provider openai`  |
-| `--model`            | Override default model for the provider.           | `--model gpt-4o`     |
-| `--temperature`      | Sampling randomness (0–2).                         | `--temperature 0.3`  |
-| `--max-tokens`       | Response length cap.                               | `--max-tokens 2048`  |
-| `--mcp / --no-mcp`   | Wrap Python output in an MCP FastAPI server.       | `--mcp`              |
-| `-o, --output PATH`  | Write result to file instead of stdout.            | `-o team.py`         |
-| `--dry-run`          | Build workflow + code skeleton but skip LLM call.  | `--dry-run`          |
-| `--show-cost`        | Print token counts & approximate USD cost.         | `--show-cost`        |
-
-### 1.3 Common recipes
-
-| Goal                                | Command                                                                        |
-| ----------------------------------- | ------------------------------------------------------------------------------ |
-| **Orchestrate YAML** from one‑liner | `agent-generator "Email summariser" -f watsonx_orchestrate -o summariser.yaml` |
-| **CrewAI Flow** with MCP wrapper    | `agent-generator "Analyse tweets" -f crewai_flow --mcp -o tweets_flow.py`      |
-| Cost estimate only                  | `agent-generator "Scrape website" -f react --dry-run --show-cost`              |
-| Use **OpenAI** instead of WatsonX   | `agent-generator "Write jokes" -f react -p openai --model gpt-4o`              |
-
-
-
-## 2  Flask Web UI
-
-### 2.1 Run locally
+**CLI example:**
 
 ```bash
-FLASK_APP=agent_generator.web FLASK_ENV=development flask run
-# visit http://localhost:5000
+agent-generator "Research team with researcher and writer" \
+  --framework crewai --output team.py
 ```
 
-### 2.2 Workflow
+---
 
-1. **Fill in prompt** – describe your requirement.
-2. **Pick framework & provider** – drop‑downs.
-3. *(Optional)* toggle **MCP wrapper**.
-4. Click **Generate**.
-5. Download the code/YAML or copy‑paste from the preview.
-6. Mermaid diagram appears under the code for quick validation.
+## LangGraph
 
-![UI screenshot](images/ui-screenshot.png)
+**Versions:** langgraph 1.1+
 
+**Artifact modes:** `code_only`
 
-## 3  Docker usage
+**What it generates:**
+
+- `StateGraph` with `TypedDict` state schema
+- One node function per task
+- Edges from task dependencies
+- `START` constant for entry point
+- `graph.compile()` and `app.invoke()` pattern
+
+**CLI example:**
 
 ```bash
-docker build -t agent-generator .
-docker run -e WATSONX_API_KEY=... -e WATSONX_PROJECT_ID=... \
-           -p 8000:8000 agent-generator
-# Web UI → http://localhost:8000
+agent-generator "Data pipeline: extract, transform, load" \
+  --framework langgraph --output pipeline.py
 ```
 
-You can also exec into the container to run the CLI:
+---
+
+## WatsonX Orchestrate
+
+**Versions:** ADK spec_version v1
+
+**Artifact modes:** `yaml_only`
+
+**What it generates:**
+
+```yaml
+spec_version: v1
+kind: native
+name: agent-name
+description: What the agent does
+instructions: |
+  Detailed instructions from task goals
+llm: watsonx/meta-llama/llama-3-3-70b-instruct
+tools:
+  - tool_name
+knowledge_base: []
+```
+
+**CLI example:**
 
 ```bash
-docker run --rm agent-generator agent-generator "Say hi" -f react --dry-run
+agent-generator "Customer support assistant" \
+  --framework watsonx_orchestrate --output support.yaml
 ```
 
-
-
-## 4  Serving generated MCP skills
-
-Every Python framework (`crewai`, `crewai_flow`, `langgraph`, `react`) can be generated with an **MCP wrapper**:
+**Import:**
 
 ```bash
-agent-generator "...data pipeline..." -f langgraph --mcp -o pipeline.py
-python pipeline.py serve      # exposes POST /invoke on port 8080
+orchestrate agents import -f support.yaml
 ```
 
-Upload the packaged script or its Docker image to your MCP Gateway and then **import** it as a custom skill in WatsonX Orchestrate.
+---
 
+## CrewAI Flow
 
+**Versions:** crewai 1.12+ (Flow API)
 
-## 5  Troubleshooting
+**Artifact modes:** `code_only`
 
-| Symptom                        | Resolution                                                                          |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| *CLI raises 401* (WatsonX)     | Verify `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, region URL.                         |
-| *`ModuleNotFoundError: flask`* | `pip install "agent-generator[web]"`                                                |
-| *Diagram doesn’t render in UI* | Check browser console – Mermaid JS must load (make sure `unpkg.com` isn’t blocked). |
-| *High cost estimate*           | Lower `--max-tokens` or pick `llama‑3‑8b` instead.                                  |
-| *Gateway import fails*         | Ensure you used `--mcp` and port 8080 is exposed.                                   |
+**What it generates:**
 
+- `FlowState` Pydantic model for shared state
+- `WorkflowFlow(Flow[FlowState])` class
+- `@start()` decorator for entry step
+- `@listen()` decorators for subsequent steps
+- Each step creates a mini-Crew for its task
 
+**CLI example:**
 
-Jump in: **[Installation ➜](installation.md)** · **[Usage ➜](usage.md)** · **[Frameworks ➜](frameworks.md)**
+```bash
+agent-generator "Content pipeline: research, write, edit" \
+  --framework crewai_flow --output content.py
+```
+
+---
+
+## ReAct
+
+**Artifact modes:** `code_only`
+
+**What it generates:**
+
+- Tool registry with `@register_tool` decorator
+- `think()` and `act()` functions
+- `react_loop()` with `MAX_ITERATIONS` guard
+- Per-task runner functions
+- Built-in `search` and `calculate` tools
+
+**CLI example:**
+
+```bash
+agent-generator "Code review bot" \
+  --framework react --output reviewer.py
+```
+
+---
+
+## Capability Matrix
+
+| Feature | CrewAI | LangGraph | WatsonX | CrewAI Flow | ReAct |
+|---------|--------|-----------|---------|-------------|-------|
+| Code output | Yes | Yes | No | Yes | Yes |
+| YAML output | Yes | No | Yes | No | No |
+| Code + YAML | Yes | No | No | No | No |
+| Tool templates | Yes | Yes | No | Yes | Yes |
+| MCP wrapper | Yes | Yes | No | Yes | Yes |
+
+---
+
+**Next:** [Architecture](architecture.md) | [Installation](installation.md)

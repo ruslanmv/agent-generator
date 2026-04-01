@@ -1,0 +1,59 @@
+from crewai.tools import tool
+import json
+import requests
+
+
+_BASE_URL = "{{ base_url | default('') }}"
+
+
+@tool("HTTP Client")
+def http_client(
+    method: str,
+    path: str,
+    body: str = "",
+    headers: str = "",
+) -> str:
+    """Make an HTTP request and return the response.
+
+    Args:
+        method: HTTP method — GET, POST, PUT, PATCH, or DELETE.
+        path: URL path (appended to the configured base URL) or a full URL.
+        body: Optional JSON body string for POST/PUT/PATCH requests.
+        headers: Optional JSON string of extra headers.
+
+    Returns:
+        Response status code and body text.
+    """
+    url = f"{_BASE_URL.rstrip('/')}/{path.lstrip('/')}" if _BASE_URL else path
+
+    method = method.upper()
+    if method not in {"GET", "POST", "PUT", "PATCH", "DELETE"}:
+        return f"Unsupported HTTP method: {method}"
+
+    extra_headers: dict[str, str] = {}
+    if headers:
+        try:
+            extra_headers = json.loads(headers)
+        except json.JSONDecodeError:
+            return "Error: 'headers' must be a valid JSON object."
+
+    json_body = None
+    if body:
+        try:
+            json_body = json.loads(body)
+        except json.JSONDecodeError:
+            return "Error: 'body' must be a valid JSON string."
+
+    try:
+        resp = requests.request(
+            method,
+            url,
+            json=json_body,
+            headers=extra_headers,
+            timeout=60,
+        )
+    except requests.RequestException as exc:
+        return f"Request failed: {exc}"
+
+    truncated = resp.text[:4000] if len(resp.text) > 4000 else resp.text
+    return f"HTTP {resp.status_code}\n{truncated}"
