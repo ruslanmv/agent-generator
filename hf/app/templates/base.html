@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Agent Generator{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              200: '#d4d4d8', 300: '#a1a1aa', 400: '#71717a',
+              500: '#3f3f50', 600: '#2a2a3a', 700: '#1e1e2a',
+              800: '#12121a', 900: '#0a0a0f', 950: '#050508',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-docker.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-markup.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-toml.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-light-bg: rgba(255, 255, 255, 0.08);
+      --text-primary: #e4e4e7;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --cyan: #06b6d4;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --pink: #ec4899;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --dark-900: #0a0a0f;
+      --dark-800: #12121a;
+      --dark-700: #1e1e2a;
+      --dark-600: #2a2a3a;
+      --dark-500: #3f3f50;
+      --dark-400: #71717a;
+      --dark-300: #a1a1aa;
+      --dark-200: #d4d4d8;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient background */
+    .bg-animated {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 60%);
+      animation: bgShift 20s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    /* Glass morphism */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+    }
+    .glass-light {
+      background: var(--glass-light-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+    }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .gradient-text-purple {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Animated gradient section */
+    .animated-gradient {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.05));
+      animation: gradientPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes gradientPulse {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    /* Glow effects */
+    .glow-cyan { box-shadow: 0 0 30px rgba(6, 182, 212, 0.15); }
+    .glow-blue { box-shadow: 0 0 30px rgba(59, 130, 246, 0.15); }
+    .glow-purple { box-shadow: 0 0 30px rgba(139, 92, 246, 0.15); }
+
+    /* Button gradients */
+    .btn-gradient {
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-gradient:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(6, 182, 212, 0.3);
+    }
+    .btn-gradient:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-gradient-purple {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .btn-gradient-purple:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3);
+    }
+    .btn-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      font-weight: 500;
+      border-radius: 12px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-glass:hover {
+      background: var(--glass-light-bg);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+    /* Code preview overrides */
+    pre[class*="language-"] {
+      background: rgba(0, 0, 0, 0.4) !important;
+      border-radius: 0 0 12px 12px !important;
+      margin: 0 !important;
+      padding: 20px !important;
+      font-size: 13px !important;
+      line-height: 1.6 !important;
+      max-height: 600px;
+      overflow: auto;
+    }
+    code[class*="language-"] {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+      font-size: 13px !important;
+    }
+
+    /* File tree */
+    .file-tree-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .file-tree-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+    .file-tree-item.active {
+      background: rgba(6, 182, 212, 0.1);
+      color: var(--cyan);
+      border-left: 2px solid var(--cyan);
+    }
+    .file-tree-folder {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Smooth transitions */
+    .transition-all { transition: all 0.3s ease; }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid;
+    }
+    .badge-cyan { background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.3); color: var(--cyan); }
+    .badge-blue { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); color: var(--blue); }
+    .badge-purple { background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3); color: var(--purple); }
+    .badge-green { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); color: var(--green); }
+    .badge-yellow { background: rgba(234, 179, 8, 0.1); border-color: rgba(234, 179, 8, 0.3); color: var(--yellow); }
+    .badge-red { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: var(--red); }
+
+    /* Form elements */
+    textarea, select, input[type="text"], input[type="number"] {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      color: var(--text-primary);
+      padding: 12px 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      width: 100%;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+    textarea:focus, select:focus, input[type="text"]:focus, input[type="number"]:focus {
+      border-color: rgba(6, 182, 212, 0.5);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+    }
+    textarea::placeholder, input::placeholder { color: var(--text-muted); }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    /* Range slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    /* Checkbox */
+    input[type="checkbox"] {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+    input[type="checkbox"]:checked {
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      border-color: var(--cyan);
+    }
+    input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 5px;
+      width: 5px; height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    /* Radio */
+    input[type="radio"] {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+    input[type="radio"]:checked {
+      border-color: var(--cyan);
+      background: rgba(0, 0, 0, 0.3);
+    }
+    input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px;
+      width: 8px; height: 8px;
+      background: var(--cyan);
+      border-radius: 50%;
+    }
+
+    /* Segmented control */
+    .segmented-control {
+      display: flex;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .segmented-control label {
+      flex: 1;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .segmented-control input[type="radio"] { display: none; }
+    .segmented-control input[type="radio"]:checked + label {
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      color: white;
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      animation: float 15s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      33% { transform: translateY(-30px) translateX(20px); }
+      66% { transform: translateY(20px) translateX(-15px); }
+    }
+
+    /* macOS dots */
+    .macos-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .macos-dots span {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* Wizard step indicator */
+    .wizard-steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .wizard-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+    .wizard-step.completed {
+      color: var(--green);
+    }
+    .wizard-step.active {
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+    .wizard-step.future {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+    .wizard-step-number {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1.5px solid;
+      flex-shrink: 0;
+    }
+    .wizard-step.completed .wizard-step-number {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: var(--green);
+    }
+    .wizard-step.active .wizard-step-number {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: var(--cyan);
+    }
+    .wizard-step.future .wizard-step-number {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: var(--dark-600);
+    }
+    .wizard-arrow {
+      color: var(--dark-600);
+      font-size: 12px;
+      padding: 0 4px;
+    }
+
+    /* Progress bar */
+    .wizard-progress {
+      height: 2px;
+      background: var(--dark-700);
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .wizard-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--blue));
+      transition: width 0.5s ease;
+    }
+
+    /* Editable card */
+    .editable-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    .editable-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .editable-card .card-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      width: 100%;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    .editable-card .card-input:hover {
+      border-color: var(--glass-border);
+    }
+    .editable-card .card-input:focus {
+      border-color: rgba(6, 182, 212, 0.4);
+      background: rgba(0, 0, 0, 0.35);
+    }
+    .editable-card .card-input-sm {
+      font-size: 13px;
+      padding: 6px 10px;
+      color: var(--text-secondary);
+    }
+
+    /* Tool group section */
+    .tool-group {
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--glass-border);
+    }
+    .tool-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* Framework card (radio styled as card) */
+    .framework-card {
+      position: relative;
+      background: var(--glass-bg);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .framework-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: var(--glass-light-bg);
+    }
+    .framework-card.selected {
+      border-color: var(--cyan);
+      background: rgba(6, 182, 212, 0.06);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+    }
+    .framework-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Tag chip */
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: rgba(6, 182, 212, 0.1);
+      color: var(--cyan);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+
+    /* Fade-in animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up { animation: slideUp 0.5s ease-out; }
+
+    /* Collapsible */
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .collapsible-content.open {
+      max-height: 500px;
+    }
+
+    /* File tree preview (configure page) */
+    .file-tree-preview-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="bg-animated"></div>
+
+  <!-- Navigation -->
+  <nav style="position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); background: rgba(10, 10, 15, 0.8);">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px;">
+      <!-- Logo -->
+      <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none; flex-shrink: 0;">
+        <div style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--cyan), var(--blue)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: white;">AG</div>
+        <span class="gradient-text" style="font-size: 18px; font-weight: 700;">Agent Generator</span>
+      </a>
+
+      <!-- Wizard Step Indicator -->
+      {% set current_step = current_step | default(1) %}
+      <div class="wizard-steps" style="display: none;" id="wizardSteps">
+        {% set steps = [
+          (1, "Describe"),
+          (2, "Plan"),
+          (3, "Configure"),
+          (4, "Generate")
+        ] %}
+        {% for num, label in steps %}
+          {% if num < current_step %}
+            <div class="wizard-step completed">
+              <div class="wizard-step-number">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <span>{{ label }}</span>
+            </div>
+          {% elif num == current_step %}
+            <div class="wizard-step active">
+              <div class="wizard-step-number">{{ num }}</div>
+              <span>{{ label }}</span>
+            </div>
+          {% else %}
+            <div class="wizard-step future">
+              <div class="wizard-step-number">{{ num }}</div>
+              <span>{{ label }}</span>
+            </div>
+          {% endif %}
+          {% if not loop.last %}
+            <span class="wizard-arrow">&rarr;</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Right side -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+        <!-- Inference status dot -->
+        <div id="inferenceStatusDot" style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); cursor: pointer;" title="Click to open settings" onclick="openSettings()">
+          <div id="statusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #3f3f50;"></div>
+          <span id="statusLabel" style="display: none;">Offline</span>
+        </div>
+        <!-- Settings gear -->
+        <button onclick="openSettings()" class="btn-glass" style="padding: 6px 10px; font-size: 12px; border-radius: 10px;" title="LLM Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <!-- GitHub -->
+        <a href="https://github.com/ruslanmv/agent-generator" target="_blank" class="btn-glass" style="padding: 6px 10px; font-size: 12px; border-radius: 10px;" title="GitHub">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </a>
+      </div>
+    </div>
+    <!-- Progress bar -->
+    <div class="wizard-progress">
+      <div class="wizard-progress-fill" style="width: {{ ((current_step - 1) / 3 * 100) | int }}%;"></div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer style="border-top: 1px solid var(--glass-border); padding: 32px 24px; text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 80px;">
+    <div style="max-width: 1280px; margin: 0 auto;">
+      <p><span class="gradient-text" style="font-weight: 600;">Agent Generator</span> v0.1.3 &mdash; Enterprise Multi-Agent System Builder</p>
+      <p style="margin-top: 8px; font-size: 12px;">&copy; 2025 Ruslan M.V. &middot; Apache License 2.0</p>
+    </div>
+  </footer>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div class="glass" style="width:100%; max-width:520px; margin:24px; padding:0; overflow:hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.5);">
+      <!-- Header -->
+      <div style="padding:20px 24px; border-bottom:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span style="font-weight:700; font-size:16px; color:var(--text-primary);">LLM Settings</span>
+        </div>
+        <button onclick="closeSettings()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div style="padding:24px; display:flex; flex-direction:column; gap:20px; max-height:70vh; overflow-y:auto;">
+        <!-- Connection Status -->
+        <div id="settingsStatus" style="padding:12px 16px; border-radius:10px; font-size:13px; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border);">
+          <div id="settingsStatusDot" style="width:8px; height:8px; border-radius:50%; background:#3f3f50; flex-shrink:0;"></div>
+          <span id="settingsStatusText" style="color:var(--text-muted);">Checking connection...</span>
+        </div>
+
+        <!-- Provider -->
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Provider</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+            <label class="framework-card" style="padding:10px 12px; text-align:center; border-radius:10px;" id="provOllama">
+              <input type="radio" name="s_provider" value="ollama" onchange="onProviderChange(this.value)">
+              <div style="font-weight:600; font-size:13px; color:var(--text-primary);">Ollama</div>
+              <div style="font-size:11px; color:var(--text-muted);">Local LLM</div>
+            </label>
+            <label class="framework-card" style="padding:10px 12px; text-align:center; border-radius:10px;" id="provOllabridge">
+              <input type="radio" name="s_provider" value="ollabridge" onchange="onProviderChange(this.value)">
+              <div style="font-weight:600; font-size:13px; color:var(--text-primary);">OllaBridge</div>
+              <div style="font-size:11px; color:var(--text-muted);">Remote LLM</div>
+            </label>
+            <label class="framework-card" style="padding:10px 12px; text-align:center; border-radius:10px;" id="provOpenai">
+              <input type="radio" name="s_provider" value="openai" onchange="onProviderChange(this.value)">
+              <div style="font-weight:600; font-size:13px; color:var(--text-primary);">OpenAI</div>
+              <div style="font-size:11px; color:var(--text-muted);">Cloud API</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Base URL -->
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Endpoint URL</label>
+          <input type="text" id="settingsBaseUrl" placeholder="http://localhost:11434" style="font-family:'JetBrains Mono',monospace; font-size:13px;">
+        </div>
+
+        <!-- Model -->
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Model</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="settingsModel" placeholder="qwen2.5:1.5b" style="font-family:'JetBrains Mono',monospace; font-size:13px; flex:1;">
+            <button onclick="refreshModels()" class="btn-glass" style="padding:8px 12px; border-radius:10px; white-space:nowrap; font-size:12px;" title="Refresh model list">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0115.36-6.36L21 8M3 22v-6h6M21 12a9 9 0 01-15.36 6.36L3 16"/></svg>
+            </button>
+          </div>
+          <div id="modelSuggestions" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:4px;"></div>
+        </div>
+
+        <!-- Auth Mode (for OllaBridge) -->
+        <div id="authModeSection" style="display:none;">
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.05em;">Authentication</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+            <label class="framework-card" style="padding:8px 10px; text-align:center; border-radius:10px;" id="authLocal">
+              <input type="radio" name="s_auth_mode" value="local" onchange="onAuthModeChange(this.value)">
+              <div style="font-weight:600; font-size:12px; color:var(--text-primary);">Local Trust</div>
+              <div style="font-size:10px; color:var(--text-muted);">No auth</div>
+            </label>
+            <label class="framework-card" style="padding:8px 10px; text-align:center; border-radius:10px;" id="authPairing">
+              <input type="radio" name="s_auth_mode" value="pairing" onchange="onAuthModeChange(this.value)">
+              <div style="font-weight:600; font-size:12px; color:var(--text-primary);">Device Pair</div>
+              <div style="font-size:10px; color:var(--text-muted);">Code-based</div>
+            </label>
+            <label class="framework-card" style="padding:8px 10px; text-align:center; border-radius:10px;" id="authApiKey">
+              <input type="radio" name="s_auth_mode" value="api_key" onchange="onAuthModeChange(this.value)">
+              <div style="font-weight:600; font-size:12px; color:var(--text-primary);">API Key</div>
+              <div style="font-size:10px; color:var(--text-muted);">Bearer token</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Device Pairing (for OllaBridge) -->
+        <div id="pairingSection" style="display:none;">
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Pairing Code</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="pairingCode" placeholder="Enter 6-digit code from OllaBridge console" style="font-family:'JetBrains Mono',monospace; font-size:15px; letter-spacing:0.2em; text-transform:uppercase; flex:1; text-align:center;" maxlength="10">
+            <button onclick="doPairing()" class="btn-gradient-purple" style="padding:8px 16px; border-radius:10px; font-size:12px; white-space:nowrap;" id="pairBtn">
+              <span id="pairBtnText">Pair</span>
+              <div class="spinner" id="pairSpinner" style="display:none; width:14px; height:14px;"></div>
+            </button>
+          </div>
+          <div id="pairingResult" style="margin-top:8px; font-size:12px; display:none;"></div>
+          <div id="pairedBadge" style="margin-top:8px; display:none;">
+            <span class="badge badge-green" style="gap:6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+              Paired — device <span id="pairedDeviceId" style="font-family:'JetBrains Mono',monospace;"></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- API Key -->
+        <div id="apiKeySection">
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">API Key <span style="font-weight:400; text-transform:none; color:var(--text-muted);">(optional for local)</span></label>
+          <input type="password" id="settingsApiKey" placeholder="Leave empty for local Ollama" style="font-family:'JetBrains Mono',monospace; font-size:13px;">
+        </div>
+
+        <!-- Temperature -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.05em;">Temperature</label>
+            <span id="settingsTempValue" style="font-size:12px; color:var(--cyan); font-family:'JetBrains Mono',monospace;">0.7</span>
+          </div>
+          <input type="range" id="settingsTemp" min="0" max="2" step="0.1" value="0.7" oninput="document.getElementById('settingsTempValue').textContent=this.value">
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:16px 24px; border-top:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <button onclick="testConnection()" class="btn-glass" style="padding:8px 16px; font-size:13px; border-radius:10px;" id="testBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          <span id="testBtnText">Test Connection</span>
+          <div class="spinner" id="testSpinner" style="display:none; width:14px; height:14px;"></div>
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button onclick="closeSettings()" class="btn-glass" style="padding:8px 16px; font-size:13px; border-radius:10px;">Cancel</button>
+          <button onclick="saveSettings()" class="btn-gradient" style="padding:8px 20px; font-size:13px; border-radius:10px;">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Show wizard steps on non-tiny screens
+    (function() {
+      var ws = document.getElementById('wizardSteps');
+      if (ws && window.innerWidth >= 768) ws.style.display = 'flex';
+    })();
+  </script>
+  <script src="/static/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Plan - {{ plan.name }} - Agent Generator{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-8">
+    <!-- Step Indicator -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 40px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: rgba(6, 182, 212, 0.2); border: 1px solid rgba(6, 182, 212, 0.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--cyan);">1</div>
+            <span style="font-size: 13px; color: var(--text-muted);">Describe</span>
+        </div>
+        <div style="width: 40px; height: 1px; background: var(--cyan);"></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white;">2</div>
+            <span style="font-size: 13px; color: var(--text-primary); font-weight: 600;">Plan</span>
+        </div>
+        <div style="width: 40px; height: 1px; background: var(--glass-border);"></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--glass-bg); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-muted);">3</div>
+            <span style="font-size: 13px; color: var(--text-muted);">Configure</span>
+        </div>
+        <div style="width: 40px; height: 1px; background: var(--glass-border);"></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--glass-bg); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-muted);">4</div>
+            <span style="font-size: 13px; color: var(--text-muted);">Generate</span>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div style="margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <h1 style="font-size: 28px; font-weight: 700;" class="gradient-text">Project Plan</h1>
+            {% if llm_enhanced %}
+            <span class="badge badge-purple">LLM Enhanced</span>
+            {% else %}
+            <span class="badge badge-cyan">Keyword Planned</span>
+            {% endif %}
+        </div>
+        <p style="color: var(--text-secondary); font-size: 14px;">Review and edit your project plan before configuring generation options.</p>
+    </div>
+
+    <!-- Plan Summary -->
+    <div class="glass" style="padding: 24px; margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Project Name</label>
+                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">{{ plan.name }}</div>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Framework</label>
+                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">{{ frameworks.get(plan.framework, plan.framework) }}</div>
+            </div>
+        </div>
+        <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Description</label>
+            <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">{{ plan.description }}</p>
+        </div>
+    </div>
+
+    <!-- Agents -->
+    <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Agents ({{ plan.agents | length }})
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+            {% for agent in plan.agents %}
+            <div class="glass-light" style="padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--cyan), var(--blue)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white;">{{ agent.id[:2] | upper }}</div>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">{{ agent.role }}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">{{ agent.id }}</div>
+                    </div>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">{{ agent.goal }}</p>
+                {% if agent.tools %}
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    {% for tool in agent.tools %}
+                    <span class="badge badge-blue" style="font-size: 11px; padding: 2px 8px;">{{ tool }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Tasks -->
+    <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Tasks ({{ plan.tasks | length }})
+        </h2>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            {% for task in plan.tasks %}
+            <div class="glass-light" style="padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;">
+                <div style="width: 24px; height: 24px; border-radius: 6px; background: rgba(139, 92, 246, 0.2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--purple); flex-shrink: 0; margin-top: 2px;">{{ loop.index }}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">{{ task.description }}</div>
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted);">
+                        <span>Agent: <span style="color: var(--cyan);">{{ task.agent_id }}</span></span>
+                        {% if task.depends_on %}
+                        <span>Depends on: {{ task.depends_on | join(', ') }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Tools -->
+    {% if plan.tools %}
+    <div style="margin-bottom: 32px;">
+        <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            Tools ({{ plan.tools | length }})
+        </h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            {% for tool in plan.tools %}
+            <span class="badge badge-green">{{ tool.id }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Edit Plan (inline) -->
+    <div class="glass" style="padding: 20px; margin-bottom: 24px;">
+        <h3 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Refine Plan
+        </h3>
+        <div style="display: flex; gap: 12px;">
+            <input type="text" id="editInput" placeholder="e.g., Add a quality reviewer agent, change framework to LangGraph..."
+                style="flex: 1;">
+            <button type="button" onclick="editPlan()" class="btn-gradient" id="editBtn" style="white-space: nowrap;">
+                <span id="editBtnText">Re-plan</span>
+                <div id="editSpinner" class="spinner" style="display: none;"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Action: Continue to Configure -->
+    <form action="/configure" method="POST">
+        <input type="hidden" name="plan_json" id="planJsonField" value='{{ plan_json }}'>
+        <input type="hidden" name="prompt" value="{{ prompt }}">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <a href="/" class="btn-glass">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Start
+            </a>
+            <button type="submit" class="btn-gradient" style="font-size: 16px; padding: 14px 32px;">
+                Continue to Configure
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    var currentPlan = {{ plan_json | safe }};
+    var currentPrompt = {{ prompt | tojson }};
+
+    function editPlan() {
+        var input = document.getElementById('editInput');
+        var edits = input.value.trim();
+        if (!edits) return;
+
+        var btn = document.getElementById('editBtn');
+        var btnText = document.getElementById('editBtnText');
+        var spinner = document.getElementById('editSpinner');
+        btn.disabled = true;
+        btnText.textContent = 'Planning...';
+        spinner.style.display = 'inline-block';
+
+        fetch('/edit-plan', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                prompt: currentPrompt,
+                edits: edits,
+                current_plan: currentPlan,
+            }),
+        })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                currentPlan = data.plan;
+                // Update hidden field
+                document.getElementById('planJsonField').value = JSON.stringify(currentPlan, null, 2);
+                // Reload page with new plan (simplest approach for full re-render)
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/plan';
+                var promptField = document.createElement('input');
+                promptField.type = 'hidden';
+                promptField.name = 'prompt';
+                promptField.value = currentPrompt + '. Additionally: ' + edits;
+                form.appendChild(promptField);
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                alert('Edit failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(function(err) {
+            alert('Request failed: ' + err.message);
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btnText.textContent = 'Re-plan';
+            spinner.style.display = 'none';
+        });
+    }
+
+    // Enter key in edit input
+    document.getElementById('editInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            editPlan();
+        }
+    });
+</script>
+{% endblock %}

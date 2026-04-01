@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% set current_step = 1 %}
+
+{% block title %}Agent Generator - Build Multi-Agent AI Systems{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="animated-gradient py-14 px-6 relative overflow-hidden">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="orb" style="width: 300px; height: 300px; background: rgba(6, 182, 212, 0.12); top: -50px; left: -50px;"></div>
+        <div class="orb" style="width: 250px; height: 250px; background: rgba(139, 92, 246, 0.10); bottom: -40px; right: -30px; animation-delay: -5s;"></div>
+    </div>
+
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-light text-cyan-400 text-sm font-medium mb-5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Step 1 of 4 &mdash; Describe Your System
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
+            <span class="gradient-text">What do you want to build?</span>
+        </h1>
+
+        <p class="text-lg text-dark-300 max-w-xl mx-auto leading-relaxed">
+            Describe your multi-agent system in plain English. We will generate a complete, production-ready project for you.
+        </p>
+    </div>
+</section>
+
+<!-- Main Form -->
+<section class="max-w-3xl mx-auto px-6 -mt-6 relative z-20">
+    {% if error %}
+    <div class="mb-6 p-4 rounded-xl bg-red-900/30 border border-red-500/30 text-red-300 animate-fade-in">
+        <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>{{ error }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <form id="generateForm" action="/plan" method="POST" class="glass rounded-2xl p-8 glow-blue animate-fade-in">
+        <!-- Prompt Input -->
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-dark-300 mb-2">Describe Your Agent Team</label>
+            <div class="relative">
+                <textarea name="prompt" id="promptInput" rows="5" required minlength="10" maxlength="2000"
+                    class="w-full resize-none"
+                    placeholder="e.g., Build a research team with a researcher that searches the web, an analyst that processes data, and a writer that creates comprehensive reports..."></textarea>
+                <div class="absolute bottom-3 right-3 text-xs text-dark-400" id="charCount">0 / 2000</div>
+            </div>
+            <p class="text-xs text-dark-400 mt-2">Describe agents, tasks, and goals in plain English. Minimum 10 characters.</p>
+        </div>
+
+        <!-- Quick Examples -->
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-dark-300 mb-3">Quick Examples</label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <button type="button" class="example-chip text-left p-3 rounded-xl glass-light hover:border-cyan-500/30 transition-all text-sm group"
+                    data-prompt="Build a research team with a web researcher that finds information online, a data analyst that processes and summarizes findings, and a report writer that creates comprehensive documents.">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-cyan-400 text-base">&#128269;</span>
+                        <span class="text-dark-200 group-hover:text-cyan-400 font-medium transition-colors text-sm">Research Team</span>
+                    </div>
+                    <span class="text-dark-400 text-xs">Web research & report writing</span>
+                </button>
+                <button type="button" class="example-chip text-left p-3 rounded-xl glass-light hover:border-cyan-500/30 transition-all text-sm group"
+                    data-prompt="Create a code review pipeline with a code analyzer that reads source files, a security auditor that checks for vulnerabilities, and a documentation writer that generates API docs.">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-blue-400 text-base">&#128187;</span>
+                        <span class="text-dark-200 group-hover:text-cyan-400 font-medium transition-colors text-sm">Code Review</span>
+                    </div>
+                    <span class="text-dark-400 text-xs">Security audit & docs</span>
+                </button>
+                <button type="button" class="example-chip text-left p-3 rounded-xl glass-light hover:border-cyan-500/30 transition-all text-sm group"
+                    data-prompt="Build a customer support system with a ticket classifier that categorizes incoming requests, a knowledge base searcher that finds relevant solutions, and a response drafter that writes professional replies.">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-purple-400 text-base">&#127919;</span>
+                        <span class="text-dark-200 group-hover:text-cyan-400 font-medium transition-colors text-sm">Support System</span>
+                    </div>
+                    <span class="text-dark-400 text-xs">Ticket routing & response</span>
+                </button>
+                <button type="button" class="example-chip text-left p-3 rounded-xl glass-light hover:border-cyan-500/30 transition-all text-sm group"
+                    data-prompt="Create a content marketing pipeline with a trend researcher that identifies popular topics, a content writer that creates blog posts and social media content, and an SEO optimizer that improves search rankings.">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-pink-400 text-base">&#128220;</span>
+                        <span class="text-dark-200 group-hover:text-cyan-400 font-medium transition-colors text-sm">Content Pipeline</span>
+                    </div>
+                    <span class="text-dark-400 text-xs">Blog, social & SEO</span>
+                </button>
+                <button type="button" class="example-chip text-left p-3 rounded-xl glass-light hover:border-cyan-500/30 transition-all text-sm group"
+                    data-prompt="Build a data engineering team with an ETL agent that extracts data from SQL databases, a data validator that checks quality and consistency, and a reporting agent that generates dashboards and summaries.">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-green-400 text-base">&#128202;</span>
+                        <span class="text-dark-200 group-hover:text-cyan-400 font-medium transition-colors text-sm">Data Pipeline</span>
+                    </div>
+                    <span class="text-dark-400 text-xs">ETL, validation & reports</span>
+                </button>
+                <button type="button" class="example-chip text-left p-3 rounded-xl glass-light hover:border-cyan-500/30 transition-all text-sm group"
+                    data-prompt="Create a legal document review system with a contract analyzer that reads PDF documents, a clause extractor that identifies key terms and obligations, and a risk assessor that flags potential issues.">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-yellow-400 text-base">&#9878;</span>
+                        <span class="text-dark-200 group-hover:text-cyan-400 font-medium transition-colors text-sm">Legal Review</span>
+                    </div>
+                    <span class="text-dark-400 text-xs">Contract & risk analysis</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" id="submitBtn" disabled
+            class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-lg transition-all hover:shadow-lg hover:shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3">
+            <span id="submitText">Continue</span>
+            <svg id="submitArrow" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            <div id="submitSpinner" class="spinner" style="display: none;"></div>
+        </button>
+    </form>
+</section>
+
+<!-- How It Works -->
+<section class="max-w-4xl mx-auto px-6 py-20">
+    <h2 class="text-2xl font-bold text-center mb-12 gradient-text">How It Works</h2>
+    <div class="relative">
+        <!-- Timeline connector line -->
+        <div class="hidden md:block absolute top-7 left-[12.5%] right-[12.5%] h-0.5" style="background: linear-gradient(90deg, var(--cyan), var(--blue), var(--purple), var(--pink));"></div>
+        <div class="grid md:grid-cols-4 gap-6 relative">
+            <div class="text-center">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4 text-xl font-bold text-cyan-400 relative z-10" style="background: var(--bg-primary);">1</div>
+                <h3 class="font-semibold text-dark-200 mb-1">Describe</h3>
+                <p class="text-dark-400 text-sm">Write what you need in plain English</p>
+            </div>
+            <div class="text-center">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4 text-xl font-bold text-blue-400 relative z-10" style="background: var(--bg-primary);">2</div>
+                <h3 class="font-semibold text-dark-200 mb-1">Plan</h3>
+                <p class="text-dark-400 text-sm">Review and edit detected agents, tasks, and tools</p>
+            </div>
+            <div class="text-center">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 text-xl font-bold text-purple-400 relative z-10" style="background: var(--bg-primary);">3</div>
+                <h3 class="font-semibold text-dark-200 mb-1">Configure</h3>
+                <p class="text-dark-400 text-sm">Choose framework, tools, and output mode</p>
+            </div>
+            <div class="text-center">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500/20 to-pink-500/10 border border-pink-500/20 flex items-center justify-center mx-auto mb-4 text-xl font-bold text-pink-400 relative z-10" style="background: var(--bg-primary);">4</div>
+                <h3 class="font-semibold text-dark-200 mb-1">Generate</h3>
+                <p class="text-dark-400 text-sm">Download your complete, production-ready project</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var textarea = document.getElementById('promptInput');
+    var charCount = document.getElementById('charCount');
+    var submitBtn = document.getElementById('submitBtn');
+    var submitText = document.getElementById('submitText');
+    var submitArrow = document.getElementById('submitArrow');
+    var submitSpinner = document.getElementById('submitSpinner');
+    var form = document.getElementById('generateForm');
+
+    // Character counter & button enable
+    textarea.addEventListener('input', function() {
+        var len = this.value.length;
+        charCount.textContent = len + ' / 2000';
+        submitBtn.disabled = len < 10;
+    });
+
+    // Quick example chips
+    document.querySelectorAll('.example-chip').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            textarea.value = this.getAttribute('data-prompt');
+            textarea.dispatchEvent(new Event('input'));
+            textarea.focus();
+        });
+    });
+
+    // Submit spinner
+    form.addEventListener('submit', function() {
+        if (textarea.value.length < 10) return false;
+        submitBtn.disabled = true;
+        submitText.textContent = 'Analyzing...';
+        submitArrow.style.display = 'none';
+        submitSpinner.style.display = 'inline-block';
+    });
+})();
+</script>
+{% endblock %}

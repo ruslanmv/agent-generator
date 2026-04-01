@@ -1,126 +1,166 @@
-# Architecture of agent-generator
+# Architecture
 
-This document describes the overall architecture of **agent-generator**, with a focus on the generative pipeline that transforms plain‑English prompts into fully configured agent code or YAML for various frameworks.
+## Pipeline Overview
 
-
-
-## 1. High‑Level Overview
-
-1. **User Input (CLI or Web UI)**: The user provides a natural‑language requirement, selects a framework, and optionally a provider, model, and other flags.
-2. **Env Loader**: `.env` variables are loaded into the process environment.
-3. **Pre‑flight Check**: Credentials for the chosen provider (WatsonX or OpenAI) are validated; helpful messages are printed if missing.
-4. **Settings Loader**: Pydantic reads `AGENTGEN_` environment variables and `.env` to build a `Settings` object, applying defaults and provider‑specific overrides (e.g., defaulting `gpt-4o` for OpenAI).
-5. **Parser**: The natural‑language prompt is parsed into a **Workflow** graph: a set of `Agent`, `Task`, and `Edge` objects that represent the multi‑agent workflow.
-6. **Prompt Renderer**: A Jinja template combines the workflow, settings, and framework instructions into a single string prompt for the LLM.
-7. **LLM Provider**: The prompt is sent to the selected LLM provider (WatsonX REST API or OpenAI SDK). The raw completion is returned.
-8. **Framework Generator**: Another set of Jinja templates consume the `Workflow` and generate code or YAML in the target framework’s syntax, leveraging the LLM response only when needed (e.g., to fill details in templates).
-9. **Output**: The generated code/YAML is either printed with syntax highlighting or written to a file. Token‑ and cost‑estimates are optionally shown.
-
-
-
-## 2. Component Breakdown
-
-### 2.1 CLI / Web UI
-
-* **`src/agent_generator/cli.py`**: Typer‑based CLI entrypoint for terminal usage.
-* **`src/agent_generator/web/`**: Flask application providing a browser UI with forms for prompt, framework, and provider selection.
-
-### 2.2 Configuration & Environment
-
-* **`config.py`**: Defines `Settings` model reading from `AGENTGEN_*` vars. Handles provider defaults, model overrides, and credential checks.
-* **`.env` support**: Load dotenv at startup to override environment values locally.
-
-### 2.3 Parser & Workflow Model
-
-* **`utils/parser.py`**: Converts free‑form English into a structured `Workflow`:
-
-  * `Agent` model: `id`, `role`, `tools`, `llm_config`.
-  * `Task` model: `id`, `goal`, `inputs`, `outputs`, `agent_id`.
-  * `Edge` model (future extension): dependencies between tasks.
-
-### 2.4 Prompt Rendering
-
-* **`utils/prompts.py`**: Jinja templates to render the full LLM prompt, injecting workflow and settings. Although currently not always used for code generation, it standardizes prompt creation.
-
-### 2.5 LLM Providers
-
-* **`providers/watsonx_provider.py`**: Thin wrapper around IBM WatsonX REST API.
-* **`providers/openai_provider.py`**: Wraps the OpenAI Python SDK; defaults to `gpt-4o` if no override.
-* **`providers/base.py`**: Shared interface (`generate`, `tokenize`, `estimate_cost`).
-
-### 2.6 Framework Generators
-
-Each framework lives in `src/agent_generator/frameworks/<name>/generator.py` and implements:
-
-* **`file_extension`**: `py` or `yaml`.
-* **`generate_code(workflow, settings, mcp)`**: Renders Jinja templates (`agent.jinja2`, `task.jinja2`, `main.jinja2`).
-
-Supported frameworks:
-
-* CrewAI (Python SDK)
-* CrewAI Flow (event‑driven)
-* LangGraph (DAG API)
-* ReAct (reason‑act pattern)
-* WatsonX Orchestrate (native YAML)
-
-### 2.7 Output & Utilities
-
-* **Syntax highlighting** via Rich when printing.
-* **MCP wrapper**: Optional FastAPI server scaffold if `--mcp` is passed.
-
-
-
-## 3. Generative Pipeline Detail
-
-### 3.1 Detailed Data Flow
-
-```mermaid
-flowchart TD
-  P[User Prompt] --> Parse
-  Parse[Parser → Workflow] --> PromptRender
-  PromptRender[Template Prompt] --> LLM
-  LLM[LLM Provider] --> Completion
-  Completion --> Generator[Framework Generator]
-  Generator --> Code[Generated Code/YAML]
+```
+User Prompt + Options
+       |
+       v
++-----------------------------+
+|  1. Keyword Planner         |  No LLM, instant
+|  Detect framework, tools,   |
+|  roles, complexity           |
++-------------+---------------+
+              |
+              v
++-----------------------------+
+|  2. LLM Planner             |  One LLM call
+|  Few-shot prompt produces    |
+|  structured ProjectSpec JSON |
++-------------+---------------+
+              |
+              v
++-----------------------------+
+|  3. Spec Normalizer          |  No LLM
+|  Validate references,        |
+|  check capability matrix,    |
+|  fix inconsistencies         |
++-------------+---------------+
+              |
+              v
++-----------------------------+
+|  4. Template Renderer        |  No LLM, Jinja2
+|  Render framework-specific   |
+|  files from ProjectSpec      |
++-------------+---------------+
+              |
+              v
++-----------------------------+
+|  5. Validation Pipeline      |  No LLM
+|  AST parse, YAML check,     |
+|  security scan, references   |
++-------------+---------------+
+              |
+              v
++-----------------------------+
+|  6. Package & Output         |
+|  ZIP bundle, file write,     |
+|  or API response             |
++-----------------------------+
 ```
 
-1. **Parser**: Breaks text into structured data.
-2. **PromptRender**: Applies Jinja to produce the text sent to the LLM.
-3. **LLM**: Returns a completion string with e.g. helper instructions or detailed sub‑prompts.
-4. **Generator**: Ignores most LLM output, instead using static templates to turn the `Workflow` graph into code.
-5. **Code**: Final output, ready to run or deploy.
+The LLM is used **once** (step 2). Everything else is deterministic.
 
-#### Why separate prompt vs generator?
-
-* Decouples **what** you ask the LLM (open‑ended natural‑language) from **how** you produce deterministic code templates.
-* Future architectures can inject LLM responses deeper into code gen templates.
-
-
-
-## 4. Extensibility & Customization
-
-* **Adding a Provider**: Create `providers/my_provider.py` implementing `BaseProvider`, register in `PROVIDERS` in `providers/__init__.py`.
-* **Adding a Framework**: Create `frameworks/my_framework/generator.py`, add templates under that folder, register in `FRAMEWORKS` in `frameworks/__init__.py`.
-* **Custom Prompts**: Modify or add Jinja templates in `utils/prompts.py`.
-* **Parser tweaks**: Improve `utils/parser.py` to extract richer workflows (e.g. data schemas, error handling agents).
-
-
-
-## 5. File Locations
+## Module Map
 
 ```
 src/agent_generator/
-├── cli.py
-├── config.py
-├── frameworks/
-│   └── <framework>/generator.py
-├── providers/
-│   └── *_provider.py
-└── utils/
-    ├── parser.py
-    └── prompts.py
+|
++-- domain/                    # Data contracts
+|   +-- project_spec.py        # ProjectSpec (canonical schema)
+|   +-- render_plan.py         # What files to generate
+|   +-- capability_matrix.py   # Framework support matrix
+|
++-- planners/                  # Planning layer
+|   +-- keyword_planner.py     # Fast keyword scoring (no LLM)
+|   +-- llm_planner.py         # LLM-powered spec generation
+|   +-- spec_normalizer.py     # Post-LLM validation
+|
++-- renderers/                 # Code generation (deterministic)
+|   +-- base.py                # BaseRenderer ABC
+|   +-- crewai_renderer.py     # CrewAI project (11 files)
+|   +-- langgraph_renderer.py  # LangGraph project
+|   +-- watsonx_renderer.py    # WatsonX YAML
+|   +-- packaging.py           # ZIP bundler
+|
++-- tools/                     # Tool template catalog
+|   +-- registry.py            # ToolTemplate registry
+|   +-- catalog/               # 6 Jinja2 tool templates
+|
++-- validators/                # Quality gates
+|   +-- spec_validator.py      # ProjectSpec validation
+|   +-- python_validator.py    # AST + security checks
+|   +-- yaml_validator.py      # YAML validation
+|   +-- pipeline.py            # Orchestrates all validators
+|
++-- frameworks/                # Legacy generators (still supported)
+|   +-- base.py                # BaseFrameworkGenerator + registry
+|   +-- crewai/                # CrewAI single-file generator
+|   +-- langgraph/             # LangGraph single-file generator
+|   +-- crewai_flow/           # CrewAI Flow generator
+|   +-- react/                 # ReAct generator
+|   +-- watsonx_orchestrate/   # WatsonX YAML generator
+|
++-- providers/                 # LLM backends
+|   +-- base.py                # BaseProvider + auto-registry
+|   +-- watsonx_provider.py    # IBM WatsonX REST API
+|   +-- openai_provider.py     # OpenAI SDK (optional)
+|
++-- web/                       # Web interface
+|   +-- routes/pages.py        # HTML routes (FastAPI)
+|   +-- routes/api.py          # JSON API endpoints
+|   +-- templates/             # Jinja2 HTML templates
+|   +-- static/app.js          # Client-side JavaScript
+|
++-- models/                    # Core data models
+|   +-- agent.py               # Agent, Tool, LLMConfig
+|   +-- task.py                # Task
+|   +-- workflow.py            # Workflow, WorkflowEdge
+|
++-- utils/                     # Utilities
+|   +-- parser.py              # NL -> Workflow (heuristic)
+|   +-- prompts.py             # LLM prompt templates
+|   +-- visualizer.py          # Mermaid + Graphviz diagrams
+|
++-- config.py                  # Settings (Pydantic-settings)
++-- cli.py                     # Typer CLI
++-- wsgi.py                    # ASGI entry point
 ```
 
+## Key Design Decisions
 
-Jump in: **[Installation ➜](installation.md)** · **[Usage ➜](usage.md)** · **[Frameworks ➜](frameworks.md)**
+**Spec-first generation:** The LLM produces a `ProjectSpec` JSON, not raw code. Renderers then produce deterministic output from the spec. Same spec = same output.
 
+**Capability matrix:** Not all frameworks support all artifact modes. The matrix explicitly defines what's valid, rejecting unsupported combinations early.
+
+**Auto-registration:** Providers and frameworks register themselves via `__init_subclass__()`. Adding a new one requires only subclassing -- no manual registration.
+
+**Tool catalog:** Tools come from approved Jinja2 templates, not free-form LLM generation. This ensures generated tools are safe and functional.
+
+**Validation pipeline:** Every artifact passes through syntax checking, security scanning, and reference validation before being returned to the user.
+
+## Extending
+
+### New Provider
+
+```python
+from agent_generator.providers.base import BaseProvider
+
+class MyProvider(BaseProvider):
+    name = "my_provider"
+    PRICING_PER_1K = (0.001, 0.002)
+
+    def generate(self, prompt: str, **kwargs) -> str:
+        return call_my_api(prompt)
+```
+
+### New Framework
+
+```python
+from agent_generator.frameworks.base import BaseFrameworkGenerator
+
+class MyFramework(BaseFrameworkGenerator):
+    framework = "my_framework"
+    file_extension = "py"
+
+    def _emit_core_code(self, workflow, settings) -> str:
+        return render_my_template(workflow)
+```
+
+### New Tool Template
+
+Add a `.py.j2` file to `tools/catalog/` and register it in `tools/registry.py`.
+
+---
+
+**Next:** [Frameworks](frameworks.md) | [Installation](installation.md)

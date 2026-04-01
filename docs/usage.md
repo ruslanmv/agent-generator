@@ -1,106 +1,152 @@
 # Usage Guide
 
-This page covers common workflows for both the **CLI** and the **Flask Web UI**.  
-For installation instructions see [Installation](installation.md).
+## CLI
 
-
-## 1  Command‑line interface
-
-### 1.1 Basic syntax
+### Basic Syntax
 
 ```bash
-agent-generator [OPTIONS] "plain‑English requirement"
+agent-generator "your requirement" --framework <framework> [options]
 ```
 
-### 1.2 Frequently used flags
+### Options
 
-| Flag / Option        | Description                                        | Example              |
-| -------------------- | -------------------------------------------------- | -------------------- |
-| `-f, --framework` \* | Which generator to use (`crewai`, `langgraph`, …). | `--framework crewai` |
-| `-p, --provider`     | LLM back‑end (`watsonx` default, or `openai`).     | `--provider openai`  |
-| `--model`            | Override default model for the provider.           | `--model gpt-4o`     |
-| `--temperature`      | Sampling randomness (0–2).                         | `--temperature 0.3`  |
-| `--max-tokens`       | Response length cap.                               | `--max-tokens 2048`  |
-| `--mcp / --no-mcp`   | Wrap Python output in an MCP FastAPI server.       | `--mcp`              |
-| `-o, --output PATH`  | Write result to file instead of stdout.            | `-o team.py`         |
-| `--dry-run`          | Build workflow + code skeleton but skip LLM call.  | `--dry-run`          |
-| `--show-cost`        | Print token counts & approximate USD cost.         | `--show-cost`        |
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-f, --framework` | *(required)* | `crewai`, `crewai_flow`, `langgraph`, `react`, `watsonx_orchestrate` |
+| `-p, --provider` | `watsonx` | `watsonx` or `openai` |
+| `--model` | provider default | Override LLM model |
+| `--mcp / --no-mcp` | off | Add MCP FastAPI wrapper |
+| `-o, --output` | stdout | Write to file |
+| `--dry-run` | off | No LLM call |
+| `--show-cost` | off | Show token/cost estimate |
+| `--temperature` | 0.7 | Sampling temperature |
+| `--max-tokens` | 4096 | Max completion tokens |
 
-### 1.3 Common recipes
+### Examples
 
-| Goal                                | Command                                                                        |
-| ----------------------------------- | ------------------------------------------------------------------------------ |
-| **Orchestrate YAML** from one‑liner | `agent-generator "Email summariser" -f watsonx_orchestrate -o summariser.yaml` |
-| **CrewAI Flow** with MCP wrapper    | `agent-generator "Analyse tweets" -f crewai_flow --mcp -o tweets_flow.py`      |
-| Cost estimate only                  | `agent-generator "Scrape website" -f react --dry-run --show-cost`              |
-| Use **OpenAI** instead of WatsonX   | `agent-generator "Write jokes" -f react -p openai --model gpt-4o`              |
-
-
-
-## 2  Flask Web UI
-
-### 2.1 Run locally
+**Generate a CrewAI project:**
 
 ```bash
-FLASK_APP=agent_generator.web FLASK_ENV=development flask run
-# visit http://localhost:5000
+agent-generator \
+  "Build a research team with a researcher and a writer" \
+  --framework crewai \
+  --output research_team.py
 ```
 
-### 2.2 Workflow
+**Generate WatsonX Orchestrate YAML:**
 
-1. **Fill in prompt** – describe your requirement.
-2. **Pick framework & provider** – drop‑downs.
-3. *(Optional)* toggle **MCP wrapper**.
-4. Click **Generate**.
-5. Download the code/YAML or copy‑paste from the preview.
-6. Mermaid diagram appears under the code for quick validation.
+```bash
+agent-generator \
+  "Customer support assistant that handles tickets" \
+  --framework watsonx_orchestrate \
+  --output support.yaml
+```
 
-![UI screenshot](images/ui-screenshot.png)
+**Use OpenAI instead of WatsonX:**
 
+```bash
+agent-generator \
+  "Data analysis pipeline" \
+  --framework langgraph \
+  --provider openai \
+  --model gpt-4o
+```
 
+**Dry run (no credentials needed):**
 
-## 3  Docker usage
+```bash
+agent-generator "Test agent" --framework crewai --dry-run
+```
+
+**With MCP wrapper:**
+
+```bash
+agent-generator \
+  "Research assistant" \
+  --framework crewai --mcp \
+  --output assistant.py
+```
+
+---
+
+## Web UI
+
+### Start the Server
+
+```bash
+# Development
+uvicorn agent_generator.wsgi:app --host 0.0.0.0 --port 8000 --reload
+
+# Production
+uvicorn agent_generator.wsgi:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+### Using the Web UI
+
+1. Open **http://localhost:8000**
+2. Describe your agent team in the text area
+3. Pick a framework (Auto, CrewAI, LangGraph, WatsonX)
+4. Choose artifact mode (Code Only, YAML Only, Code + YAML)
+5. Select tools from the catalog (optional)
+6. Click **Generate**
+7. Browse generated files in the file tree
+8. Preview code with syntax highlighting
+9. Download as ZIP
+10. Iterate with follow-up prompts
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Home page |
+| `/generate` | POST | Generate from form |
+| `/edit` | POST | Edit existing project |
+| `/download/{id}` | GET | Download ZIP |
+| `/api/plan` | POST | Get ProjectSpec JSON |
+| `/api/build` | POST | Build from ProjectSpec |
+| `/api/generate` | POST | Combined plan + build |
+| `/health` | GET | Health check |
+
+### API Example
+
+```bash
+curl -X POST http://localhost:8000/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Build a research team",
+    "framework": "crewai",
+    "provider": "watsonx"
+  }'
+```
+
+---
+
+## Docker
 
 ```bash
 docker build -t agent-generator .
 docker run -e WATSONX_API_KEY=... -e WATSONX_PROJECT_ID=... \
            -p 8000:8000 agent-generator
-# Web UI → http://localhost:8000
 ```
 
-You can also exec into the container to run the CLI:
+CLI inside Docker:
 
 ```bash
-docker run --rm agent-generator agent-generator "Say hi" -f react --dry-run
+docker run --rm -e WATSONX_API_KEY=... \
+  agent-generator agent-generator "Say hi" -f react --dry-run
 ```
 
+---
 
+## MCP Server Wrapper
 
-## 4  Serving generated MCP skills
-
-Every Python framework (`crewai`, `crewai_flow`, `langgraph`, `react`) can be generated with an **MCP wrapper**:
+Python outputs can include a FastAPI MCP wrapper:
 
 ```bash
-agent-generator "...data pipeline..." -f langgraph --mcp -o pipeline.py
-python pipeline.py serve      # exposes POST /invoke on port 8080
+agent-generator "Data pipeline" -f langgraph --mcp -o pipeline.py
+python pipeline.py   # Runs FastAPI on :8080 with POST /invoke
 ```
 
-Upload the packaged script or its Docker image to your MCP Gateway and then **import** it as a custom skill in WatsonX Orchestrate.
+---
 
-
-
-## 5  Troubleshooting
-
-| Symptom                        | Resolution                                                                          |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| *CLI raises 401* (WatsonX)     | Verify `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, region URL.                         |
-| *`ModuleNotFoundError: flask`* | `pip install "agent-generator[web]"`                                                |
-| *Diagram doesn’t render in UI* | Check browser console – Mermaid JS must load (make sure `unpkg.com` isn’t blocked). |
-| *High cost estimate*           | Lower `--max-tokens` or pick `llama‑3‑8b` instead.                                  |
-| *Gateway import fails*         | Ensure you used `--mcp` and port 8080 is exposed.                                   |
-
-Still stuck? Open an issue on the [GitHub tracker](https://github.com/ruslanmv/agent-generator/issues).
-
-
-Jump in: **[Installation ➜](installation.md)** · **[Usage ➜](usage.md)** · **[Frameworks ➜](frameworks.md)**
-
+**Next:** [Frameworks](frameworks.md) | [Architecture](architecture.md)

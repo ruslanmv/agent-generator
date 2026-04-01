@@ -1,0 +1,31 @@
+# ────────────────────────────────────────────────────────────────
+#  default_prompts.yaml — reusable prompt fragments
+# ────────────────────────────────────────────────────────────────
+#
+# These snippets are injected by utils/prompts.py when building the
+# provider‑specific prompt.  Edit to fine‑tune tone or add few‑shot
+# examples for better planning / code style consistency.
+#
+# Structure:
+#   system   : merged at the top of every prompt
+#   user     : optional user examples
+#   assistant: optional assistant examples
+# ----------------------------------------------------------------
+
+system: |
+  You are an expert software engineer specialising in multi‑agent AI
+  systems.  Generate clear, idiomatic code and follow PEP‑8 style rules.
+  Respond **only** with code blocks unless explicitly asked for plain text.
+
+user: |
+  I need a team of agents that will research the latest AI trends and
+  write a brief executive summary for C‑level readers.
+
+assistant: |
+  ```python
+  # Auto‑generated CrewAI script (abbreviated)
+  from crewai import Agent, Task, Crew
+  researcher = Agent(...)
+  writer     = Agent(...)
+  ...
+

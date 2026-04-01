@@ -1,0 +1,47 @@
+from crewai.tools import tool
+import chromadb
+
+
+_COLLECTION_NAME = "{{ collection_name | default('default') }}"
+
+
+@tool("Vector Search")
+def vector_search(query: str, n_results: int = 5) -> str:
+    """Perform semantic vector search over a ChromaDB collection.
+
+    Args:
+        query: Natural-language search query.
+        n_results: Number of results to return (default 5, max 20).
+
+    Returns:
+        Matching documents with their distances, or an error message.
+    """
+    n_results = max(1, min(n_results, 20))
+
+    client = chromadb.Client()
+    try:
+        collection = client.get_collection(name=_COLLECTION_NAME)
+    except Exception:
+        return (
+            f"Collection '{_COLLECTION_NAME}' not found. "
+            "Ensure the collection has been created and populated."
+        )
+
+    results = collection.query(query_texts=[query], n_results=n_results)
+
+    documents = results.get("documents", [[]])[0]
+    distances = results.get("distances", [[]])[0]
+    metadatas = results.get("metadatas", [[]])[0]
+
+    if not documents:
+        return "No matching documents found."
+
+    lines: list[str] = []
+    for idx, (doc, dist, meta) in enumerate(
+        zip(documents, distances, metadatas), start=1
+    ):
+        snippet = doc[:300] + "..." if len(doc) > 300 else doc
+        meta_str = f" | metadata: {meta}" if meta else ""
+        lines.append(f"{idx}. [distance={dist:.4f}{meta_str}] {snippet}")
+
+    return "\n".join(lines)

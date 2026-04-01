@@ -1,0 +1,59 @@
+from crewai.tools import tool
+import os
+from sqlalchemy import create_engine, text
+
+
+_CONNECTION_ENV = "{{ connection_string_env_var | default('DATABASE_URL') }}"
+
+
+@tool("SQL Query")
+def sql_query(query: str, params: str = "") -> str:
+    """Execute a read-only SQL query and return the results.
+
+    Args:
+        query: SQL SELECT statement. Only SELECT queries are allowed.
+        params: Optional JSON string of bind parameters (e.g. '{"id": 42}').
+
+    Returns:
+        Query results formatted as text rows, or an error message.
+    """
+    import json
+
+    conn_string = os.environ.get(_CONNECTION_ENV)
+    if not conn_string:
+        return f"Database connection not configured. Set the {_CONNECTION_ENV} environment variable."
+
+    normalized = query.strip().rstrip(";").lower()
+    if not normalized.startswith("select"):
+        return "Only SELECT queries are allowed for safety."
+
+    bind_params: dict = {}
+    if params:
+        try:
+            bind_params = json.loads(params)
+        except json.JSONDecodeError:
+            return "Error: 'params' must be a valid JSON object."
+
+    engine = create_engine(conn_string)
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text(query), bind_params)
+            columns = list(result.keys())
+            rows = result.fetchmany(100)
+
+        if not rows:
+            return "Query returned 0 rows."
+
+        header = " | ".join(columns)
+        lines = [header, "-" * len(header)]
+        for row in rows:
+            lines.append(" | ".join(str(v) for v in row))
+
+        if len(rows) == 100:
+            lines.append("... (results truncated to 100 rows)")
+
+        return "\n".join(lines)
+    except Exception as exc:
+        return f"SQL error: {exc}"
+    finally:
+        engine.dispose()

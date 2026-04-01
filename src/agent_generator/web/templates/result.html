@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% set current_step = 4 %}
+
+{% block title %}{{ plan.name }} - Generated Project{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 animate-fade-in">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-400">{{ fw_label }}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-dark-800 text-dark-400">{{ plan.get('artifact_mode', 'code_and_yaml') | replace('_', ' ') | title }}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    {{ files | length }} files
+                </span>
+            </div>
+            <h1 class="text-3xl font-bold gradient-text">{{ plan.name }}</h1>
+            <p class="text-dark-400 mt-1 text-sm">{{ plan.description[:150] }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/download/{{ project_id }}" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-sm transition-all hover:shadow-lg hover:shadow-cyan-500/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Download ZIP
+            </a>
+            <a href="/" class="flex items-center gap-2 px-5 py-2.5 rounded-xl glass hover:border-cyan-500/30 text-dark-300 hover:text-cyan-400 font-semibold text-sm transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                New Project
+            </a>
+        </div>
+    </div>
+
+    <!-- Validation Results -->
+    {% if validation %}
+    <div class="mb-6 animate-fade-in">
+        {% if not validation_errors %}
+        <div class="p-4 rounded-xl bg-emerald-900/20 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>All {{ validation_ok }} validation checks passed</span>
+        </div>
+        {% else %}
+        {% for v in validation_errors %}
+        <div class="mb-2 p-3 rounded-lg bg-red-900/20 border border-red-500/20 text-red-300 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            {{ v.file }}: {{ v.message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content: File Tree + Code Preview -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-slide-up">
+
+        <!-- File Tree Sidebar -->
+        <div class="lg:col-span-3">
+            <div class="glass rounded-xl overflow-hidden sticky top-20">
+                <div class="px-4 py-3 border-b border-dark-800">
+                    <h3 class="text-sm font-semibold text-dark-300 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                        Project Files
+                    </h3>
+                </div>
+                <div class="p-2 max-h-[60vh] overflow-y-auto" id="fileTree">
+                    {% for item in file_tree %}
+                    {% if item.type == 'dir' %}
+                    <div class="file-tree-item flex items-center gap-2 px-3 py-1.5 rounded-lg" style="padding-left: {{ (item.depth * 16) + 12 }}px;">
+                        <svg class="w-4 h-4 text-cyan-500/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                        <span class="text-sm text-dark-400">{{ item.name }}</span>
+                    </div>
+                    {% else %}
+                    <button type="button" class="file-tree-item w-full flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer text-left" style="padding-left: {{ (item.depth * 16) + 12 }}px;" data-filepath="{{ item.path }}" onclick="selectFile('{{ item.path }}')">
+                        <svg class="w-4 h-4 text-dark-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span class="text-sm text-dark-300 truncate">{{ item.name }}</span>
+                    </button>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Preview + Sandbox + Edit -->
+        <div class="lg:col-span-9">
+            <div class="glass rounded-xl overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-2 border-b border-dark-800 bg-dark-900/50">
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-500/60"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500/60"></div>
+                        </div>
+                        <span class="text-sm font-mono text-dark-400 ml-3" id="currentFileName">Select a file</span>
+                    </div>
+                    <button onclick="copyCode()" class="text-xs text-dark-500 hover:text-cyan-400 transition-colors flex items-center gap-1 px-2 py-1 rounded hover:bg-dark-800" id="copyBtn">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="overflow-auto max-h-[70vh] p-0" id="codeContainer">
+                    <div class="p-8 text-center text-dark-500" id="codePlaceholder">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-dark-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        <p>Click a file in the tree to view its code</p>
+                    </div>
+                    <pre class="hidden line-numbers" id="codeBlock"><code id="codeContent"></code></pre>
+                </div>
+            </div>
+
+            <!-- Sandbox Verification -->
+            <div class="glass rounded-xl mt-6 overflow-hidden" id="sandboxSection">
+                <div class="px-6 py-4 border-b border-dark-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+                        <h3 class="text-sm font-semibold text-dark-300">Sandbox Verification</h3>
+                        <span class="text-xs text-dark-500">Optional</span>
+                    </div>
+                    <button onclick="toggleSandbox()" id="sandboxToggle" class="relative w-11 h-6 rounded-full transition-colors duration-200" style="background: rgba(255,255,255,0.1);">
+                        <div id="sandboxToggleDot" class="absolute top-1 left-1 w-4 h-4 rounded-full bg-dark-400 transition-all duration-200"></div>
+                    </button>
+                </div>
+
+                <!-- Sandbox Content (hidden by default) -->
+                <div id="sandboxContent" style="display:none;">
+                    <!-- What will be tested -->
+                    <div class="px-6 py-4 border-b border-dark-800">
+                        <p class="text-xs text-dark-400 mb-3">The sandbox will run these checks on your generated project:</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="sandboxChecks">
+                            <div class="flex items-center gap-2 p-2 rounded-lg bg-dark-900/50 text-xs" data-check="syntax">
+                                <div class="w-5 h-5 rounded-full bg-dark-700 flex items-center justify-center" id="check-syntax-icon">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-dark-500"></div>
+                                </div>
+                                <span class="text-dark-300">Syntax</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 rounded-lg bg-dark-900/50 text-xs" data-check="security">
+                                <div class="w-5 h-5 rounded-full bg-dark-700 flex items-center justify-center" id="check-security-icon">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-dark-500"></div>
+                                </div>
+                                <span class="text-dark-300">Security</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 rounded-lg bg-dark-900/50 text-xs" data-check="dependencies">
+                                <div class="w-5 h-5 rounded-full bg-dark-700 flex items-center justify-center" id="check-deps-icon">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-dark-500"></div>
+                                </div>
+                                <span class="text-dark-300">Dependencies</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 rounded-lg bg-dark-900/50 text-xs" data-check="import">
+                                <div class="w-5 h-5 rounded-full bg-dark-700 flex items-center justify-center" id="check-import-icon">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-dark-500"></div>
+                                </div>
+                                <span class="text-dark-300">Import Test</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Run Button / Results -->
+                    <div class="px-6 py-4">
+                        <div id="sandboxIdle">
+                            <button onclick="runSandbox('{{ project_id }}')" id="sandboxRunBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span id="sandboxRunText">Run Sandbox Verification</span>
+                                <div class="spinner hidden" id="sandboxSpinner"></div>
+                            </button>
+                        </div>
+
+                        <!-- Results (shown after run) -->
+                        <div id="sandboxResults" style="display:none;" class="space-y-3">
+                            <div id="sandboxOverall" class="p-4 rounded-xl text-sm flex items-center gap-3"></div>
+                            <div id="sandboxSteps" class="space-y-2"></div>
+                            <!-- Terminal Log -->
+                            <div id="sandboxLogSection" style="display:none;">
+                                <button onclick="document.getElementById('sandboxLog').classList.toggle('hidden')" class="text-xs text-dark-500 hover:text-cyan-400 flex items-center gap-1 mb-2">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    Toggle Logs
+                                </button>
+                                <pre id="sandboxLog" class="hidden text-xs text-dark-400 bg-black/30 rounded-lg p-4 max-h-60 overflow-auto font-mono"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Iterate Section -->
+            <div class="glass rounded-xl mt-6 p-6">
+                <h3 class="text-sm font-semibold text-dark-300 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Iterate on Your Project
+                </h3>
+                <form action="/generate" method="POST" id="editForm" class="flex gap-3">
+                    <input type="hidden" name="plan_json" value='{{ plan | tojson }}'>
+                    <input type="hidden" name="prompt" value="{{ prompt }}">
+                    <input type="hidden" name="framework" value="{{ plan.framework }}">
+                    <input type="hidden" name="artifact_mode" value="{{ plan.get('artifact_mode', 'code_and_yaml') }}">
+                    <input type="text" name="edit_prompt" required
+                        class="flex-1 bg-dark-900/80 border border-dark-700 rounded-lg px-4 py-2.5 text-dark-300 placeholder-dark-600 text-sm focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20"
+                        placeholder="e.g., Add a quality reviewer agent, use vector search instead of web search...">
+                    <button type="submit" id="editBtn" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white font-semibold text-sm transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span id="editText">Regenerate</span>
+                        <div id="editSpinner" class="spinner hidden"></div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File data for JS -->
+<script id="fileData" type="application/json">{{ files | tojson }}</script>
+<script>
+var _projectId = "{{ project_id }}";
+var _framework = "{{ plan.framework }}";
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const fileData = JSON.parse(document.getElementById('fileData').textContent);
+    const firstFile = Object.keys(fileData)[0];
+    if (firstFile) selectFile(firstFile);
+</script>
+{% endblock %}
