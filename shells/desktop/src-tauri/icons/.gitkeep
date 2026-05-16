@@ -1,8 +1,0 @@
-# Icons land here.
-#
-# Drop a single 1024×1024 PNG at `source.png` and run
-#   npm --prefix .. run icons
-# to generate every per-platform variant
-# (`32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.icns`, `icon.ico`).
-#
-# We don't commit the generated variants — only `source.png`.

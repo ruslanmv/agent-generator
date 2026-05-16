@@ -182,6 +182,16 @@ jobs:
         working-directory: ${{ env.DESKTOP_DIR }}
         run: npm install --no-audit --no-fund
 
+      # ── Generate icon variants ──────────────────────────────────
+      # The repo only commits `src-tauri/icons/source.png`. Tauri's
+      # build needs the per-platform variants (32x32.png used by tray
+      # via include_bytes!, icon.ico for the Windows resource file,
+      # icon.icns for macOS bundle metadata, etc.) so we regenerate
+      # them from the source PNG before every build.
+      - name: Generate Tauri icons
+        working-directory: ${{ env.DESKTOP_DIR }}
+        run: npx tauri icon ./src-tauri/icons/source.png
+
       # ── Tauri build ─────────────────────────────────────────────
       - name: Build (signed when secrets present)
         working-directory: ${{ env.DESKTOP_DIR }}

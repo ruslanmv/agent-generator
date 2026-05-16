@@ -1,137 +1,85 @@
-# Architecture
+# How it works
 
-## Pipeline Overview
+One LLM call. Everything else is deterministic. That's the whole idea.
+
+## The pipeline
 
 ```
-User Prompt + Options
-       |
-       v
-+-----------------------------+
-|  1. Keyword Planner         |  No LLM, instant
-|  Detect framework, tools,   |
-|  roles, complexity           |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-|  2. LLM Planner             |  One LLM call
-|  Few-shot prompt produces    |
-|  structured ProjectSpec JSON |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-|  3. Spec Normalizer          |  No LLM
-|  Validate references,        |
-|  check capability matrix,    |
-|  fix inconsistencies         |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-|  4. Template Renderer        |  No LLM, Jinja2
-|  Render framework-specific   |
-|  files from ProjectSpec      |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-|  5. Validation Pipeline      |  No LLM
-|  AST parse, YAML check,     |
-|  security scan, references   |
-+-------------+---------------+
-              |
-              v
-+-----------------------------+
-|  6. Package & Output         |
-|  ZIP bundle, file write,     |
-|  or API response             |
-+-----------------------------+
+Your prompt
+    │
+    ▼
+1. Keyword planner    ← no LLM. Detects framework, tools, roles, complexity.
+    │
+    ▼
+2. LLM planner        ← one LLM call. Produces a ProjectSpec JSON.
+    │
+    ▼
+3. Spec normaliser    ← no LLM. Validates references, fixes inconsistencies.
+    │
+    ▼
+4. Template renderer  ← no LLM. Jinja2 → files.
+    │
+    ▼
+5. Validation         ← no LLM. AST + YAML + security + reference checks.
+    │
+    ▼
+6. Output             ← ZIP, file, or API response.
 ```
 
-The LLM is used **once** (step 2). Everything else is deterministic.
+Same prompt → same `ProjectSpec` → same files. Re-runs are byte-identical.
 
-## Module Map
+## Why a spec, not raw code
+
+The LLM hands back a structured `ProjectSpec` — agents, tasks, tools,
+LLM config, framework, artifact mode. Renderers turn that spec into
+files through templates. No raw code ever crosses the LLM boundary.
+
+That's how we keep three things true at once:
+
+1. **Reproducibility.** Same spec, same output.
+2. **Safety.** No model-emitted code reaches your disk.
+3. **Auditability.** The spec is small, human-readable, and stored.
+
+## What lives where
 
 ```
 src/agent_generator/
-|
-+-- domain/                    # Data contracts
-|   +-- project_spec.py        # ProjectSpec (canonical schema)
-|   +-- render_plan.py         # What files to generate
-|   +-- capability_matrix.py   # Framework support matrix
-|
-+-- planners/                  # Planning layer
-|   +-- keyword_planner.py     # Fast keyword scoring (no LLM)
-|   +-- llm_planner.py         # LLM-powered spec generation
-|   +-- spec_normalizer.py     # Post-LLM validation
-|
-+-- renderers/                 # Code generation (deterministic)
-|   +-- base.py                # BaseRenderer ABC
-|   +-- crewai_renderer.py     # CrewAI project (11 files)
-|   +-- langgraph_renderer.py  # LangGraph project
-|   +-- watsonx_renderer.py    # WatsonX YAML
-|   +-- packaging.py           # ZIP bundler
-|
-+-- tools/                     # Tool template catalog
-|   +-- registry.py            # ToolTemplate registry
-|   +-- catalog/               # 6 Jinja2 tool templates
-|
-+-- validators/                # Quality gates
-|   +-- spec_validator.py      # ProjectSpec validation
-|   +-- python_validator.py    # AST + security checks
-|   +-- yaml_validator.py      # YAML validation
-|   +-- pipeline.py            # Orchestrates all validators
-|
-+-- frameworks/                # Legacy generators (still supported)
-|   +-- base.py                # BaseFrameworkGenerator + registry
-|   +-- crewai/                # CrewAI single-file generator
-|   +-- langgraph/             # LangGraph single-file generator
-|   +-- crewai_flow/           # CrewAI Flow generator
-|   +-- react/                 # ReAct generator
-|   +-- watsonx_orchestrate/   # WatsonX YAML generator
-|
-+-- providers/                 # LLM backends
-|   +-- base.py                # BaseProvider + auto-registry
-|   +-- watsonx_provider.py    # IBM WatsonX REST API
-|   +-- openai_provider.py     # OpenAI SDK (optional)
-|
-+-- web/                       # Web interface
-|   +-- routes/pages.py        # HTML routes (FastAPI)
-|   +-- routes/api.py          # JSON API endpoints
-|   +-- templates/             # Jinja2 HTML templates
-|   +-- static/app.js          # Client-side JavaScript
-|
-+-- models/                    # Core data models
-|   +-- agent.py               # Agent, Tool, LLMConfig
-|   +-- task.py                # Task
-|   +-- workflow.py            # Workflow, WorkflowEdge
-|
-+-- utils/                     # Utilities
-|   +-- parser.py              # NL -> Workflow (heuristic)
-|   +-- prompts.py             # LLM prompt templates
-|   +-- visualizer.py          # Mermaid + Graphviz diagrams
-|
-+-- config.py                  # Settings (Pydantic-settings)
-+-- cli.py                     # Typer CLI
-+-- wsgi.py                    # ASGI entry point
+├── domain/         data contracts (ProjectSpec, RenderPlan, capability matrix)
+├── planners/       keyword planner · LLM planner · spec normaliser
+├── renderers/      per-framework renderers + the ZIP packager
+├── tools/          tool template catalogue (Jinja2)
+├── validators/     AST · YAML · security · spec · reference checks
+├── frameworks/     legacy single-file generators (still supported)
+├── providers/      WatsonX · OpenAI (auto-registered subclasses)
+├── web/            FastAPI routes + templates + static
+├── models/         core domain models (Agent, Task, Workflow)
+├── utils/          parser, prompt templates, visualiser
+├── config.py       Pydantic-settings
+├── cli.py          Typer CLI
+└── wsgi.py         ASGI entrypoint
 ```
 
-## Key Design Decisions
+## Decisions that matter
 
-**Spec-first generation:** The LLM produces a `ProjectSpec` JSON, not raw code. Renderers then produce deterministic output from the spec. Same spec = same output.
+**Spec-first.** Every entry point — CLI, web, API — funnels through
+`PlanningService → ProjectSpec → BuildService → ArtifactBundle`. One
+production pipeline, three faces.
 
-**Capability matrix:** Not all frameworks support all artifact modes. The matrix explicitly defines what's valid, rejecting unsupported combinations early.
+**Capability matrix.** Not every framework supports every artifact mode.
+The matrix in `domain/capability_matrix.py` rejects bad combinations
+early instead of letting the LLM guess.
 
-**Auto-registration:** Providers and frameworks register themselves via `__init_subclass__()`. Adding a new one requires only subclassing -- no manual registration.
+**Auto-registration.** Providers and frameworks register themselves via
+`__init_subclass__`. Adding a new one means subclassing — no manual
+plumbing.
 
-**Tool catalog:** Tools come from approved Jinja2 templates, not free-form LLM generation. This ensures generated tools are safe and functional.
+**Tool catalogue, not free-form tools.** Tools come from approved
+templates in `tools/catalog/`. That's how generated agents end up with
+working, safe tools every time.
 
-**Validation pipeline:** Every artifact passes through syntax checking, security scanning, and reference validation before being returned to the user.
+## Extending it
 
-## Extending
-
-### New Provider
+### Add a provider
 
 ```python
 from agent_generator.providers.base import BaseProvider
@@ -144,7 +92,7 @@ class MyProvider(BaseProvider):
         return call_my_api(prompt)
 ```
 
-### New Framework
+### Add a framework
 
 ```python
 from agent_generator.frameworks.base import BaseFrameworkGenerator
@@ -157,10 +105,12 @@ class MyFramework(BaseFrameworkGenerator):
         return render_my_template(workflow)
 ```
 
-### New Tool Template
+### Add a tool template
 
-Add a `.py.j2` file to `tools/catalog/` and register it in `tools/registry.py`.
+Drop a `.py.j2` into `tools/catalog/` and register it in
+`tools/registry.py`. The wizard, the planner, and the renderers all
+pick it up.
 
 ---
 
-**Next:** [Frameworks](frameworks.md) | [Installation](installation.md)
+**Next:** [Platform overview](platform.md) · [Production readiness](production-readiness.md)

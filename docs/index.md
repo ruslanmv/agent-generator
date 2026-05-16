@@ -1,76 +1,58 @@
 # agent-generator
 
-*From one plain-English sentence to a production-ready multi-agent project.*
+**Describe an AI team in plain English. Get a runnable project.**
 
 ![logo](images/logo.png)
 
-`agent-generator` converts natural language descriptions into complete, runnable
-multi-agent projects for:
+You write one sentence. agent-generator picks a framework, wires the
+agents, generates the code, validates it, and hands you a ZIP you can
+unpack and run.
 
-- **CrewAI** (Python + YAML config)
-- **LangGraph** (StateGraph with typed state)
-- **WatsonX Orchestrate** (ADK YAML)
-- **CrewAI Flow** (event-driven pipelines)
-- **ReAct** (reasoning + tool loop)
+## What you can build
 
-Choose your LLM provider:
+- **CrewAI** projects — Python + YAML, ready for `crewai run`
+- **LangGraph** state machines — typed graphs with one node per task
+- **WatsonX Orchestrate** YAML — import straight into Orchestrate
+- **CrewAI Flow** pipelines — event-driven mini-crews
+- **ReAct** loops — single-file reasoning + tool agents
 
-- **IBM WatsonX** (default)
-- **OpenAI** (via `--provider openai`)
+Run on **WatsonX** out of the box, or switch to **OpenAI** with one flag.
 
----
-
-## How It Works
-
-1. **Describe** your agent team in plain English
-2. **Plan** -- keyword pre-classifier + one LLM call produces a structured ProjectSpec
-3. **Generate** -- Jinja2 templates render deterministic, reproducible code
-4. **Validate** -- AST check, YAML parse, security scan, reference validation
-5. **Package** -- Download as ZIP or write to file
-
-The LLM is used **once** to produce a structured spec. Everything after that is deterministic.
-
----
-
-## What You Get
-
-| Framework | Files Generated |
-|-----------|----------------|
-| CrewAI (code+yaml) | `crew.py`, `main.py`, `agents.yaml`, `tasks.yaml`, tools, tests, `pyproject.toml`, README |
-| LangGraph | `graph.py`, `main.py`, `nodes.py`, `requirements.txt`, README |
-| WatsonX Orchestrate | `agent.yaml`, README |
-| CrewAI Flow | Single Python file with Flow class |
-| ReAct | Single Python file with reasoning loop |
-
----
-
-## Features
-
-| Feature | Description |
-|---------|-------------|
-| Multi-framework | 5 frameworks supported |
-| Provider-agnostic | WatsonX (default) + OpenAI |
-| Tool catalog | 6 built-in tool templates (web search, PDF, SQL, etc.) |
-| MCP wrapper | FastAPI `/invoke` endpoint for any Python output |
-| Web UI | Glassmorphism dark theme with file tree, code preview, ZIP download |
-| Validation | Python AST, YAML schema, security scan, reference checks |
-| CLI | Typer-based with dry-run, cost estimation, syntax highlighting |
-| Extensible | Add providers/frameworks via one subclass |
-
----
-
-## Quick Install
+## 60-second tour
 
 ```bash
 pip install agent-generator
+agent-generator "Build a research team with a researcher and a writer" \
+  -f crewai -o team/
+cd team && crewai run
 ```
 
-For all extras:
+That's it. No prompt engineering, no wiring tools by hand, no copy-pasting
+boilerplate. The LLM is called **once** to produce a structured plan; the
+rest is template rendering, so the same prompt always yields the same code.
 
-```bash
-pip install "agent-generator[all]"
-```
+## Why it's safe to ship
+
+| Concern | How we handle it |
+|---|---|
+| **Hallucinated code** | Templates render from a validated `ProjectSpec`, not from raw LLM output. |
+| **Unsafe patterns** | AST scanner blocks `eval`, `exec`, `os.system`, bare `subprocess`. |
+| **Drift between runs** | Same prompt + same spec = byte-identical output. |
+| **Secrets in code** | Generated `.env.example` only; real secrets live in the platform's vault. |
+| **Audit trail** | Every generation is logged; the platform stores the spec and the diff. |
+
+## Two ways to use it
+
+| | CLI | Platform |
+|---|---|---|
+| **Install** | `pip install agent-generator` | `make install` from a clone |
+| **Output** | Files to disk | Web · Desktop · Android |
+| **Best for** | Scripts, CI, one-offs | Teams, enterprises, marketplaces |
+
+The CLI is the original tool. The platform adds a FastAPI backend, a SPA,
+desktop installers (Tauri), an Android app (Capacitor), audit logs, a
+project marketplace, and Helm charts. Same generator under the hood.
 
 ---
 
-**Next:** [Installation](installation.md) | [Usage](usage.md) | [Frameworks](frameworks.md) | [Architecture](architecture.md)
+**Next:** [Install in 30 seconds](installation.md) · [Usage recipes](usage.md) · [Pick a framework](frameworks.md)

@@ -1,30 +1,65 @@
-# mkdocs.yml — configuration for your documentation site
+# mkdocs.yml — configuration for the docs site.
 
 site_name: agent-generator
-site_description: Turn plain‑English requirements into fully‑configured multi‑agent AI teams.
+site_description: Describe an AI team in plain English. Get a runnable project.
 site_author: Ruslan M. V.
 repo_url: https://github.com/ruslanmv/agent-generator
+edit_uri: edit/master/docs/
 
 docs_dir: docs
 site_dir: site
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Install in 30s: installation.md
   - Usage: usage.md
-  - Frameworks: frameworks.md
-  - Architecture: architecture.md
+  - Pick a framework: frameworks.md
+  - How it works: architecture.md
   - Platform overview: platform.md
   - Production readiness: production-readiness.md
   - Release process: release-process.md
 
 theme:
   name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - navigation.tabs
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 plugins:
   - search
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
+  - tables
   - toc:
       permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
