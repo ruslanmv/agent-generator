@@ -70,7 +70,11 @@ jobs:
         platform:
           - id: macos
             runner: macos-14
-            rust_target: universal-apple-darwin
+            # `universal-apple-darwin` is a Tauri/lipo meta-target — it
+            # isn't a real rustup target, so install both arch-specific
+            # toolchains and let `tauri build --target universal-...`
+            # lipo the two release binaries together.
+            rust_target: aarch64-apple-darwin,x86_64-apple-darwin
             bundle_targets: "app,dmg"
             tauri_args: "--target universal-apple-darwin"
           - id: windows
