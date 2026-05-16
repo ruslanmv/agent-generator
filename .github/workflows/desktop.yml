@@ -196,8 +196,12 @@ jobs:
           # Tauri auto-update signing
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # Reproducible builds
-          SOURCE_DATE_EPOCH: ${{ github.event.head_commit.timestamp && '' }}
+          # SOURCE_DATE_EPOCH for reproducible builds is intentionally
+          # not set: cc-rs (pulled in transitively by tauri's objc2
+          # crates) rejects empty / non-integer values, and the
+          # previous expression always evaluated to ''. Re-add it as a
+          # real Unix epoch (e.g. via `date -d "$timestamp" +%s`) when
+          # reproducible-build invariants become a release blocker.
         run: |
           npx tauri build --bundles ${{ matrix.platform.bundle_targets }} ${{ matrix.platform.tauri_args }} ${{ contains(matrix.platform.bundle_targets, 'app') && secrets.TAURI_SIGNING_PRIVATE_KEY != '' && '--features updater' || '' }}
 
