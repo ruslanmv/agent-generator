@@ -1,0 +1,327 @@
+name: desktop
+
+# Build signed Agent Generator desktop artefacts for every supported
+# platform. Lands ahead of the maintainer provisioning the repo
+# secrets — when any secret is missing, the workflow falls back to an
+# unsigned build of that platform (visible in the job summary) so we
+# never break PR CI.
+#
+# Outputs uploaded as workflow artefacts, and on tag pushes (v*.*.*)
+# attached to the matching GitHub Release for tauri-plugin-updater to
+# pull from.
+#
+# Matrix
+# ---------------------------------------------------------------
+#   macos-14    universal2  -> .dmg + .app       (codesign + notarization)
+#   windows-2022 x86_64      -> .msi + setup.exe (signtool, EV cert)
+#   ubuntu-22.04 x86_64      -> .AppImage / .deb / .rpm (GPG signed)
+#
+# Required repo secrets when signing is desired:
+#   APPLE_CERTIFICATE          (base64 .p12)
+#   APPLE_CERTIFICATE_PASSWORD
+#   APPLE_SIGNING_IDENTITY     "Developer ID Application: ..."
+#   APPLE_ID
+#   APPLE_PASSWORD             (app-specific notarization password)
+#   APPLE_TEAM_ID
+#   WINDOWS_CERTIFICATE        (base64 .pfx, EV recommended)
+#   WINDOWS_CERTIFICATE_PASSWORD
+#   GPG_PRIVATE_KEY            (ASCII-armored, for .deb / .rpm / .AppImage)
+#   GPG_PASSPHRASE
+#   TAURI_SIGNING_PRIVATE_KEY  (ed25519, generated with `tauri signer generate`)
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+
+on:
+  push:
+    branches: [master, "claude/**"]
+    tags:
+      - "v*.*.*"
+    paths:
+      - "frontend/**"
+      - "shells/desktop/**"
+      - ".github/workflows/desktop.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "shells/desktop/**"
+      - ".github/workflows/desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write       # tagged releases attach desktop binaries
+  id-token: write       # apple notarization OIDC (future)
+
+env:
+  FRONTEND_DIR: frontend
+  DESKTOP_DIR: shells/desktop
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: short
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build · ${{ matrix.platform.id }}
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - id: macos
+            runner: macos-14
+            rust_target: universal-apple-darwin
+            bundle_targets: "app,dmg"
+            tauri_args: "--target universal-apple-darwin"
+          - id: windows
+            runner: windows-2022
+            rust_target: x86_64-pc-windows-msvc
+            bundle_targets: "msi,nsis"
+            tauri_args: ""
+          - id: linux
+            runner: ubuntu-22.04
+            rust_target: x86_64-unknown-linux-gnu
+            bundle_targets: "deb,rpm,appimage"
+            tauri_args: ""
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Node + Rust toolchains ──────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.rust_target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.DESKTOP_DIR }}/src-tauri -> target
+
+      # ── Linux system deps ───────────────────────────────────────
+      - name: Install Linux system deps
+        if: matrix.platform.id == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            rpm
+
+      # ── macOS signing material ──────────────────────────────────
+      - name: Import Apple Developer ID
+        if: matrix.platform.id == 'macos' && env.APPLE_CERTIFICATE != ''
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/build.keychain"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+          echo "$APPLE_CERTIFICATE" | base64 -d > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" \
+            -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+
+      # ── Windows signing material ────────────────────────────────
+      - name: Stage Authenticode certificate
+        if: matrix.platform.id == 'windows' && env.WINDOWS_CERTIFICATE != ''
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllBytes(
+            "$env:RUNNER_TEMP\authenticode.pfx",
+            [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE)
+          )
+
+      # ── Linux GPG key ───────────────────────────────────────────
+      - name: Import GPG signing key
+        if: matrix.platform.id == 'linux' && env.GPG_PRIVATE_KEY != ''
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          # Echo passphrase to gpg-agent so the post-build sign step is non-interactive.
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+
+      # ── Frontend build ──────────────────────────────────────────
+      - name: Install + build the SPA
+        working-directory: ${{ env.FRONTEND_DIR }}
+        env:
+          AG_BUILD_CHANNEL: tauri
+        run: |
+          npm ci
+          npm run build
+
+      # ── Desktop shell deps ──────────────────────────────────────
+      - name: Install desktop shell deps
+        working-directory: ${{ env.DESKTOP_DIR }}
+        run: npm install --no-audit --no-fund
+
+      # ── Tauri build ─────────────────────────────────────────────
+      - name: Build (signed when secrets present)
+        working-directory: ${{ env.DESKTOP_DIR }}
+        env:
+          # macOS
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          # Tauri auto-update signing
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Reproducible builds
+          SOURCE_DATE_EPOCH: ${{ github.event.head_commit.timestamp && '' }}
+        run: |
+          npx tauri build --bundles ${{ matrix.platform.bundle_targets }} ${{ matrix.platform.tauri_args }} ${{ contains(matrix.platform.bundle_targets, 'app') && secrets.TAURI_SIGNING_PRIVATE_KEY != '' && '--features updater' || '' }}
+
+      # ── macOS notarization ──────────────────────────────────────
+      - name: Notarize + staple
+        if: matrix.platform.id == 'macos' && env.APPLE_ID != ''
+        working-directory: ${{ env.DESKTOP_DIR }}/src-tauri/target/universal-apple-darwin/release/bundle
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          DMG="$(ls dmg/*.dmg | head -n1)"
+          xcrun notarytool submit "$DMG" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+          xcrun stapler staple "$DMG"
+
+      # ── Windows signtool ────────────────────────────────────────
+      - name: Sign Windows installers
+        if: matrix.platform.id == 'windows' && env.WINDOWS_CERTIFICATE != ''
+        working-directory: ${{ env.DESKTOP_DIR }}/src-tauri/target/release/bundle
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        shell: pwsh
+        run: |
+          $signtool = (Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+                       Where-Object { $_.FullName -like '*x64*' } | Select-Object -First 1).FullName
+          Get-ChildItem -Recurse -Include *.msi,*.exe | ForEach-Object {
+            & $signtool sign /f "$env:RUNNER_TEMP\authenticode.pfx" /p $env:WINDOWS_CERTIFICATE_PASSWORD `
+              /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $_.FullName
+          }
+
+      # ── Linux GPG sign .deb / .rpm / .AppImage ──────────────────
+      - name: Sign Linux artefacts
+        if: matrix.platform.id == 'linux' && env.GPG_PRIVATE_KEY != ''
+        working-directory: ${{ env.DESKTOP_DIR }}/src-tauri/target/release/bundle
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          for f in $(find . -type f \( -name '*.deb' -o -name '*.rpm' -o -name '*.AppImage' \)); do
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "$GPG_PASSPHRASE" \
+              --detach-sign --armor "$f"
+          done
+
+      # ── Upload artefacts ────────────────────────────────────────
+      - name: Upload artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-generator-desktop-${{ matrix.platform.id }}
+          path: |
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/dmg/*.dmg
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/msi/*.msi
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/nsis/*-setup.exe
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/appimage/*.AppImage
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/deb/*.deb
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/rpm/*.rpm
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/**/*.sig
+            ${{ env.DESKTOP_DIR }}/src-tauri/target/**/release/bundle/**/*.asc
+          if-no-files-found: warn
+
+  release:
+    name: attach to release · tag ${{ github.ref_name }}
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all desktop artefacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: agent-generator-desktop-*
+          path: artefacts/
+
+      - name: Generate updater manifest (latest.json)
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES="$(git tag -l --format='%(contents:subject)' "$GITHUB_REF_NAME")"
+          python3 - "$VERSION" "$NOTES" <<'PY' > latest.json
+          import json, os, sys, glob
+          version, notes = sys.argv[1], sys.argv[2]
+          platforms = {}
+          patterns = {
+            "darwin-aarch64": "**/*aarch64*.app.tar.gz",
+            "darwin-x86_64":  "**/*x64*.app.tar.gz",
+            "windows-x86_64": "**/*x64-setup.exe",
+            "linux-x86_64":   "**/*amd64.AppImage",
+          }
+          for name, pat in patterns.items():
+            for sig in glob.glob(f"artefacts/{pat}.sig", recursive=True):
+              with open(sig) as fh:
+                signature = fh.read().strip()
+              url = sig[:-4].replace("artefacts/", "")
+              platforms[name] = {
+                "signature": signature,
+                "url": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/v{version}/{os.path.basename(url)}",
+              }
+              break
+          json.dump({
+            "version": version,
+            "notes": notes,
+            "pub_date": os.environ.get("GITHUB_RUN_STARTED_AT", ""),
+            "platforms": platforms,
+          }, sys.stdout, indent=2)
+          PY
+          cat latest.json
+
+      - name: Attach artefacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artefacts/**/*.dmg
+            artefacts/**/*.msi
+            artefacts/**/*-setup.exe
+            artefacts/**/*.AppImage
+            artefacts/**/*.deb
+            artefacts/**/*.rpm
+            artefacts/**/*.sig
+            artefacts/**/*.asc
+            latest.json
+          fail_on_unmatched_files: false

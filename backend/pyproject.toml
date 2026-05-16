@@ -1,0 +1,71 @@
+[project]
+name        = "agent-generator-backend"
+version     = "0.1.0"
+description = "FastAPI service for Agent Generator. Wraps the existing CLI as a service, streams runs / docker builds over WebSocket, brokers Marketplace + OllaBridge + secret backends."
+readme      = "README.md"
+authors     = [{ name = "ruslanmv" }]
+license     = "Apache-2.0"
+requires-python = ">=3.11"
+
+dependencies = [
+  "fastapi[standard] >=0.115,<0.117",
+  "uvicorn[standard] >=0.32,<0.34",
+  "pydantic >=2.9,<3",
+  "pydantic-settings >=2.6,<3",
+  "sqlalchemy >=2.0,<3",
+  "alembic >=1.13,<2",
+  "aiosqlite >=0.20,<0.21",
+  "asyncpg >=0.30,<0.31",
+  "httpx >=0.27,<0.29",
+  "websockets >=13,<14",
+  "structlog >=24.4,<26",
+  "authlib >=1.3,<2",
+  "pyjwt[crypto] >=2.9,<3",
+  "itsdangerous >=2.2,<3",
+  "argon2-cffi >=23.1,<24",
+  "cryptography >=43,<46",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest >=8,<9",
+  "pytest-asyncio >=0.24,<0.25",
+  "pytest-cov >=5,<6",
+  "ruff >=0.7,<0.9",
+  "mypy >=1.13,<2",
+]
+otel = [
+  "opentelemetry-api >=1.27",
+  "opentelemetry-sdk >=1.27",
+  "opentelemetry-instrumentation-fastapi >=0.48b0",
+  "opentelemetry-exporter-otlp >=1.27",
+]
+
+[build-system]
+requires      = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length    = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S", "ANN", "RUF"]
+ignore = ["ANN101", "ANN102", "S101"]  # `self`/`cls` type hints, asserts in tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "ANN"]
+
+[tool.mypy]
+python_version       = "3.11"
+strict               = true
+warn_unused_ignores  = true
+disallow_untyped_defs = true
+files                = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts      = "-q --strict-markers --cov=app --cov-report=term-missing"

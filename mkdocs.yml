@@ -14,6 +14,9 @@ nav:
   - Usage: usage.md
   - Frameworks: frameworks.md
   - Architecture: architecture.md
+  - Platform overview: platform.md
+  - Production readiness: production-readiness.md
+  - Release process: release-process.md
 
 theme:
   name: material

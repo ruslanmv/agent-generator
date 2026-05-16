@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Agent Generator",
+  "version": "../package.json",
+  "identifier": "io.agent-generator.app",
+  "build": {
+    "beforeDevCommand": "npm --prefix ../../frontend run dev",
+    "beforeBuildCommand": "npm --prefix ../../frontend run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../frontend/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Agent Generator",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5173 ws://localhost:5173 http://localhost:8000 ws://localhost:8000 https://api.matrixhub.io https://ruslanmv-ollabridge.hf.space;"
+    },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "msi", "nsis", "deb", "rpm", "appimage"],
+    "category": "DeveloperTool",
+    "copyright": "© 2026 ruslanmv",
+    "shortDescription": "Type a sentence. Get a runnable multi-agent project.",
+    "longDescription": "Agent Generator scaffolds CrewAI, LangGraph, watsonx Orchestrate, AutoGen, Strands, and any plug-in template — wired with the right tools, prompts, and tests. Open-source under Apache-2.0; powered by Matrix Hub for the catalog.",
+    "homepage": "https://github.com/ruslanmv/agent-generator",
+    "publisher": "ruslanmv",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "frameworks": [],
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.plist"
+    },
+    "windows": {
+      "wix": {
+        "language": ["en-US"]
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "displayLanguageSelector": false,
+        "languages": ["English"]
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libwebkit2gtk-4.1-0", "libssl3"]
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": false,
+      "endpoints": [
+        "https://github.com/ruslanmv/agent-generator/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": ""
+    },
+    "deep-link": {
+      "desktop": {
+        "schemes": ["agent-generator"]
+      }
+    }
+  }
+}

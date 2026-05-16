@@ -1,0 +1,108 @@
+/* Agent Generator — global styles.
+ * CSS variables mirror src/styles/tokens.ts so consumers can pick the form
+ * that suits them. Keep both in sync when adjusting the palette.
+ */
+
+:root {
+  --ag-bg: #ffffff;
+  --ag-surface: #f4f4f4;
+  --ag-surface2: #e8e8e8;
+  --ag-border: #dcdcdc;
+  --ag-border-strong: #c6c6c6;
+
+  --ag-ink: #161616;
+  --ag-ink2: #393939;
+  --ag-ink3: #525252;
+  --ag-muted: #6f6f6f;
+  --ag-faint: #a8a8a8;
+
+  --ag-accent: #0a3df0;
+  --ag-accent-hi: #dbe4ff;
+  --ag-accent-dim: #001d6c;
+
+  --ag-ok: #198038;
+  --ag-warn: #b28600;
+  --ag-err: #da1e28;
+
+  --ag-term-bg: #0d0d0d;
+  --ag-term-ink: #e6e6e6;
+  --ag-term-dim: #8d8d8d;
+  --ag-term-ok: #42be65;
+  --ag-term-acc: #78a9ff;
+  --ag-term-warn: #f1c21b;
+  --ag-term-err: #fa4d56;
+
+  --ag-sans: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ag-serif: "IBM Plex Serif", Georgia, serif;
+  --ag-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; padding: 0; }
+body {
+  background: var(--ag-bg);
+  color: var(--ag-ink);
+  font-family: var(--ag-sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "ss02";
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+.ag-mono { font-family: var(--ag-mono); font-feature-settings: "zero", "ss01"; }
+.ag-num  { font-family: var(--ag-mono); font-variant-numeric: tabular-nums; }
+
+.ag-cap {
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ag-muted);
+  font-weight: 500;
+}
+.ag-eyebrow {
+  font-family: var(--ag-mono);
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--ag-muted);
+}
+.ag-h1 { font-size: 42px; font-weight: 300; letter-spacing: -.02em; line-height: 1.05; }
+.ag-h2 { font-size: 28px; font-weight: 400; letter-spacing: -.01em; line-height: 1.15; }
+.ag-h3 { font-size: 20px; font-weight: 500; letter-spacing: -.005em; line-height: 1.2; }
+.ag-h4 { font-size: 14px; font-weight: 600; line-height: 1.3; }
+.ag-body  { font-size: 14px; line-height: 1.5; color: var(--ag-ink2); }
+.ag-small { font-size: 12px; line-height: 1.45; color: var(--ag-muted); }
+
+.ag-divider   { height: 1px; background: var(--ag-border); }
+.ag-divider-v { width: 1px;  background: var(--ag-border); }
+
+.ag-grid-bg {
+  background-image:
+    linear-gradient(var(--ag-surface) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ag-surface) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Scrollbar reset */
+::-webkit-scrollbar       { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ag-border-strong); border-radius: 0; }
+* { scrollbar-width: thin; scrollbar-color: var(--ag-border-strong) transparent; }
+
+/* Animations */
+@keyframes ag-blink { 50% { opacity: 0; } }
+@keyframes ag-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+@keyframes ag-spin  { to { transform: rotate(360deg); } }
+
+.ag-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: var(--ag-ink);
+  margin-left: 2px;
+  vertical-align: -2px;
+  animation: ag-blink 1s steps(1) infinite;
+}
+.ag-pulse { animation: ag-pulse 1.4s ease-in-out infinite; }
+.ag-spin  { animation: ag-spin 1.2s linear infinite; }

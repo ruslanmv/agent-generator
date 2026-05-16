@@ -1,0 +1,24 @@
+appId: io.agent_generator.app
+name: wizard-smoke
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- assertVisible:
+    text: "Generate"
+- tapOn:
+    text: "Generate"
+- assertVisible:
+    text: "STEP 1 / 4"
+- tapOn:
+    id: "prompt-textarea"
+    optional: true
+- inputText: "Research crew that drafts arXiv digests."
+- tapOn:
+    text: "Continue"
+    index: 0
+- assertVisible:
+    text: "STEP 2 / 4"
+- assertVisible:
+    text: "HYPERSCALER"

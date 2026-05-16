@@ -1,0 +1,48 @@
+[package]
+name        = "agent-generator-desktop"
+version     = "0.1.0"
+description = "Agent Generator — Tauri 2 desktop shell"
+authors     = ["ruslanmv <https://github.com/ruslanmv>"]
+license     = "Apache-2.0"
+edition     = "2021"
+rust-version = "1.77"
+
+# Library + binary so `cargo test` can exercise the Rust side without
+# the windowing system. The binary forwards to `agent_generator_desktop::run()`.
+[lib]
+name       = "agent_generator_desktop"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri                       = { version = "2.1", features = ["tray-icon", "image-png"] }
+tauri-plugin-store          = "2.1"
+tauri-plugin-stronghold     = "2.0"
+tauri-plugin-dialog         = "2.0"
+tauri-plugin-fs             = "2.0"
+tauri-plugin-shell          = "2.0"
+tauri-plugin-opener         = "2.0"
+tauri-plugin-os             = "2.0"
+tauri-plugin-notification   = "2.0"
+tauri-plugin-deep-link      = "2.0"
+tauri-plugin-single-instance = "2.0"
+# `updater` is gated by a Cargo feature so dev builds don't need a
+# signing key. Production CI flips this on.
+tauri-plugin-updater        = { version = "2.0", optional = true }
+serde                       = { version = "1", features = ["derive"] }
+serde_json                  = "1"
+log                         = "0.4"
+
+[features]
+# Enabled in production builds; CI sets `--features updater`.
+default  = []
+updater  = ["dep:tauri-plugin-updater"]
+
+[profile.release]
+panic        = "abort"      # smaller binary, no unwinding tables
+codegen-units = 1            # better inlining
+lto          = true          # ~25% smaller release binary
+opt-level    = "s"           # optimize for size — fast enough for a UI shell
+strip        = true          # remove debug symbols from the final binary

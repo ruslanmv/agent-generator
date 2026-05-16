@@ -1,0 +1,10 @@
+appId: io.agent_generator.app
+name: deep-link-smoke
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- openLink: "agent-generator://generate?new=1"
+- assertVisible:
+    text: "STEP 1 / 4"

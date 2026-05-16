@@ -1,0 +1,122 @@
+{
+  "uid": "agent-generator",
+  "title": "Agent Generator",
+  "tags": ["agent-generator", "backend"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "editable": true,
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "env",
+        "label": "Environment",
+        "type": "custom",
+        "current": { "text": "all", "value": ".*" },
+        "options": [
+          { "text": "all", "value": ".*", "selected": true },
+          { "text": "dev", "value": "dev" },
+          { "text": "staging", "value": "staging" },
+          { "text": "prod", "value": "prod" }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "HTTP req/s by route",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{deployment_environment=~\"$env\"}[1m]))",
+          "legendFormat": "{{http_route}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "p95 latency by route",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket{deployment_environment=~\"$env\"}[5m])))",
+          "legendFormat": "{{http_route}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Error rate",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count{http_status_code=~\"5..\",deployment_environment=~\"$env\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_seconds_count{deployment_environment=~\"$env\"}[5m])),1)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Active runs",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 6, "y": 8, "w": 6, "h": 6 },
+      "targets": [
+        {
+          "expr": "sum(agent_generator_runs_active{deployment_environment=~\"$env\"})",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Recent audit events",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "x": 0, "y": 14, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "{service_name=\"agent-generator-backend\"} | json | event=\"http.request\" | line_format \"{{.method}} {{.path}} ({{.status_code}}) actor={{.actor_username}} req_id={{.request_id}}\"",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "traces",
+      "title": "Slow traces (>500ms)",
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "gridPos": { "x": 0, "y": 22, "w": 24, "h": 10 },
+      "targets": [
+        {
+          "query": "{resource.service.name=\"agent-generator-backend\" && duration > 500ms}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

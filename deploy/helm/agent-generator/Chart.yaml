@@ -1,0 +1,28 @@
+apiVersion: v2
+name: agent-generator
+description: |
+  Agent Generator backend deployed alongside its nginx-served web SPA.
+  The chart exposes a single `Ingress` fronting both, so users hit one
+  hostname and the Service routes /api + /ws to the FastAPI backend
+  and everything else to the static SPA.
+
+type: application
+
+# Auto-bumped by .github/workflows/release-app.yml on every v*.*.* tag.
+version: 0.1.0
+appVersion: "0.1.0"
+
+home: https://github.com/ruslanmv/agent-generator
+sources:
+  - https://github.com/ruslanmv/agent-generator
+maintainers:
+  - name: ruslanmv
+    url: https://github.com/ruslanmv
+
+kubeVersion: ">=1.26.0-0"
+
+icon: https://github.com/ruslanmv/agent-generator/raw/master/assets/logo.png
+
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/containsSecurityUpdates: "false"
