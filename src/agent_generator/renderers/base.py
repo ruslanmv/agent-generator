@@ -1,4 +1,5 @@
 """Base renderer — abstract interface for all code-generation backends."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

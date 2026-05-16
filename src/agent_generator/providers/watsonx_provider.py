@@ -44,9 +44,7 @@ class WatsonXProvider(BaseProvider):
             if not getattr(self.settings, field)
         ]
         if missing:
-            raise ValueError(
-                f"WatsonXProvider: missing required credential(s): {missing}"
-            )
+            raise ValueError(f"WatsonXProvider: missing required credential(s): {missing}")
 
         # Prepare HTTP session without Authorization header for now
         self._session = requests.Session()
@@ -59,8 +57,7 @@ class WatsonXProvider(BaseProvider):
 
         # Endpoint URL (version as query param)
         self._url = (
-            f"{self.settings.watsonx_url}/ml/v1/text/generation"
-            f"?version={self.API_VERSION}"
+            f"{self.settings.watsonx_url}/ml/v1/text/generation" f"?version={self.API_VERSION}"
         )
 
     def _get_iam_token(self) -> str:
@@ -87,9 +84,7 @@ class WatsonXProvider(BaseProvider):
 
         token = resp.json().get("access_token")
         if not token:
-            raise RuntimeError(
-                f"IAM response did not include access_token: {resp.text}"
-            )
+            raise RuntimeError(f"IAM response did not include access_token: {resp.text}")
         return token
 
     def generate(self, prompt: str, **kwargs) -> str:

@@ -23,9 +23,7 @@ from agent_generator.utils.parser import parse_natural_language_to_workflow
 from agent_generator.utils.prompts import render_prompt
 
 
-def measure_full_single(
-    prompt: str, framework_name: str, provider_name: str
-) -> dict[str, float]:
+def measure_full_single(prompt: str, framework_name: str, provider_name: str) -> dict[str, float]:
     """Single-run timings for the full LLM workflow."""
     timings: dict[str, float] = {}
 
@@ -120,13 +118,9 @@ def main() -> None:
         description="Compare full vs dry-run timings for agent-generator workflows."
     )
     parser.add_argument("--prompt", default="Build an agent", help="Prompt text")
-    parser.add_argument(
-        "--framework", default="watsonx_orchestrate", help="Framework name"
-    )
+    parser.add_argument("--framework", default="watsonx_orchestrate", help="Framework name")
     parser.add_argument("--provider", default="watsonx", help="Provider name")
-    parser.add_argument(
-        "-n", "--runs", type=int, default=3, help="Number of runs to average"
-    )
+    parser.add_argument("-n", "--runs", type=int, default=3, help="Number of runs to average")
     args = parser.parse_args()
 
     # Add a warm-up run that isn't timed to account for initial caching, etc.
@@ -143,9 +137,7 @@ def main() -> None:
     full_avg = average_timings(
         measure_full_single, args.prompt, args.framework, args.provider, runs=args.runs
     )
-    dry_avg = average_timings(
-        measure_dry_single, args.prompt, args.framework, runs=args.runs
-    )
+    dry_avg = average_timings(measure_dry_single, args.prompt, args.framework, runs=args.runs)
 
     print("Average FULL-run timings (ms):")
     total_full = sum(full_avg.values())

@@ -48,27 +48,17 @@ class Settings(BaseSettings):
     max_tokens: int = Field(default=4096, ge=16)
 
     # Provider-specific model overrides (use validation_alias for env mapping)
-    watsonx_model: Optional[str] = Field(
-        default=None, validation_alias="WATSONX_MODEL"
-    )
-    openai_model: Optional[str] = Field(
-        default=None, validation_alias="OPENAI_MODEL"
-    )
+    watsonx_model: Optional[str] = Field(default=None, validation_alias="WATSONX_MODEL")
+    openai_model: Optional[str] = Field(default=None, validation_alias="OPENAI_MODEL")
 
     # Credentials
-    watsonx_api_key: Optional[str] = Field(
-        default=None, validation_alias="WATSONX_API_KEY"
-    )
-    watsonx_project_id: Optional[str] = Field(
-        default=None, validation_alias="WATSONX_PROJECT_ID"
-    )
+    watsonx_api_key: Optional[str] = Field(default=None, validation_alias="WATSONX_API_KEY")
+    watsonx_project_id: Optional[str] = Field(default=None, validation_alias="WATSONX_PROJECT_ID")
     watsonx_url: str = Field(
         default="https://us-south.ml.cloud.ibm.com",
         validation_alias="WATSONX_URL",
     )
-    openai_api_key: Optional[str] = Field(
-        default=None, validation_alias="OPENAI_API_KEY"
-    )
+    openai_api_key: Optional[str] = Field(default=None, validation_alias="OPENAI_API_KEY")
 
     # Misc
     log_level: str = Field(default="INFO")
@@ -85,9 +75,7 @@ class Settings(BaseSettings):
     def _normalise_log_level(cls, v: str) -> str:
         v_up = v.upper()
         if v_up not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
-            raise ValueError(
-                "log_level must be one of DEBUG | INFO | WARNING | ERROR | CRITICAL"
-            )
+            raise ValueError("log_level must be one of DEBUG | INFO | WARNING | ERROR | CRITICAL")
         return v_up
 
     @model_validator(mode="after")

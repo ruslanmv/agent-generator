@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 import pytest
 
 from agent_generator.models.agent import Agent, LLMConfig, Tool
@@ -20,6 +18,7 @@ def _mock_env(monkeypatch):
     monkeypatch.setenv("AGENTGEN_PROVIDER", "watsonx")
     # Clear the lru_cache so Settings picks up the monkeypatched env
     from agent_generator.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -29,6 +28,7 @@ def _mock_env(monkeypatch):
 def test_settings():
     """Create a Settings instance with test credentials."""
     from agent_generator.config import Settings
+
     return Settings(
         provider="watsonx",
         watsonx_api_key="test-key",

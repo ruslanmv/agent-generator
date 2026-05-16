@@ -14,7 +14,7 @@ Authorization model:
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
@@ -47,7 +47,7 @@ class ProjectIn(BaseModel):
     hyperscaler: str | None = None
     pattern: str | None = None
     model: str | None = None
-    state: dict | None = None
+    state: dict[str, Any] | None = None
     visibility: Visibility = "private"
     files: list[FileIn] = Field(default_factory=list)
 
@@ -59,7 +59,7 @@ class ProjectPatch(BaseModel):
     hyperscaler: str | None = None
     pattern: str | None = None
     model: str | None = None
-    state: dict | None = None
+    state: dict[str, Any] | None = None
     visibility: Visibility | None = None
     files: list[FileIn] | None = None
 
@@ -73,14 +73,14 @@ class ProjectOut(BaseModel):
     hyperscaler: str | None
     pattern: str | None
     model: str | None
-    state: dict | None
+    state: dict[str, Any] | None
     visibility: Visibility
     files: list[FileOut]
     created_at: str
     updated_at: str
 
     @classmethod
-    def from_orm_project(cls, p: Project) -> "ProjectOut":
+    def from_orm_project(cls, p: Project) -> ProjectOut:
         return cls(
             id=p.id,
             owner_id=p.owner_id,

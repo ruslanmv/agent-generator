@@ -1,4 +1,5 @@
 """Deep validation of a ProjectSpec for completeness and consistency."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -49,17 +50,13 @@ class SpecValidator:
         # 3. Every task references a valid agent
         for t in spec.tasks:
             if t.agent_id not in agent_id_set:
-                errors.append(
-                    f"Task '{t.id}' references unknown agent '{t.agent_id}'"
-                )
+                errors.append(f"Task '{t.id}' references unknown agent '{t.agent_id}'")
 
         # 4. Every depends_on references a valid task
         for t in spec.tasks:
             for dep in t.depends_on:
                 if dep not in task_id_set:
-                    errors.append(
-                        f"Task '{t.id}' depends on unknown task '{dep}'"
-                    )
+                    errors.append(f"Task '{t.id}' depends on unknown task '{dep}'")
 
         # 5. No circular dependencies
         if self._has_cycle(spec.tasks):
@@ -67,9 +64,7 @@ class SpecValidator:
 
         # 6. At least one entry-point task (no dependencies)
         if spec.tasks and all(t.depends_on for t in spec.tasks):
-            warnings.append(
-                "No entry-point task found (all tasks have dependencies)"
-            )
+            warnings.append("No entry-point task found (all tasks have dependencies)")
 
         # 7. Tool ID uniqueness
         tool_ids = [t.id for t in spec.tools]
@@ -81,9 +76,7 @@ class SpecValidator:
         for agent in spec.agents:
             for tool_ref in agent.tools:
                 if tool_ref not in tool_id_set:
-                    warnings.append(
-                        f"Agent '{agent.id}' references undefined tool '{tool_ref}'"
-                    )
+                    warnings.append(f"Agent '{agent.id}' references undefined tool '{tool_ref}'")
 
         return ValidationResult(
             valid=len(errors) == 0,

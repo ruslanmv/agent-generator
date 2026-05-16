@@ -24,8 +24,7 @@ from agent_generator.models.workflow import Workflow
 # Jinja2 template (with optional knowledge_base field)
 # ────────────────────────────────────────────────
 _YAML_TEMPLATE = Template(
-    textwrap.dedent(
-        """
+    textwrap.dedent("""
         # ------------------------------------------------------------------
         #  Auto‑generated watsonx Orchestrate agent definition
         # ------------------------------------------------------------------
@@ -48,8 +47,7 @@ _YAML_TEMPLATE = Template(
         {% endfor %}
         knowledge_base: []
         hidden: {{ hidden | lower }}
-        """
-    ).strip(),
+        """).strip(),
     trim_blocks=True,
     lstrip_blocks=True,
 )
@@ -93,9 +91,7 @@ class WatsonXOrchestrateGenerator(BaseFrameworkGenerator):
 
         # Build human‑readable task list for instructions
         task_lines = [
-            f"- {task.goal}"
-            for task in workflow.tasks
-            if task.agent_id == primary_agent.id
+            f"- {task.goal}" for task in workflow.tasks if task.agent_id == primary_agent.id
         ]
         instructions = (
             "You are an AI agent that can:\n" + "\n".join(task_lines)

@@ -1,4 +1,5 @@
 """Canonical project specification — the single source of truth."""
+
 from __future__ import annotations
 
 from enum import Enum

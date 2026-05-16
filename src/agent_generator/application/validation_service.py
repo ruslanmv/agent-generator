@@ -1,10 +1,11 @@
 """Central validation service for specs and artifacts."""
+
 from __future__ import annotations
 
-from agent_generator.domain.project_spec import ProjectSpec
 from agent_generator.domain.artifact_bundle import ArtifactBundle
-from agent_generator.validators.spec_validator import SpecValidator, ValidationResult
+from agent_generator.domain.project_spec import ProjectSpec
 from agent_generator.validators.security_validator import SecurityValidator
+from agent_generator.validators.spec_validator import SpecValidator, ValidationResult
 
 _spec_validator = SpecValidator()
 _security_validator = SecurityValidator()

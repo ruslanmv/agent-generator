@@ -18,7 +18,7 @@ is the same shape the live hub returns.
 from __future__ import annotations
 
 import time
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 import httpx
 import structlog
@@ -105,7 +105,7 @@ _FIXTURE: list[MarketplaceAgent] = [
 # ── helpers ─────────────────────────────────────────────────────────────
 
 
-def _cache_get(key: str) -> Any | None:
+def _cache_get(key: str) -> Any | None:  # noqa: ANN401 — generic JSON cache
     hit = _cache.get(key)
     if hit is None:
         return None
@@ -116,11 +116,11 @@ def _cache_get(key: str) -> Any | None:
     return value
 
 
-def _cache_put(key: str, value: Any) -> None:
+def _cache_put(key: str, value: Any) -> None:  # noqa: ANN401 — generic JSON cache
     _cache[key] = (time.monotonic(), value)
 
 
-async def _hub_get(settings: Settings, path: str) -> Any:
+async def _hub_get(settings: Settings, path: str) -> Any:  # noqa: ANN401 — generic JSON response
     assert settings.matrix_hub_url is not None
     url = f"{str(settings.matrix_hub_url).rstrip('/')}{path}"
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -148,7 +148,7 @@ async def list_agents(
     key = f"list:{framework}:{hyperscaler}:{q}"
     cached = _cache_get(key)
     if cached is not None:
-        return cached
+        return cast(list[MarketplaceAgent], cached)
 
     if settings.matrix_hub_url:
         params: dict[str, str] = {}
@@ -190,17 +190,19 @@ async def get_agent(
     key = f"detail:{agent_id}"
     cached = _cache_get(key)
     if cached is not None:
-        return cached
+        return cast(MarketplaceAgent, cached)
 
+    agent: MarketplaceAgent
     if settings.matrix_hub_url:
         payload = await _hub_get(settings, f"/agents/{agent_id}")
         agent = MarketplaceAgent(**payload)
     else:
-        agent = next((a for a in _FIXTURE if a.id == agent_id), None)
-        if agent is None:
+        found = next((a for a in _FIXTURE if a.id == agent_id), None)
+        if found is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="agent not found"
             )
+        agent = found
 
     _cache_put(key, agent)
     return agent

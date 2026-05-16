@@ -9,8 +9,7 @@ from agent_generator.frameworks.base import BaseFrameworkGenerator
 from agent_generator.models.workflow import Workflow
 
 _LANG_TEMPLATE = Template(
-    textwrap.dedent(
-        '''
+    textwrap.dedent('''
         """Auto-generated LangGraph workflow (langgraph 1.x)."""
 
         from __future__ import annotations
@@ -86,8 +85,7 @@ _LANG_TEMPLATE = Template(
         if __name__ == "__main__":
             result = main()
             print(result)
-        '''
-    ).strip("\n"),
+        ''').strip("\n"),
     trim_blocks=True,
     lstrip_blocks=True,
 )

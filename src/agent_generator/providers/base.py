@@ -12,6 +12,7 @@ Each concrete provider must implement:
 The tiny `tokenize()` helper is *good‑enough* for cost estimates; override
 in subclasses for greater accuracy if needed.
 """
+
 from __future__ import annotations
 
 import math

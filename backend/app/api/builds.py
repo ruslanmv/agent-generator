@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Annotated, Literal
+from collections.abc import Coroutine
+from datetime import UTC
+from typing import Annotated, Any, Literal
 
 import structlog
 from fastapi import (
@@ -32,9 +34,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.project import Project
 from app.db.models.user import User
-from app.db.session import get_session
 from app.db.models.user import User as UserOrm
-from app.db.session import get_sessionmaker
+from app.db.session import get_session, get_sessionmaker
 from app.runs.bus import hub
 from app.security.deps import get_current_user
 from app.security.jwt import TokenError, decode_token
@@ -42,6 +43,15 @@ from app.security.jwt import TokenError, decode_token
 router = APIRouter(prefix="/api/builds", tags=["builds"])
 ws_router = APIRouter(tags=["builds"])
 log = structlog.get_logger("builds")
+
+# Strong refs to in-flight build tasks so they aren't garbage-collected.
+_BUILD_TASKS: set[asyncio.Task[None]] = set()
+
+
+def _spawn_build(coro: Coroutine[object, object, None], *, name: str) -> None:
+    task = asyncio.create_task(coro, name=name)
+    _BUILD_TASKS.add(task)
+    task.add_done_callback(_BUILD_TASKS.discard)
 
 BuildMode = Literal["local", "remote", "stub"]
 
@@ -68,14 +78,14 @@ def _mode() -> BuildMode:
     return "stub"
 
 
-async def _emit(build_id: str, kind: str, payload: dict) -> None:
-    from datetime import datetime, timezone
+async def _emit(build_id: str, kind: str, payload: dict[str, Any]) -> None:
+    from datetime import datetime
 
     event = {
         "seq": payload.pop("seq", 0),
         "kind": kind,
         "payload": payload,
-        "created_at": datetime.now(tz=timezone.utc).isoformat(),
+        "created_at": datetime.now(tz=UTC).isoformat(),
     }
     await hub.publish(f"build:{build_id}", event)
 
@@ -189,7 +199,7 @@ async def start_docker_build(
     build_id = str(uuid4())
     mode = _mode()
     if mode == "local":
-        asyncio.create_task(
+        _spawn_build(
             _local_build(build_id, body.image, project, body.push),
             name=f"build:{build_id}",
         )
@@ -197,13 +207,9 @@ async def start_docker_build(
         # Real implementation enqueues a job on the BuildKit pod / fires
         # a `workflow_dispatch` against backend-image.yml. Stubbed here
         # to keep this batch self-contained.
-        asyncio.create_task(
-            _stub_build(build_id, body.image), name=f"build:{build_id}"
-        )
+        _spawn_build(_stub_build(build_id, body.image), name=f"build:{build_id}")
     else:
-        asyncio.create_task(
-            _stub_build(build_id, body.image), name=f"build:{build_id}"
-        )
+        _spawn_build(_stub_build(build_id, body.image), name=f"build:{build_id}")
     return DockerBuildOut(
         build_id=build_id,
         mode=mode,
@@ -223,7 +229,7 @@ async def _ws_authorize_build(ws: WebSocket) -> UserOrm | None:
     except TokenError:
         await ws.close(code=4401)
         return None
-    Session = get_sessionmaker()  # noqa: N806
+    Session = get_sessionmaker()
     async with Session() as session:
         user = await session.get(UserOrm, payload["sub"])
         if user is None:

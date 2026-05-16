@@ -1,6 +1,6 @@
 """Fast keyword-based pre-classifier -- no LLM call needed."""
-from __future__ import annotations
 
+from __future__ import annotations
 
 FRAMEWORK_KEYWORDS: dict[str, list[str]] = {
     "crewai": [
@@ -116,9 +116,7 @@ ROLE_KEYWORDS: dict[str, list[str]] = {
 }
 
 
-def _score(
-    prompt_lower: str, keyword_map: dict[str, list[str]], top_n: int = 3
-) -> list[str]:
+def _score(prompt_lower: str, keyword_map: dict[str, list[str]], top_n: int = 3) -> list[str]:
     """Score each key by counting how many of its keywords appear in the prompt."""
     scores: dict[str, int] = {}
     for key, keywords in keyword_map.items():
@@ -166,8 +164,7 @@ class KeywordPlanner:
             complexity = "high"
 
         return {
-            "suggested_framework": user_framework
-            or (frameworks[0] if frameworks else "crewai"),
+            "suggested_framework": user_framework or (frameworks[0] if frameworks else "crewai"),
             "suggested_tools": tools,
             "suggested_roles": roles,
             "suggested_artifact_mode": user_artifact_mode

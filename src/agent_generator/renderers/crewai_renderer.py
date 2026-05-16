@@ -1,17 +1,12 @@
 """CrewAI project renderer — generates a complete CrewAI 1.x project."""
+
 from __future__ import annotations
 
 import textwrap
 
 import yaml
 
-from agent_generator.domain.project_spec import (
-    ArtifactMode,
-    ProjectSpec,
-    AgentSpec,
-    TaskSpec,
-    ToolSpec,
-)
+from agent_generator.domain.project_spec import ArtifactMode, ProjectSpec, ToolSpec
 from agent_generator.domain.render_plan import RenderPlan
 from agent_generator.renderers.base import BaseRenderer
 

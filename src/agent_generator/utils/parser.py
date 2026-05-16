@@ -57,9 +57,7 @@ def _generate_agent(role: str) -> Agent:
     return Agent(
         id=f"agent_{uuid.uuid4().hex[:6]}",
         role=role,
-        tools=[
-            Tool(name="default_tool", description="Auto-generated placeholder tool")
-        ],
+        tools=[Tool(name="default_tool", description="Auto-generated placeholder tool")],
         llm=LLMConfig(
             provider=settings.provider,
             model=settings.model,

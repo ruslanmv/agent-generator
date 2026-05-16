@@ -2,9 +2,7 @@
 
 import yaml
 
-from agent_generator.frameworks.watsonx_orchestrate.generator import (
-    WatsonXOrchestrateGenerator,
-)
+from agent_generator.frameworks.watsonx_orchestrate.generator import WatsonXOrchestrateGenerator
 
 
 def test_watsonx_generates_valid_yaml(dummy_workflow, test_settings):

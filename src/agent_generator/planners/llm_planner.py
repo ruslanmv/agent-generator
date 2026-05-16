@@ -4,6 +4,7 @@ Takes a BaseProvider instance and keyword hints from the KeywordPlanner.
 Uses a carefully crafted few-shot prompt to produce a ProjectSpec JSON.
 Includes a JSON repair loop (max 2 attempts) for robustness.
 """
+
 from __future__ import annotations
 
 import json
@@ -18,8 +19,7 @@ from agent_generator.providers.base import BaseProvider
 
 log = logging.getLogger(__name__)
 
-_SPEC_PROMPT = Template(
-    """\
+_SPEC_PROMPT = Template("""\
 You are an expert AI systems architect specializing in multi-agent workflows.
 
 Given the user's request below, produce a ProjectSpec JSON object that defines
@@ -93,11 +93,9 @@ web_search, pdf_reader, http_client, sql_query, vector_search, file_writer
 
 ## Output
 Respond with ONLY valid JSON matching the structure above. No markdown fences,
-no explanation, just the JSON object."""
-)
+no explanation, just the JSON object.""")
 
-_REPAIR_PROMPT = Template(
-    """\
+_REPAIR_PROMPT = Template("""\
 The following JSON is invalid. Please fix it so it is valid JSON and return
 ONLY the corrected JSON object. No explanation, no markdown fences.
 
@@ -105,8 +103,7 @@ ONLY the corrected JSON object. No explanation, no markdown fences.
 {{ broken_json }}
 
 ## Error
-{{ error }}"""
-)
+{{ error }}""")
 
 
 def extract_json_block(text: str) -> str:
@@ -191,9 +188,7 @@ class LLMPlanner:
                     json_str = extract_json_block(raw_response)
                 else:
                     # Repair attempt: ask the LLM to fix the broken JSON
-                    repair_prompt = _REPAIR_PROMPT.render(
-                        broken_json=json_str, error=last_error
-                    )
+                    repair_prompt = _REPAIR_PROMPT.render(broken_json=json_str, error=last_error)
                     raw_response = self.provider.generate(repair_prompt)
                     json_str = extract_json_block(raw_response)
 

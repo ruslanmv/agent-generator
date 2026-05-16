@@ -5,6 +5,6 @@ Both are opt-in: a missing endpoint / DSN disables the integration so
 local dev stays quiet.
 """
 
-from app.telemetry.bootstrap import setup_telemetry  # noqa: F401
+from app.telemetry.bootstrap import setup_telemetry
 
 __all__ = ["setup_telemetry"]
