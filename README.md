@@ -4,7 +4,7 @@
 
 # agent-generator
 
-**Create AI agents from a single sentence.**
+**Type a sentence. Ship a multi-agent project — as code, a container, a desktop app, or an Android build.**
 
 [![PyPI](https://img.shields.io/pypi/v/agent-generator.svg)](https://pypi.org/project/agent-generator/)
 [![Python 3.10+](https://img.shields.io/pypi/pyversions/agent-generator.svg)](https://pypi.org/project/agent-generator/)
@@ -14,7 +14,40 @@
 
 ---
 
-## What does it do?
+## Two surfaces, one repo
+
+| Surface       | What you get                                                            | Use when…                                  |
+|---------------|--------------------------------------------------------------------------|--------------------------------------------|
+| **CLI**       | `pip install agent-generator` → one-shot project generator (this README, ↓ further down)  | You want a single Python file or YAML.     |
+| **Platform**  | FastAPI backend + Vite SPA + Tauri desktop + Capacitor Android, all from one TypeScript codebase. | You want the full app, the wizard, the Marketplace, signed installers, or a Helm install. |
+
+### Run the full platform in three commands
+
+```bash
+make install      # CLI + backend (FastAPI) + frontend (Vite SPA)
+make test         # CLI tests + backend pytest + frontend type-check & build
+make start        # backend on :8000 and SPA on :5173 — Ctrl-C stops both
+```
+
+Then open <http://localhost:5173>. Ports are configurable
+(`make start BACKEND_PORT=8080 FRONTEND_PORT=4173`).
+
+### Ship desktop / Android binaries
+
+```bash
+make build              # nginx SPA bundle + backend Docker image
+                        # + .dmg / .msi / .AppImage / .deb / .rpm for THIS host
+make build-android      # Android debug APK (needs Android SDK + JDK 17)
+```
+
+Signed CI builds (Authenticode, Apple notarization, GPG, Play Store) live in
+`.github/workflows/{desktop,mobile,release-app}.yml`.
+
+For the production Kubernetes deployment, see [`deploy/helm/`](deploy/helm).
+
+---
+
+## What the CLI does
 
 You type what you want. You get a complete project.
 
@@ -161,11 +194,35 @@ docker run -e WATSONX_API_KEY=... -p 8000:8000 agent-generator
 ```bash
 git clone https://github.com/ruslanmv/agent-generator.git
 cd agent-generator
+
+# Full stack (CLI + backend + frontend) in one shot:
+make install
+make test
+make start            # backend :8000 + SPA :5173
+
+# Or just the CLI bits, like the original workflow:
 pip install -e ".[dev,all]"
-pytest                # run tests
+pytest                # CLI tests
 ruff check src/       # lint
 mkdocs serve          # docs
 ```
+
+Useful `make` targets:
+
+| Target               | What it does                                                       |
+|----------------------|--------------------------------------------------------------------|
+| `make install`       | Editable CLI install **plus** `make app-install` (backend + SPA)   |
+| `make test`          | CLI pytest **plus** backend pytest + frontend `tsc` + Vite build   |
+| `make start`         | Backend + frontend dev servers concurrently (Ctrl-C stops both)    |
+| `make stop`          | Stop any backend / frontend dev servers started by `make start`    |
+| `make build`         | Frontend bundle + backend Docker image + desktop installer (host)  |
+| `make build-android` | Android debug APK                                                  |
+| `make help`          | Full list (CLI + platform targets, ~30 of them)                    |
+
+The full architecture (compatibility matrix, frontend shells, backend
+service, signing pipeline, Helm chart) is documented in
+[`docs/platform.md`](docs/platform.md). The original master plan is in
+[`docs/complete-solution-plan.md`](docs/complete-solution-plan.md).
 
 ---
 

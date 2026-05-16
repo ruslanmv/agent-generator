@@ -1,0 +1,15 @@
+appId: io.agent_generator.app
+name: marketplace-smoke
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "Marketplace"
+- assertVisible:
+    text: "Marketplace"
+# The offline fixture ships these three entries; at least one should
+# render even without a backend connection on the device.
+- assertVisible:
+    text: ".*(Research Assistant|Customer Analytics|Social Media Team).*"

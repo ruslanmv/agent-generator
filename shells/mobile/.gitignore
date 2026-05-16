@@ -1,0 +1,22 @@
+node_modules
+
+# Capacitor native projects — `npx cap add android` regenerates them
+# from `capacitor.config.ts` + `package.json`. We commit the project
+# folder (it has app-id, signing config, manifest tweaks) but ignore
+# the build outputs and the Gradle wrapper cache.
+android/.gradle
+android/build
+android/app/build
+android/app/release
+android/captures
+android/local.properties
+android/.idea
+
+# Keystore lives in CI secrets, never in the repo.
+android/app/*.keystore
+android/app/*.jks
+android/keystore.properties
+
+# Auto-generated bundle output
+android/app/*.aab
+android/app/*.apk

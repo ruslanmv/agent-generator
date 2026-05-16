@@ -1,0 +1,93 @@
+# Default values for agent-generator.
+#
+# Production deployments override `backend.image.tag` /
+# `web.image.tag` and the secret refs. The release pipeline
+# (Batch 32) auto-bumps the tags on every v*.*.* tag push.
+
+global:
+  registry: ghcr.io
+  imagePullSecrets: []
+
+# ── Backend (FastAPI) ────────────────────────────────────────────
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ruslanmv/agent-generator-backend
+    # Bumped by release-app.yml; leave as 'latest' for dev installs.
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 1,    memory: 512Mi }
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities: { drop: ["ALL"] }
+    readOnlyRootFilesystem: true
+  env:
+    AG_ENV: prod
+    AG_LOG_LEVEL: INFO
+    AG_SECRETS_BACKEND: vault
+  envFromSecret: agent-generator-backend
+  livenessProbe:
+    httpGet: { path: /livez, port: 8000 }
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readinessProbe:
+    httpGet: { path: /readyz, port: 8000 }
+    initialDelaySeconds: 3
+    periodSeconds: 5
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# ── Web (nginx + SPA) ────────────────────────────────────────────
+web:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ruslanmv/agent-generator-web
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests: { cpu: 10m,  memory: 32Mi }
+    limits:   { cpu: 200m, memory: 128Mi }
+
+# ── Ingress ──────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: agent-generator.local
+      paths:
+        # /api and /ws hit the backend; everything else hits the SPA.
+        - { path: /api, pathType: Prefix, service: backend }
+        - { path: /ws,  pathType: Prefix, service: backend }
+        - { path: /,    pathType: Prefix, service: web     }
+  tls: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# OpenTelemetry collector endpoint — pointed at the otel-collector
+# service from `observability/docker-compose.yaml` when run together,
+# or any compatible OTLP gRPC endpoint in your cluster.
+telemetry:
+  otlpEndpoint: ""
+  sentryDsn: ""

@@ -1,0 +1,17 @@
+{
+  "name": "@agent-generator/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tauri 2 desktop shell for Agent Generator. Wraps frontend/dist to produce .exe / .msi / .dmg / .AppImage / .deb / .rpm. Native plugins land in Batch 26; signed CI builds in Batch 27.",
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:debug": "tauri build --debug",
+    "icons": "tauri icon ./src-tauri/icons/source.png",
+    "info": "tauri info"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0"
+  }
+}

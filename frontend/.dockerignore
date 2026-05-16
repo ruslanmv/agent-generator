@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+.vite
+.eslintcache
+.tsbuildinfo
+.git
+.github
+.idea
+.vscode
+.env
+.env.*
+*.log
+README.md

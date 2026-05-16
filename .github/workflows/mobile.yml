@@ -1,0 +1,242 @@
+name: mobile
+
+# Build the Android shell. Two outputs:
+#   1. Debug APK on every push/PR touching the mobile shell — easy
+#      side-load smoke target for QA fleets.
+#   2. Signed release AAB on v*.*.* tags, uploaded to the Play Store
+#      internal track via r0adkll/upload-google-play.
+#
+# When the signing secrets are missing the release path skips the
+# upload step and falls back to producing an unsigned AAB (visible
+# in the run summary) so the workflow remains useful for fork
+# contributors who don't have a keystore.
+#
+# Required repo secrets for the signed path:
+#   ANDROID_KEYSTORE_BASE64     (base64-encoded .keystore / .jks)
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+#   PLAY_SERVICE_ACCOUNT_JSON   (Google Play Console service account)
+
+on:
+  push:
+    branches: [master, "claude/**"]
+    tags:
+      - "v*.*.*"
+    paths:
+      - "frontend/**"
+      - "shells/mobile/**"
+      - ".github/workflows/mobile.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "shells/mobile/**"
+      - ".github/workflows/mobile.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FRONTEND_DIR: frontend
+  MOBILE_DIR: shells/mobile
+
+jobs:
+  debug:
+    name: debug APK (unsigned)
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-34 build-tools;34.0.0"
+
+      - name: Frontend build
+        working-directory: ${{ env.FRONTEND_DIR }}
+        env:
+          AG_BUILD_CHANNEL: capacitor
+        run: |
+          npm ci
+          npm run build
+
+      - name: Mobile shell install + capacitor add android
+        working-directory: ${{ env.MOBILE_DIR }}
+        run: |
+          npm install --no-audit --no-fund
+          # Only `cap add android` when the project hasn't been generated yet.
+          if [ ! -d android ]; then npx cap add android; fi
+          npx cap sync
+
+      - name: Build debug APK
+        working-directory: ${{ env.MOBILE_DIR }}/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-generator-debug-apk
+          path: ${{ env.MOBILE_DIR }}/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  release:
+    name: release AAB (signed when secrets present)
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-34 build-tools;34.0.0"
+
+      # ── Frontend ────────────────────────────────────────────────
+      - name: Frontend build
+        working-directory: ${{ env.FRONTEND_DIR }}
+        env:
+          AG_BUILD_CHANNEL: capacitor
+        run: |
+          npm ci
+          npm run build
+
+      # ── Mobile shell ────────────────────────────────────────────
+      - name: Capacitor sync
+        working-directory: ${{ env.MOBILE_DIR }}
+        run: |
+          npm install --no-audit --no-fund
+          if [ ! -d android ]; then npx cap add android; fi
+          npx cap sync
+
+      # ── Keystore + version bump ────────────────────────────────
+      - name: Stage signing material
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        working-directory: ${{ env.MOBILE_DIR }}/android
+        run: |
+          set -euo pipefail
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > app/release.keystore
+          cat > keystore.properties <<EOF
+          storeFile=release.keystore
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+          # Patch app/build.gradle to read keystore.properties + sign
+          # release. Idempotent: skip if already patched.
+          if ! grep -q "keystore.properties" app/build.gradle; then
+            python3 - <<'PY'
+          import re, pathlib
+          p = pathlib.Path("app/build.gradle")
+          src = p.read_text()
+          if "android {" not in src:
+              raise SystemExit("app/build.gradle missing android {} block")
+          inject = """
+          def keystorePropertiesFile = rootProject.file("keystore.properties")
+          def keystoreProperties = new Properties()
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+          }
+          android {
+              signingConfigs {
+                  release {
+                      if (keystorePropertiesFile.exists()) {
+                          storeFile file(keystoreProperties['storeFile'])
+                          storePassword keystoreProperties['storePassword']
+                          keyAlias keystoreProperties['keyAlias']
+                          keyPassword keystoreProperties['keyPassword']
+                      }
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          """
+          src = src.replace("android {", inject, 1)
+          p.write_text(src)
+          PY
+          fi
+
+      - name: Compute versionCode from tag
+        working-directory: ${{ env.MOBILE_DIR }}/android
+        run: |
+          set -euo pipefail
+          # tag v1.2.3 -> versionCode 010203
+          version="${GITHUB_REF_NAME#v}"
+          IFS=. read -r major minor patch <<<"$version"
+          code=$(( major*10000 + minor*100 + patch ))
+          sed -i.bak -E "s/versionCode .+/versionCode $code/" app/build.gradle
+          sed -i.bak -E "s/versionName \".+\"/versionName \"$version\"/" app/build.gradle
+          rm -f app/build.gradle.bak
+
+      # ── Build ──────────────────────────────────────────────────
+      - name: Build release AAB
+        working-directory: ${{ env.MOBILE_DIR }}/android
+        run: ./gradlew bundleRelease --no-daemon
+
+      - name: Locate AAB
+        id: locate
+        working-directory: ${{ env.MOBILE_DIR }}/android
+        run: |
+          set -euo pipefail
+          aab="$(ls app/build/outputs/bundle/release/*.aab | head -n1)"
+          echo "aab=$aab" >> "$GITHUB_OUTPUT"
+          ls -l "$aab"
+
+      # ── Play Store upload (signed only) ────────────────────────
+      - name: Upload to Play Store internal track
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
+        uses: r0adkll/upload-google-play@v1
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: io.agent_generator.app
+          releaseFiles: ${{ steps.locate.outputs.aab }}
+          track: internal
+          status: completed
+          changesNotSentForReview: false
+
+      # ── Upload artefacts on every tag, even when unsigned ──────
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-generator-android-aab
+          path: ${{ env.MOBILE_DIR }}/android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      # ── Attach to GitHub Release ───────────────────────────────
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.MOBILE_DIR }}/android/app/build/outputs/bundle/release/*.aab
+          fail_on_unmatched_files: true

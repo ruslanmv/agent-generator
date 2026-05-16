@@ -1,0 +1,141 @@
+name: backend-image
+
+# Build, sign, and publish the backend container with full supply-chain
+# guarantees: cosign keyless signature (Sigstore), SBOM in SPDX JSON,
+# SLSA-3 provenance attestation. Triggered on tag pushes (v*.*.*) and
+# on commits to main when the backend changes.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+    branches: [master]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-image.yml"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Override image tag (e.g. dev-2026-05-15)."
+        required: false
+
+permissions:
+  contents: read
+  id-token: write     # cosign keyless OIDC
+  packages: write     # push to GHCR
+  attestations: write # SLSA provenance
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/agent-generator-backend
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+      tags: ${{ steps.meta.outputs.tags }}
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event.inputs.tag != '' }}
+          labels: |
+            org.opencontainers.image.title=agent-generator-backend
+            org.opencontainers.image.description=FastAPI backend for Agent Generator
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - name: Build + push (linux/amd64, linux/arm64)
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  sign-and-attest:
+    runs-on: ubuntu-latest
+    needs: build
+    if: needs.build.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@v3
+      - uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }}
+          format: spdx-json
+          output-file: backend-sbom.spdx.json
+
+      - name: Cosign keyless sign
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          for tag in ${{ needs.build.outputs.tags }}; do
+            ref="${tag%@*}@${DIGEST}"
+            echo "::group::cosign sign ${ref}"
+            cosign sign --yes "${ref}"
+            echo "::endgroup::"
+          done
+
+      - name: Cosign attach SBOM
+        env:
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          for tag in ${{ needs.build.outputs.tags }}; do
+            ref="${tag%@*}@${DIGEST}"
+            cosign attest --yes --predicate backend-sbom.spdx.json \
+              --type spdxjson "${ref}"
+          done
+
+      - name: GitHub attestation (SLSA-3 provenance)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ needs.build.outputs.digest }}
+          push-to-registry: true
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: [build, sign-and-attest]
+    steps:
+      - uses: sigstore/cosign-installer@v3
+      - name: cosign verify (keyless)
+        env:
+          DIGEST: ${{ needs.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          tag="$(echo '${{ needs.build.outputs.tags }}' | head -n1)"
+          ref="${tag%@*}@${DIGEST}"
+          cosign verify "${ref}" \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"

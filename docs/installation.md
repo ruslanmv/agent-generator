@@ -1,6 +1,15 @@
 # Installation
 
-Requires **Python 3.10+**.
+Two install paths, pick the one that matches what you want to ship.
+
+| Path                   | Install                              | What you get                                                          |
+|------------------------|--------------------------------------|-----------------------------------------------------------------------|
+| **CLI only**           | `pip install agent-generator`        | The original one-shot generator (this page from "Basic install" ↓).   |
+| **Full platform**      | `make install` from a clone of the repo | CLI + FastAPI backend + Vite SPA. `make start` boots both dev servers. See [Platform overview](platform.md). |
+
+Requires **Python 3.10+**. The full platform additionally needs **Node 20+**;
+for desktop installers add **Rust 1.77+** and the Tauri prereqs; for Android,
+**JDK 17** and the Android SDK.
 
 ## Basic Install
 
