@@ -4,8 +4,8 @@
   "version": "../package.json",
   "identifier": "io.agent-generator.app",
   "build": {
-    "beforeDevCommand": "npm --prefix ../../frontend run dev",
-    "beforeBuildCommand": "npm --prefix ../../frontend run build",
+    "beforeDevCommand": "cd ../../frontend && npm run dev",
+    "beforeBuildCommand": "cd ../../frontend && npm run build",
     "devUrl": "http://localhost:5173",
     "frontendDist": "../../frontend/dist"
   },
