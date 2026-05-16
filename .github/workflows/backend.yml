@@ -39,17 +39,20 @@ jobs:
       - name: Set up Python ${{ matrix.python }}
         run: uv python install ${{ matrix.python }}
 
+      - name: Create venv
+        run: uv venv --python ${{ matrix.python }} .venv
+
       - name: Install project + dev deps
-        run: uv pip install --system -e ".[dev]"
+        run: uv pip install --python .venv/bin/python -e ".[dev]"
 
       - name: Ruff
-        run: ruff check app tests
+        run: .venv/bin/ruff check app tests
 
       - name: Mypy
-        run: mypy
+        run: .venv/bin/mypy
 
       - name: Pytest
-        run: pytest
+        run: .venv/bin/pytest
 
   docker:
     name: docker build
