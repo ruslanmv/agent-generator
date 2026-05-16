@@ -49,7 +49,7 @@ class UserOut(BaseModel):
     role: str
 
     @classmethod
-    def from_orm_user(cls, user: User) -> "UserOut":
+    def from_orm_user(cls, user: User) -> UserOut:
         return cls(
             id=user.id,
             provider=user.provider,
@@ -63,7 +63,7 @@ class UserOut(BaseModel):
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
+    token_type: str = "bearer"  # noqa: S105 — OAuth2 token type identifier, not a secret
 
 
 class RefreshIn(BaseModel):
@@ -89,7 +89,7 @@ def _set_session_cookie(response: Response, token: str, settings: Settings) -> N
 @router.get("/github/login")
 async def github_login(
     next: Annotated[str, Query(description="Post-login bounce URL.")] = "/",
-    settings: Settings = Depends(get_settings),
+    settings: Settings = Depends(get_settings),  # noqa: B008 — FastAPI DI pattern
 ) -> RedirectResponse:
     if not settings.github_client_id:
         raise HTTPException(
@@ -176,7 +176,7 @@ async def refresh(
 @router.post("/logout")
 async def logout(
     response: Response,
-    request: Request,  # noqa: ARG001 — explicit dependency for clarity
+    request: Request,
 ) -> dict[str, str]:
     response.delete_cookie(SESSION_COOKIE_NAME, path="/")
     return {"status": "ok"}

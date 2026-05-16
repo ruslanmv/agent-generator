@@ -242,13 +242,34 @@ class Model(BaseModel):
 
 
 MODELS: list[Model] = [
-    Model(id="gpt-5.1",        label="GPT-5.1",         provider="openai",     hyperscalers=["azure"],                       contextWindow="256k", cost="$$$"),
-    Model(id="gpt-4o",         label="GPT-4o",          provider="openai",     hyperscalers=["azure"],                       contextWindow="128k", cost="$$"),
-    Model(id="claude-opus-4",  label="Claude Opus 4",   provider="anthropic",  hyperscalers=["azure", "aws", "on_prem"],     contextWindow="500k", cost="$$$"),
-    Model(id="claude-haiku-4", label="Claude Haiku 4",  provider="anthropic",  hyperscalers=["azure", "aws", "on_prem"],     contextWindow="200k", cost="$"),
-    Model(id="granite-3.1-70b",label="Granite 3.1 70B", provider="watsonx",    hyperscalers=["ibm"],                         contextWindow="128k", cost="$$"),
-    Model(id="llama-3.1-70b",  label="Llama 3.1 70B",   provider="ollama",     hyperscalers=["on_prem"],                     contextWindow="128k", cost="$"),
-    Model(id="qwen-2.5-1.5b",  label="Qwen 2.5 1.5B",   provider="ollabridge", hyperscalers=["on_prem"],                     contextWindow="32k",  cost="free"),
+    Model(
+        id="gpt-5.1", label="GPT-5.1", provider="openai",
+        hyperscalers=["azure"], contextWindow="256k", cost="$$$",
+    ),
+    Model(
+        id="gpt-4o", label="GPT-4o", provider="openai",
+        hyperscalers=["azure"], contextWindow="128k", cost="$$",
+    ),
+    Model(
+        id="claude-opus-4", label="Claude Opus 4", provider="anthropic",
+        hyperscalers=["azure", "aws", "on_prem"], contextWindow="500k", cost="$$$",
+    ),
+    Model(
+        id="claude-haiku-4", label="Claude Haiku 4", provider="anthropic",
+        hyperscalers=["azure", "aws", "on_prem"], contextWindow="200k", cost="$",
+    ),
+    Model(
+        id="granite-3.1-70b", label="Granite 3.1 70B", provider="watsonx",
+        hyperscalers=["ibm"], contextWindow="128k", cost="$$",
+    ),
+    Model(
+        id="llama-3.1-70b", label="Llama 3.1 70B", provider="ollama",
+        hyperscalers=["on_prem"], contextWindow="128k", cost="$",
+    ),
+    Model(
+        id="qwen-2.5-1.5b", label="Qwen 2.5 1.5B", provider="ollabridge",
+        hyperscalers=["on_prem"], contextWindow="32k", cost="free",
+    ),
 ]
 
 

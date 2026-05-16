@@ -54,7 +54,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "S", "ANN", "RUF"]
-ignore = ["ANN101", "ANN102", "S101"]  # `self`/`cls` type hints, asserts in tests
+ignore = ["S101"]  # asserts in tests
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S", "ANN"]
