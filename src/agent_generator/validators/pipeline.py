@@ -3,6 +3,7 @@
 Combines ProjectSpec validation with individual file validation (Python or YAML
 based on file extension) into a single unified result.
 """
+
 from __future__ import annotations
 
 from agent_generator.domain.project_spec import ProjectSpec

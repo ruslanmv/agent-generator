@@ -15,23 +15,23 @@ POST /api/ollabridge/pair   - Pairing proxy
 GET  /api/ollabridge/models - Models proxy
 GET  /api/ollabridge/health - Health proxy
 """
+
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 import requests as http_requests
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
-from agent_generator.application.planning_service import plan as plan_spec
 from agent_generator.application.build_service import build_dict
-from agent_generator.config import Settings, get_settings
+from agent_generator.application.planning_service import plan as plan_spec
 from agent_generator.frameworks import FRAMEWORKS
 from agent_generator.web.inference import (
+    PROVIDER_DEFAULTS,
     get_inference_client,
     get_inference_settings,
-    PROVIDER_DEFAULTS,
 )
 
 router = APIRouter()
@@ -39,15 +39,23 @@ router = APIRouter()
 
 # ── Request / Response Models ────────────────────────────────────
 
+
 class GenerateRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, description="Natural language description of the agent team.")
-    framework: str = Field(default="crewai", description="Framework: crewai, crewai_flow, langgraph, react, watsonx_orchestrate")
+    prompt: str = Field(
+        ..., min_length=1, description="Natural language description of the agent team."
+    )
+    framework: str = Field(
+        default="crewai",
+        description="Framework: crewai, crewai_flow, langgraph, react, watsonx_orchestrate",
+    )
     provider: Optional[str] = Field(default=None, description="LLM provider: watsonx or openai")
     model: Optional[str] = Field(default=None, description="Model identifier override")
     temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0)
     max_tokens: Optional[int] = Field(default=None, ge=1)
     mcp: bool = Field(default=False, description="Enable MCP HTTP wrapper")
-    artifact_mode: str = Field(default="code_only", description="code_only, yaml_only, or code_and_yaml")
+    artifact_mode: str = Field(
+        default="code_only", description="code_only, yaml_only, or code_and_yaml"
+    )
     tools: list[str] = Field(default_factory=list, description="Tool IDs to include")
 
 
@@ -114,6 +122,7 @@ class GenerateResponse(BaseModel):
 
 # ── Core Endpoints ──────────────────────────────────────────────
 
+
 @router.post("/plan", response_model=ProjectPlan)
 async def plan(req: PlanRequest):
     """Parse a natural language prompt into a structured project plan."""
@@ -125,8 +134,15 @@ async def plan(req: PlanRequest):
     spec, warnings = plan_spec(prompt, framework=fw)
 
     agents = [AgentInfo(role=a.role, goal=a.goal, tools=a.tools) for a in spec.agents]
-    tasks = [TaskInfo(description=t.description, agent_role=t.agent_id,
-                      expected_output=t.expected_output, depends_on=t.depends_on) for t in spec.tasks]
+    tasks = [
+        TaskInfo(
+            description=t.description,
+            agent_role=t.agent_id,
+            expected_output=t.expected_output,
+            depends_on=t.depends_on,
+        )
+        for t in spec.tasks
+    ]
 
     return ProjectPlan(
         name=spec.name,
@@ -148,8 +164,14 @@ async def build(req: BuildRequest):
     spec, _ = plan_spec(p.description, framework=fw)
     result = build_dict(spec, mcp=req.mcp)
 
-    files = [FileArtifact(path=path, content=content, language="python" if path.endswith(".py") else "yaml")
-             for path, content in result.get("files", {}).items()]
+    files = [
+        FileArtifact(
+            path=path,
+            content=content,
+            language="python" if path.endswith(".py") else "yaml",
+        )
+        for path, content in result.get("files", {}).items()
+    ]
 
     return BuildResponse(
         project_name=spec.name,
@@ -192,6 +214,7 @@ async def generate(req: GenerateRequest):
 
 
 # ── Settings / Inference Endpoints ──────────────────────────────
+
 
 @router.get("/models")
 async def api_models():
@@ -266,6 +289,7 @@ async def api_inference_status():
 
 # ── OllaBridge Pairing Proxy ────────────────────────────────────
 
+
 @router.post("/ollabridge/pair")
 async def ollabridge_pair(request: Request):
     """Proxy device pairing request to OllaBridge Cloud."""
@@ -315,7 +339,9 @@ async def ollabridge_pair(request: Request):
                 err_msg = f"OllaBridge returned HTTP {resp.status_code}"
         return JSONResponse(content={"ok": False, "error": err_msg}, status_code=400)
     except http_requests.ConnectionError:
-        return JSONResponse(content={"ok": False, "error": f"Cannot reach {base_url}"}, status_code=503)
+        return JSONResponse(
+            content={"ok": False, "error": f"Cannot reach {base_url}"}, status_code=503
+        )
     except http_requests.Timeout:
         return JSONResponse(content={"ok": False, "error": "Connection timed out"}, status_code=504)
     except Exception as e:
@@ -323,7 +349,9 @@ async def ollabridge_pair(request: Request):
 
 
 @router.get("/ollabridge/models")
-async def ollabridge_models(base_url: str = "https://ruslanmv-ollabridge.hf.space", api_key: str = ""):
+async def ollabridge_models(
+    base_url: str = "https://ruslanmv-ollabridge.hf.space", api_key: str = ""
+):
     """Proxy model listing to an OllaBridge instance."""
     base = base_url.rstrip("/")
     try:
@@ -341,11 +369,13 @@ async def ollabridge_models(base_url: str = "https://ruslanmv-ollabridge.hf.spac
                 models = sorted({m.get("id", "") for m in data["data"] if m.get("id")})
                 return {"models": models}
             if isinstance(data, dict) and "models" in data:
-                models = sorted({
-                    m.get("name", m.get("model", ""))
-                    for m in data["models"]
-                    if m.get("name") or m.get("model")
-                })
+                models = sorted(
+                    {
+                        m.get("name", m.get("model", ""))
+                        for m in data["models"]
+                        if m.get("name") or m.get("model")
+                    }
+                )
                 return {"models": models}
         return {"models": [], "error": f"HTTP {resp.status_code}"}
     except Exception as e:

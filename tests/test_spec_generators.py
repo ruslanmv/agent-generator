@@ -1,6 +1,14 @@
 """Test that generators work directly from ProjectSpec (no Workflow adapter)."""
-from agent_generator.domain.project_spec import ProjectSpec, FrameworkChoice, ArtifactMode, AgentSpec, TaskSpec, LLMSpec
+
 from agent_generator.config import get_settings_lenient
+from agent_generator.domain.project_spec import (
+    AgentSpec,
+    ArtifactMode,
+    FrameworkChoice,
+    LLMSpec,
+    ProjectSpec,
+    TaskSpec,
+)
 from agent_generator.frameworks import FRAMEWORKS
 
 
@@ -15,14 +23,26 @@ def _make_spec(framework: str) -> ProjectSpec:
             AgentSpec(id="agent_1", role="Assistant", goal="Help users", backstory="Expert"),
         ],
         tasks=[
-            TaskSpec(id="task_1", description="Greet the user", agent_id="agent_1", expected_output="A greeting"),
-            TaskSpec(id="task_2", description="Answer questions", agent_id="agent_1", expected_output="An answer", depends_on=["task_1"]),
+            TaskSpec(
+                id="task_1",
+                description="Greet the user",
+                agent_id="agent_1",
+                expected_output="A greeting",
+            ),
+            TaskSpec(
+                id="task_2",
+                description="Answer questions",
+                agent_id="agent_1",
+                expected_output="An answer",
+                depends_on=["task_1"],
+            ),
         ],
     )
 
 
 def test_crewai_from_spec():
     import ast
+
     spec = _make_spec("crewai")
     gen = FRAMEWORKS["crewai"]()
     code = gen.generate_from_spec(spec, get_settings_lenient())
@@ -64,6 +84,10 @@ def test_crewai_flow_from_spec():
 def test_build_uses_spec_not_workflow():
     """Verify build_service no longer imports Workflow directly."""
     import inspect
+
     from agent_generator.application import build_service
+
     source = inspect.getsource(build_service)
-    assert "_spec_to_workflow" not in source, "build_service still contains legacy _spec_to_workflow adapter"
+    assert (
+        "_spec_to_workflow" not in source
+    ), "build_service still contains legacy _spec_to_workflow adapter"

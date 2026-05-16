@@ -62,9 +62,7 @@ VERSION = "0.2.1"  # 🛈 bump on release
 # ---------------------------------------------------------------- #
 def _validate_choice(value: str, allowed: set[str], name: str) -> str:
     if value not in allowed:
-        console.print(
-            f"[red]{name} '{value}' is invalid. Options: {sorted(allowed)}[/]"
-        )
+        console.print(f"[red]{name} '{value}' is invalid. Options: {sorted(allowed)}[/]")
         raise typer.Exit(code=1)
     return value
 
@@ -74,9 +72,7 @@ def _write_or_echo(text: str, output: Optional[Path]) -> None:
         output.write_text(text, encoding="utf-8")
         console.print(f"[bold green]✓ Written to {output}[/]")
     else:
-        console.print(
-            Syntax(text, "python" if text.lstrip().startswith("from") else "yaml")
-        )
+        console.print(Syntax(text, "python" if text.lstrip().startswith("from") else "yaml"))
 
 
 # ---------------------------------------------------------------- #
@@ -107,9 +103,7 @@ def generate(
         help="Wrap Python output in an MCP FastAPI server.",
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Skip LLM call."),
-    show_cost: bool = typer.Option(
-        False, "--show-cost", help="Display token/cost info."
-    ),
+    show_cost: bool = typer.Option(False, "--show-cost", help="Display token/cost info."),
     version: bool = typer.Option(False, "--version", "-V", is_eager=True),
 ):
     """Generate code (or YAML) for a multi‑agent workflow."""
@@ -155,7 +149,10 @@ def generate(
 
     # ───────── Plan (spec-first pipeline) ─────────
     spec, plan_warnings = plan_project(
-        prompt, framework=framework, provider=provider_name, mcp=mcp,
+        prompt,
+        framework=framework,
+        provider=provider_name,
+        mcp=mcp,
     )
     if plan_warnings:
         for w in plan_warnings:
@@ -163,9 +160,7 @@ def generate(
 
     # ───────── Dry‑run shortcut ─────────
     if dry_run:
-        console.print(
-            "[yellow]Dry‑run only → generating code without LLM calls or env checks.[/]"
-        )
+        console.print("[yellow]Dry‑run only → generating code without LLM calls or env checks.[/]")
         result = build_project(spec, mcp=mcp)
         # Pick the main generated file
         code = ""
@@ -226,8 +221,7 @@ def generate(
         ctok = provider_inst.tokenize(code)
         cost = provider_inst.estimate_cost(ptok, ctok)
         console.print(
-            f"[cyan]≈ prompt_tokens={ptok}, completion_tokens={ctok}, "
-            f"est. cost=${cost:.4f}[/]"
+            f"[cyan]≈ prompt_tokens={ptok}, completion_tokens={ctok}, " f"est. cost=${cost:.4f}[/]"
         )
 
     # ───────── Output ─────────

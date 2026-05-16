@@ -23,7 +23,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.5 /uv /usr/local/bin/uv
 WORKDIR /src
 
 # Resolve dependencies first so they cache across rebuilds.
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 RUN uv venv /opt/venv && \
     uv pip install --python /opt/venv/bin/python \
         "fastapi[standard]>=0.115,<0.117" \

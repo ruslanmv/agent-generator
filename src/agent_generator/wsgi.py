@@ -21,8 +21,7 @@ try:
     from agent_generator.web import create_app
 except ModuleNotFoundError as exc:  # pragma: no cover
     raise RuntimeError(
-        "FastAPI extras are not installed. "
-        "Install with: pip install 'agent-generator[web]'"
+        "FastAPI extras are not installed. " "Install with: pip install 'agent-generator[web]'"
     ) from exc
 
 app: Any = create_app()
