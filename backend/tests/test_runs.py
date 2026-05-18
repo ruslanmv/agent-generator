@@ -95,7 +95,7 @@ async def test_ws_streaming_with_token() -> None:
     from app.security.jwt import issue_token
 
     await init_models()
-    Session = get_sessionmaker()  # noqa: N806
+    Session = get_sessionmaker()
     async with Session() as session:
         user = User(
             provider="github",
@@ -126,13 +126,11 @@ async def test_ws_streaming_with_token() -> None:
         # Wait until the run terminates so the WS just replays from
         # the DB without needing live events. Keeps the test
         # deterministic.
-        import time
-
         for _ in range(40):
             status = tc.get(f"/api/runs/{run['id']}", headers=h).json()["status"]
             if status in ("succeeded", "failed", "cancelled"):
                 break
-            time.sleep(0.05)
+            await asyncio.sleep(0.05)
 
         with tc.websocket_connect(f"/ws/runs/{run['id']}?token={token}") as ws:
             kinds: list[str] = []

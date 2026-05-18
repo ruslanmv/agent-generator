@@ -1,4 +1,5 @@
 """Tool template registry — maps tool IDs to Jinja2 catalog templates."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -95,9 +96,6 @@ def render_tool(tool_id: str, inputs: dict[str, str] | None = None) -> str:
         If *tool_id* is not in the catalog.
     """
     if tool_id not in TOOL_CATALOG:
-        raise KeyError(
-            f"Unknown tool '{tool_id}'. "
-            f"Available: {sorted(TOOL_CATALOG)}"
-        )
+        raise KeyError(f"Unknown tool '{tool_id}'. " f"Available: {sorted(TOOL_CATALOG)}")
     template = _env.get_template(f"{tool_id}.py.j2")
     return template.render(**(inputs or {}))

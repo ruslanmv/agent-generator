@@ -1,4 +1,5 @@
 """YAML file validation: parse checking and emptiness detection."""
+
 from __future__ import annotations
 
 import yaml
@@ -33,6 +34,4 @@ class YamlValidator:
         except yaml.YAMLError as e:
             errors.append(f"{filepath}: YAML parse error: {e}")
 
-        return ValidationResult(
-            valid=len(errors) == 0, errors=errors, warnings=warnings
-        )
+        return ValidationResult(valid=len(errors) == 0, errors=errors, warnings=warnings)

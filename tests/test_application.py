@@ -1,7 +1,9 @@
 """Integration tests for the spec-first planning + build pipeline."""
+
 import ast
-from agent_generator.application.planning_service import plan
+
 from agent_generator.application.build_service import build_dict as build
+from agent_generator.application.planning_service import plan
 
 
 def test_plan_returns_valid_spec():
@@ -9,7 +11,13 @@ def test_plan_returns_valid_spec():
     assert spec.name
     assert len(spec.agents) >= 1
     assert len(spec.tasks) >= 1
-    assert spec.framework.value in ("crewai", "langgraph", "watsonx_orchestrate", "crewai_flow", "react")
+    assert spec.framework.value in (
+        "crewai",
+        "langgraph",
+        "watsonx_orchestrate",
+        "crewai_flow",
+        "react",
+    )
 
 
 def test_build_from_spec():

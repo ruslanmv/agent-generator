@@ -1,4 +1,5 @@
 """AST-based Python code validation: syntax, security, and import extraction."""
+
 from __future__ import annotations
 
 import ast
@@ -100,6 +101,4 @@ class PythonValidator:
         if not imports:
             warnings.append(f"{filepath}: No imports found")
 
-        return ValidationResult(
-            valid=len(errors) == 0, errors=errors, warnings=warnings
-        )
+        return ValidationResult(valid=len(errors) == 0, errors=errors, warnings=warnings)

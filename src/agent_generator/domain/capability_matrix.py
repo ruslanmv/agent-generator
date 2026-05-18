@@ -1,4 +1,5 @@
 """Framework capability matrix -- what each framework supports."""
+
 from __future__ import annotations
 
 CAPABILITY_MATRIX: dict[str, dict[str, bool]] = {
@@ -48,11 +49,7 @@ def validate_combination(framework: str, mode: str) -> bool:
 def supported_modes(framework: str) -> list[str]:
     """Return the list of supported artifact modes for a framework."""
     caps = CAPABILITY_MATRIX.get(framework, {})
-    return [
-        k
-        for k, v in caps.items()
-        if v and k in ("code_only", "yaml_only", "code_and_yaml")
-    ]
+    return [k for k, v in caps.items() if v and k in ("code_only", "yaml_only", "code_and_yaml")]
 
 
 def supports_tools(framework: str) -> bool:

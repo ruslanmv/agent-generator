@@ -44,7 +44,7 @@ class SecretOut(BaseModel):
     version: int
 
     @classmethod
-    def from_record(cls, r: SecretRecord) -> "SecretOut":
+    def from_record(cls, r: SecretRecord) -> SecretOut:
         return cls(key=r.key, version=r.version)
 
 

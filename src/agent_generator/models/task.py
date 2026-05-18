@@ -36,9 +36,7 @@ class Task(BaseModel):
 
     id: str = Field(..., description="Unique task identifier.")
     goal: str = Field(..., description="One-sentence objective.")
-    inputs: List[str] = Field(
-        default_factory=list, description="Input variable names (optional)."
-    )
+    inputs: List[str] = Field(default_factory=list, description="Input variable names (optional).")
     outputs: List[str] = Field(
         default_factory=list, description="Output variable names (optional)."
     )

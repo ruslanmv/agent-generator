@@ -1,8 +1,9 @@
 """Release service — package artifacts for distribution."""
+
 from __future__ import annotations
 
 from io import BytesIO
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from agent_generator.domain.artifact_bundle import ArtifactBundle
 

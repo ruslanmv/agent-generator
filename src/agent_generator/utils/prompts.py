@@ -44,8 +44,7 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
     # =========================================================
     "watsonx": {
         # Generic fallback
-        "generic": _dedent(
-            """
+        "generic": _dedent("""
             You are a helpful AI that writes {{ framework_name }} code for multi‑agent
             workflows.  The user provided a *workflow spec* in JSON below; output only
             the finished code block with no explanations.
@@ -53,10 +52,8 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
             === SPEC START ===
             {{ spec_json }}
             === SPEC END ===
-            """
-        ),
-        "crewai": _dedent(
-            """
+            """),
+        "crewai": _dedent("""
             Act as a senior Python developer specialising in *CrewAI* agent teams.
             Your task: turn the following JSON workflow into an executable CrewAI script.
 
@@ -69,10 +66,8 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
 
             JSON SPEC:
             {{ spec_json }}
-            """
-        ),
-        "crewai_flow": _dedent(
-            """
+            """),
+        "crewai_flow": _dedent("""
             Generate a **CrewAI Flow** pipeline from the workflow specification below.
 
             Requirements:
@@ -82,10 +77,8 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
 
             SPEC:
             {{ spec_json }}
-            """
-        ),
-        "langgraph": _dedent(
-            """
+            """),
+        "langgraph": _dedent("""
             Convert the workflow into a **LangGraph** graph.
 
             • Create nodes for each task.
@@ -96,40 +89,33 @@ TEMPLATES: Dict[str, Dict[str, str]] = {
 
             SPEC JSON:
             {{ spec_json }}
-            """
-        ),
-        "react": _dedent(
-            """
+            """),
+        "react": _dedent("""
             Produce a stand‑alone **ReAct** style script based on the workflow spec.
 
             • Implement a main loop with reasoning + acting.
             • Each output variable should be logged to console.
 
             SPEC = {{ spec_json }}
-            """
-        ),
-        "watsonx_orchestrate": _dedent(
-            """
+            """),
+        "watsonx_orchestrate": _dedent("""
             Emit an `orchestrate.yaml` skill definition compatible with
             IBM WatsonX Orchestrate.  Follow the official schema.
 
             SPEC JSON:
             {{ spec_json }}
-            """
-        ),
+            """),
     },
     # =========================================================
     # OpenAI  (installed via optional extra)
     # =========================================================
     "openai": {
-        "generic": _dedent(
-            """
+        "generic": _dedent("""
             You are ChatGPT generating {{ framework_name }} code from a JSON workflow.
 
             SPEC:
             {{ spec_json }}
-            """
-        ),
+            """),
         # For brevity we reuse the watsonx strings ↓
     },
 }

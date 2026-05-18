@@ -1,10 +1,12 @@
 """Unified planning service used by CLI and Web API."""
+
 from __future__ import annotations
 
 import re
 import warnings as _warnings
 from typing import Optional
 
+from agent_generator.application.validation_service import validate_spec
 from agent_generator.domain.project_spec import (
     AgentSpec,
     ArtifactMode,
@@ -18,7 +20,6 @@ from agent_generator.domain.project_spec import (
 )
 from agent_generator.planners.keyword_planner import KeywordPlanner
 from agent_generator.planners.spec_normalizer import SpecNormalizer
-from agent_generator.application.validation_service import validate_spec
 
 _keyword_planner = KeywordPlanner()
 _normalizer = SpecNormalizer()
@@ -51,11 +52,7 @@ def _extract_roles(prompt: str, hints: dict) -> list[dict]:
 
 def _extract_tasks(prompt: str, agents: list[dict]) -> list[dict]:
     """Extract tasks from prompt sentences."""
-    sentences = [
-        s.strip()
-        for s in re.split(r"[.!?]+", prompt)
-        if s.strip() and len(s.strip()) > 5
-    ]
+    sentences = [s.strip() for s in re.split(r"[.!?]+", prompt) if s.strip() and len(s.strip()) > 5]
     if not sentences:
         sentences = [prompt.strip()]
     tasks = []
@@ -127,10 +124,7 @@ def plan(
     mode = hints["suggested_artifact_mode"]
     agents = _extract_roles(prompt, hints)
     tasks = _extract_tasks(prompt, agents)
-    tools = [
-        {"id": t, "template": t, "inputs": {}}
-        for t in hints.get("suggested_tools", [])
-    ]
+    tools = [{"id": t, "template": t, "inputs": {}} for t in hints.get("suggested_tools", [])]
 
     spec = ProjectSpec(
         name=_slugify(prompt[:50]),

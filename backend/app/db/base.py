@@ -38,5 +38,5 @@ class TimestampMixin:
         nullable=False,
     )
 
-    def __init_subclass__(cls, **kw: Any) -> None:
+    def __init_subclass__(cls, **kw: Any) -> None:  # noqa: ANN401 — passthrough
         super().__init_subclass__(**kw)

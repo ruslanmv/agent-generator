@@ -43,4 +43,4 @@ class AuditEvent(Base, TimestampMixin):
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
-    actor: Mapped["User | None"] = relationship(lazy="joined")
+    actor: Mapped[User | None] = relationship(lazy="joined")

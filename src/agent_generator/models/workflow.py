@@ -56,10 +56,7 @@ class Workflow(BaseModel):
     def _validate_edges(self):
         task_ids = {t.id for t in self.tasks}
         missing = {
-            eid
-            for edge in self.edges
-            for eid in (edge.source, edge.target)
-            if eid not in task_ids
+            eid for edge in self.edges for eid in (edge.source, edge.target) if eid not in task_ids
         }
         if missing:
             raise ValueError(f"Edge(s) reference unknown task id(s): {missing}")

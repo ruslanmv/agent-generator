@@ -9,8 +9,7 @@ from agent_generator.frameworks.base import BaseFrameworkGenerator
 from agent_generator.models.workflow import Workflow
 
 _REACT_TEMPLATE = Template(
-    textwrap.dedent(
-        '''
+    textwrap.dedent('''
         """Auto-generated ReAct agent with reasoning loop."""
 
         from __future__ import annotations
@@ -162,8 +161,7 @@ _REACT_TEMPLATE = Template(
         if __name__ == "__main__":
             result = main()
             print(json.dumps(result, indent=2, default=str))
-        '''
-    ).strip("\n"),
+        ''').strip("\n"),
     trim_blocks=True,
     lstrip_blocks=True,
 )

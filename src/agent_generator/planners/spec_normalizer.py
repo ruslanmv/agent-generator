@@ -3,6 +3,7 @@
 Performs compatibility checks, reference validation, and cycle detection.
 Returns a corrected spec along with a list of warnings about adjustments made.
 """
+
 from __future__ import annotations
 
 from collections import deque
@@ -11,7 +12,14 @@ from agent_generator.domain.capability_matrix import supported_modes, validate_c
 from agent_generator.domain.project_spec import ArtifactMode, ProjectSpec
 
 KNOWN_TOOL_TEMPLATES = frozenset(
-    {"web_search", "pdf_reader", "http_client", "sql_query", "vector_search", "file_writer"}
+    {
+        "web_search",
+        "pdf_reader",
+        "http_client",
+        "sql_query",
+        "vector_search",
+        "file_writer",
+    }
 )
 
 
@@ -46,9 +54,7 @@ class SpecNormalizer:
 
         return spec, warnings
 
-    def _check_capability_matrix(
-        self, spec: ProjectSpec, warnings: list[str]
-    ) -> None:
+    def _check_capability_matrix(self, spec: ProjectSpec, warnings: list[str]) -> None:
         """Adjust artifact_mode if unsupported by the chosen framework."""
         if not validate_combination(spec.framework.value, spec.artifact_mode.value):
             available = supported_modes(spec.framework.value)
@@ -61,21 +67,16 @@ class SpecNormalizer:
                     f"(unsupported for {spec.framework.value})"
                 )
 
-    def _check_tool_templates(
-        self, spec: ProjectSpec, warnings: list[str]
-    ) -> None:
+    def _check_tool_templates(self, spec: ProjectSpec, warnings: list[str]) -> None:
         """Ensure all tool templates reference known catalog entries."""
         for tool in spec.tools:
             if tool.template not in KNOWN_TOOL_TEMPLATES:
                 warnings.append(
-                    f"Unknown tool template '{tool.template}', "
-                    f"defaulting to 'http_client'"
+                    f"Unknown tool template '{tool.template}', " f"defaulting to 'http_client'"
                 )
                 tool.template = "http_client"
 
-    def _check_agent_references(
-        self, spec: ProjectSpec, warnings: list[str]
-    ) -> None:
+    def _check_agent_references(self, spec: ProjectSpec, warnings: list[str]) -> None:
         """Ensure all tasks reference valid agent IDs."""
         agent_ids = {a.id for a in spec.agents}
         for task in spec.tasks:
@@ -87,22 +88,16 @@ class SpecNormalizer:
                 )
                 task.agent_id = fallback
 
-    def _check_task_dependencies(
-        self, spec: ProjectSpec, warnings: list[str]
-    ) -> None:
+    def _check_task_dependencies(self, spec: ProjectSpec, warnings: list[str]) -> None:
         """Remove invalid task dependency references."""
         task_ids = {t.id for t in spec.tasks}
         for task in spec.tasks:
             invalid = [d for d in task.depends_on if d not in task_ids]
             if invalid:
-                warnings.append(
-                    f"Task '{task.id}' has invalid depends_on: {invalid}, removed"
-                )
+                warnings.append(f"Task '{task.id}' has invalid depends_on: {invalid}, removed")
                 task.depends_on = [d for d in task.depends_on if d in task_ids]
 
-    def _check_circular_dependencies(
-        self, spec: ProjectSpec, warnings: list[str]
-    ) -> None:
+    def _check_circular_dependencies(self, spec: ProjectSpec, warnings: list[str]) -> None:
         """Detect circular dependencies using Kahn's topological sort algorithm."""
         task_ids = {t.id for t in spec.tasks}
         graph: dict[str, list[str]] = {t.id: list(t.depends_on) for t in spec.tasks}
@@ -124,9 +119,7 @@ class SpecNormalizer:
                     adjacency[dep].append(tid)
                     in_degree[tid] += 1
 
-        queue: deque[str] = deque(
-            tid for tid, deg in in_degree.items() if deg == 0
-        )
+        queue: deque[str] = deque(tid for tid, deg in in_degree.items() if deg == 0)
         visited_count = 0
         while queue:
             node = queue.popleft()
@@ -145,16 +138,13 @@ class SpecNormalizer:
             for task in spec.tasks:
                 task.depends_on = []
 
-    def _check_agent_tool_references(
-        self, spec: ProjectSpec, warnings: list[str]
-    ) -> None:
+    def _check_agent_tool_references(self, spec: ProjectSpec, warnings: list[str]) -> None:
         """Ensure agents only reference tools defined in the spec."""
         tool_ids = {t.id for t in spec.tools}
         for agent in spec.agents:
             invalid_tools = [t for t in agent.tools if t not in tool_ids]
             if invalid_tools:
                 warnings.append(
-                    f"Agent '{agent.id}' references unknown tools: "
-                    f"{invalid_tools}, removed"
+                    f"Agent '{agent.id}' references unknown tools: " f"{invalid_tools}, removed"
                 )
                 agent.tools = [t for t in agent.tools if t in tool_ids]

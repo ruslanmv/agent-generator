@@ -18,7 +18,7 @@ backend is a thin shim — no business logic — so swapping is a single
 env-var change.
 """
 
-from app.secrets.base import SecretRecord, SecretsBackend  # noqa: F401
-from app.secrets.factory import get_secrets_backend  # noqa: F401
+from app.secrets.base import SecretRecord, SecretsBackend
+from app.secrets.factory import get_secrets_backend
 
 __all__ = ["SecretRecord", "SecretsBackend", "get_secrets_backend"]

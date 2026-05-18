@@ -10,7 +10,7 @@ We deliberately keep claims minimal: ``sub`` (user id), ``role``,
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 import jwt
@@ -26,7 +26,7 @@ class TokenError(Exception):
 
 
 def _now() -> datetime:
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def issue_token(

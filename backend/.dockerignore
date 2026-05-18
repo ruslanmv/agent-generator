@@ -15,7 +15,6 @@ coverage.xml
 build
 dist
 tests
-README.md
 .env
 *.db
 *.sqlite

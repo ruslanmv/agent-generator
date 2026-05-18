@@ -73,10 +73,10 @@ async def test_callback_creates_admin_for_first_user(
 
     get_settings.cache_clear()
 
-    async def fake_exchange(code: str, *, redirect_uri: str) -> str:  # noqa: ARG001
+    async def fake_exchange(code: str, *, redirect_uri: str) -> str:
         return "fake-access-token"
 
-    async def fake_profile(token: str) -> oauth.GitHubProfile:  # noqa: ARG001
+    async def fake_profile(token: str) -> oauth.GitHubProfile:
         return oauth.GitHubProfile(
             id="42",
             username="octocat",

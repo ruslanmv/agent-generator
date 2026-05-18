@@ -30,7 +30,7 @@ class AuditOut(BaseModel):
     created_at: str
 
     @classmethod
-    def from_orm_event(cls, e: AuditEvent) -> "AuditOut":
+    def from_orm_event(cls, e: AuditEvent) -> AuditOut:
         return cls(
             id=e.id,
             actor_id=e.actor_id,

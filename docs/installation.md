@@ -1,92 +1,71 @@
-# Installation
+# Install in 30 seconds
 
-Two install paths, pick the one that matches what you want to ship.
-
-| Path                   | Install                              | What you get                                                          |
-|------------------------|--------------------------------------|-----------------------------------------------------------------------|
-| **CLI only**           | `pip install agent-generator`        | The original one-shot generator (this page from "Basic install" ↓).   |
-| **Full platform**      | `make install` from a clone of the repo | CLI + FastAPI backend + Vite SPA. `make start` boots both dev servers. See [Platform overview](platform.md). |
-
-Requires **Python 3.10+**. The full platform additionally needs **Node 20+**;
-for desktop installers add **Rust 1.77+** and the Tauri prereqs; for Android,
-**JDK 17** and the Android SDK.
-
-## Basic Install
+## The CLI
 
 ```bash
 pip install agent-generator
 ```
 
-This gives you the CLI, core libraries, and the WatsonX provider.
+That's the whole thing. Python 3.10 or newer.
 
-## Optional Extras
-
-| Extra | What it adds | Install command |
-|-------|-------------|-----------------|
-| `openai` | OpenAI provider + tiktoken | `pip install "agent-generator[openai]"` |
-| `crewai` | CrewAI runtime (for running generated code) | `pip install "agent-generator[crewai]"` |
-| `langgraph` | LangGraph runtime | `pip install "agent-generator[langgraph]"` |
-| `all` | All of the above | `pip install "agent-generator[all]"` |
-| `dev` | pytest, ruff, mypy, mkdocs | `pip install "agent-generator[dev]"` |
-
-## Environment Variables
-
-Create a `.env` file in your project root:
-
-```env
-# Provider selection (default: watsonx)
-AGENTGEN_PROVIDER=watsonx
-
-# WatsonX credentials
-WATSONX_API_KEY=your-api-key
-WATSONX_PROJECT_ID=your-project-id
-WATSONX_URL=https://us-south.ml.cloud.ibm.com
-
-# OpenAI credentials (if using OpenAI)
-# OPENAI_API_KEY=sk-your-key
-
-# Optional overrides
-# AGENTGEN_MODEL=meta-llama/llama-3-3-70b-instruct
-# AGENTGEN_TEMPERATURE=0.7
-# AGENTGEN_MAX_TOKENS=4096
-```
-
-Load them:
+Need OpenAI, CrewAI runtime, or LangGraph runtime too?
 
 ```bash
-# Option A: source the file
-set -a && source .env && set +a
-
-# Option B: export manually
-export WATSONX_API_KEY=your-key
-export WATSONX_PROJECT_ID=your-project
-```
-
-## Verify Installation
-
-```bash
-# Dry run (no credentials needed)
-agent-generator "Test agent" --framework crewai --dry-run
-
-# Check version
-agent-generator --version
-```
-
-## Windows (WSL)
-
-On Windows, use WSL:
-
-```powershell
-wsl --install
-```
-
-Then inside WSL:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
 pip install "agent-generator[all]"
 ```
+
+## The platform (web · desktop · mobile)
+
+You only need this if you want the full team-ready experience — the
+FastAPI backend, the SPA, the marketplace, the desktop installer.
+
+```bash
+git clone https://github.com/ruslanmv/agent-generator
+cd agent-generator
+make install
+make start          # backend :8000 + SPA :5173
+```
+
+`make start` runs both dev servers and tails the logs. Hit Ctrl-C to stop.
+
+Extra requirements when going beyond the CLI:
+
+| For | You need |
+|---|---|
+| Backend + SPA | Node 20+ |
+| Desktop installer | Rust 1.77+ and the Tauri prereqs |
+| Android APK | JDK 17 and the Android SDK |
+
+## Set your credentials
+
+Create a `.env` in the project root:
+
+```env
+# Pick one provider
+AGENTGEN_PROVIDER=watsonx          # or "openai"
+
+# WatsonX
+WATSONX_API_KEY=your-key
+WATSONX_PROJECT_ID=your-project
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
+
+# OpenAI (only if you switched the provider)
+OPENAI_API_KEY=sk-...
+```
+
+Then either source it (`set -a && source .env && set +a`) or export the
+variables yourself. The platform reads the same names from its own
+Settings model, so a `.env` works for both.
+
+## Did it work?
+
+```bash
+agent-generator "Test agent" -f crewai --dry-run
+```
+
+`--dry-run` skips the LLM call so you don't need credentials just to
+prove the install. You should see a fake-but-valid CrewAI project printed
+to stdout.
 
 ## Docker
 
@@ -96,23 +75,35 @@ docker run -e WATSONX_API_KEY=... -e WATSONX_PROJECT_ID=... \
            -p 8000:8000 agent-generator
 ```
 
-Web UI at **http://localhost:8000**, CLI via `docker exec`.
+Web UI on `http://localhost:8000`. The CLI is also inside the image —
+`docker exec` if you want to drive it from a shell.
 
-## Upgrading
+## Windows
+
+Use WSL. PowerShell is unsupported.
+
+```powershell
+wsl --install
+```
+
+Then inside WSL: `python3 -m venv .venv && source .venv/bin/activate &&
+pip install "agent-generator[all]"`.
+
+## Upgrade
 
 ```bash
 pip install --upgrade "agent-generator[all]"
 ```
 
-## Troubleshooting
+## When something goes wrong
 
-| Issue | Fix |
-|-------|-----|
-| `401 Unauthorized` (WatsonX) | Check `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` |
-| `OPENAI_API_KEY is required` | Install the openai extra: `pip install "agent-generator[openai]"` |
-| CLI hangs | Lower `--max-tokens` or check network |
-| `ModuleNotFoundError` | Make sure you installed the right extra |
+| You see | Try |
+|---|---|
+| `401 Unauthorized` (WatsonX) | Re-check `WATSONX_API_KEY` and `WATSONX_PROJECT_ID`. |
+| `OPENAI_API_KEY is required` | `pip install "agent-generator[openai]"` and export the key. |
+| CLI hangs | Network is slow or the prompt is huge — lower `--max-tokens`. |
+| `ModuleNotFoundError` | The extra you need isn't installed: `pip install "agent-generator[<extra>]"`. |
 
 ---
 
-**Next:** [Usage](usage.md) | [Frameworks](frameworks.md) | [Architecture](architecture.md)
+**Next:** [Usage recipes](usage.md) · [Pick a framework](frameworks.md)
