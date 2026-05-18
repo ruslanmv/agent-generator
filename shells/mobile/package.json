@@ -27,9 +27,10 @@
     "@capacitor/splash-screen": "^6.0.3",
     "@capacitor/status-bar": "^6.0.2",
     "@capacitor/keyboard": "^6.0.4",
-    "@aparajita/capacitor-secure-storage": "^7.0.0"
+    "@aparajita/capacitor-secure-storage": "^6.0.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.2.0"
+    "@capacitor/cli": "^6.2.0",
+    "typescript": "^5.5.4"
   }
 }
