@@ -8,6 +8,7 @@ Provider hierarchy:
 
 All three expose the same /v1/chat/completions and /v1/models interface.
 """
+
 from __future__ import annotations
 
 import json
@@ -70,8 +71,17 @@ class InferenceSettings:
     def update(self, **kwargs) -> dict:
         """Update settings. Returns the new state."""
         with self._lock:
-            for key in ("provider", "base_url", "model", "api_key", "temperature",
-                        "max_tokens", "pair_token", "device_id", "auth_mode"):
+            for key in (
+                "provider",
+                "base_url",
+                "model",
+                "api_key",
+                "temperature",
+                "max_tokens",
+                "pair_token",
+                "device_id",
+                "auth_mode",
+            ):
                 if key in kwargs and kwargs[key] is not None:
                     val = kwargs[key]
                     if key == "temperature":
@@ -82,7 +92,9 @@ class InferenceSettings:
             # If provider changed, apply defaults for empty fields
             if "provider" in kwargs:
                 defaults = PROVIDER_DEFAULTS.get(self.provider, {})
-                if not self.base_url or self.base_url in [d["base_url"] for d in PROVIDER_DEFAULTS.values()]:
+                if not self.base_url or self.base_url in [
+                    d["base_url"] for d in PROVIDER_DEFAULTS.values()
+                ]:
                     self.base_url = defaults.get("base_url", self.base_url)
                 if not self.model or self.model in [d["model"] for d in PROVIDER_DEFAULTS.values()]:
                     self.model = defaults.get("model", self.model)
@@ -155,9 +167,13 @@ class InferenceClient:
             pass
         return []
 
-    def generate(self, prompt: str, system: str = "",
-                 temperature: float | None = None,
-                 max_tokens: int | None = None) -> str:
+    def generate(
+        self,
+        prompt: str,
+        system: str = "",
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> str:
         """Generate a chat completion."""
         messages = []
         if system:
@@ -167,8 +183,8 @@ class InferenceClient:
         payload = {
             "model": self.settings.model,
             "messages": messages,
-            "temperature": temperature if temperature is not None else self.settings.temperature,
-            "max_tokens": max_tokens if max_tokens is not None else self.settings.max_tokens,
+            "temperature": (temperature if temperature is not None else self.settings.temperature),
+            "max_tokens": (max_tokens if max_tokens is not None else self.settings.max_tokens),
         }
 
         resp = requests.post(

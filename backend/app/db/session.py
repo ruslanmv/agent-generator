@@ -42,7 +42,7 @@ def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
 
 async def get_session() -> AsyncIterator[AsyncSession]:
     """FastAPI dependency that yields one session per request."""
-    Session = get_sessionmaker()  # noqa: N806
+    Session = get_sessionmaker()
     async with Session() as session:
         try:
             yield session
@@ -59,8 +59,8 @@ async def init_models() -> None:
     is wired into the lifespan when ``AG_ENV=dev`` so a fresh checkout
     works without manual setup.
     """
-    from app.db.base import Base
     from app.db import models  # noqa: F401 — register tables
+    from app.db.base import Base
 
     engine = get_engine()
     async with engine.begin() as conn:

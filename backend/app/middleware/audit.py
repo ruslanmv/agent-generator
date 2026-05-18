@@ -74,7 +74,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
         actor_id, actor_username = self._resolve_actor(request)
 
-        Session = get_sessionmaker()  # noqa: N806
+        Session = get_sessionmaker()
         try:
             async with Session() as session:
                 session.add(

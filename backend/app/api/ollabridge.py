@@ -36,7 +36,7 @@ from app.settings import Settings, get_settings
 router = APIRouter(prefix="/api/ollabridge", tags=["ollabridge"])
 log = structlog.get_logger("ollabridge")
 
-SECRET_KEY_URL = "OLLABRIDGE_URL"
+SECRET_KEY_URL = "OLLABRIDGE_URL"  # noqa: S105 — env-var name, not a credential
 SECRET_KEY_TOKEN = "OLLABRIDGE_TOKEN"  # noqa: S105
 
 

@@ -9,7 +9,7 @@ Status transitions: pending → running → (succeeded | failed | cancelled).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
 from sqlalchemy import ForeignKey, Index, String, Text
@@ -47,9 +47,9 @@ class Run(Base, TimestampMixin):
     prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    project: Mapped["Project"] = relationship(lazy="joined")
-    owner: Mapped["User"] = relationship(lazy="joined")
-    events: Mapped[list["RunEvent"]] = relationship(
+    project: Mapped[Project] = relationship(lazy="joined")
+    owner: Mapped[User] = relationship(lazy="joined")
+    events: Mapped[list[RunEvent]] = relationship(
         back_populates="run",
         cascade="all, delete-orphan",
         order_by="RunEvent.seq",
@@ -77,7 +77,7 @@ class RunEvent(Base):
     )
     seq: Mapped[int] = mapped_column(nullable=False)
     kind: Mapped[EventKind] = mapped_column(String(16), nullable=False)
-    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     created_at: Mapped[str] = mapped_column(
         # ISO-8601 string is enough for replay; no need for a TZ-aware
         # timestamp column here since the wizard renders the value

@@ -32,6 +32,7 @@ def _watsonx_env(monkeypatch):
     monkeypatch.setenv("WATSONX_API_KEY", "dummy")
     monkeypatch.setenv("WATSONX_PROJECT_ID", "proj123")
     from agent_generator.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()

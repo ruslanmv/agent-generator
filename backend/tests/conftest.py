@@ -75,7 +75,7 @@ async def make_user() -> Any:
         role: str = "user",
         provider_user_id: str | None = None,
     ) -> tuple[str, str]:
-        Session = get_sessionmaker()  # noqa: N806
+        Session = get_sessionmaker()
         async with Session() as session:
             user = User(
                 provider="github",

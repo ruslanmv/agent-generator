@@ -24,11 +24,11 @@ from itsdangerous import BadSignature, URLSafeTimedSerializer
 from app.settings import get_settings
 
 GITHUB_AUTHORIZE = "https://github.com/login/oauth/authorize"
-GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
+GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"  # noqa: S105 — public URL, not a credential
 GITHUB_USER_URL = "https://api.github.com/user"
 GITHUB_EMAILS_URL = "https://api.github.com/user/emails"
 
-STATE_SALT = "agent-generator:oauth:state"  # noqa: S105
+STATE_SALT = "agent-generator:oauth:state"
 STATE_MAX_AGE_SECONDS = 600  # 10 minutes
 
 
@@ -56,7 +56,8 @@ def sign_state(payload: dict[str, Any]) -> str:
 
 def verify_state(token: str) -> dict[str, Any]:
     try:
-        return _serializer().loads(token, max_age=STATE_MAX_AGE_SECONDS)
+        result: dict[str, Any] = _serializer().loads(token, max_age=STATE_MAX_AGE_SECONDS)
+        return result
     except BadSignature as exc:
         raise OAuthError(f"invalid state: {exc}") from exc
 

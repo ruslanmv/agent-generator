@@ -1,6 +1,7 @@
 """Tests for ArtifactBundle and build pipeline."""
-from agent_generator.application.planning_service import plan
+
 from agent_generator.application.build_service import build, build_dict
+from agent_generator.application.planning_service import plan
 from agent_generator.domain.artifact_bundle import ArtifactBundle, GeneratedFile
 
 

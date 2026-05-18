@@ -6,6 +6,7 @@ Uses the production infrastructure:
 - BuildService for code generation
 - SecurityValidator for artifact checks
 """
+
 from __future__ import annotations
 
 import ast
@@ -22,14 +23,9 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from agent_generator.application.planning_service import plan as plan_spec
 from agent_generator.application.build_service import build_dict
-from agent_generator.frameworks import FRAMEWORKS
-from agent_generator.web.inference import (
-    get_inference_client,
-    get_inference_settings,
-    PROVIDER_DEFAULTS,
-)
+from agent_generator.application.planning_service import plan as plan_spec
+from agent_generator.web.inference import get_inference_client
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -82,23 +78,48 @@ FRAMEWORK_LABELS = {
 FRAMEWORK_CAPABILITIES = {
     "crewai": {"yaml": True, "tools": True, "multi_agent": True, "flow": False},
     "langgraph": {"yaml": False, "tools": False, "multi_agent": True, "flow": True},
-    "watsonx_orchestrate": {"yaml": True, "tools": True, "multi_agent": False, "flow": False},
+    "watsonx_orchestrate": {
+        "yaml": True,
+        "tools": True,
+        "multi_agent": False,
+        "flow": False,
+    },
     "crewai_flow": {"yaml": False, "tools": True, "multi_agent": True, "flow": True},
     "react": {"yaml": False, "tools": True, "multi_agent": False, "flow": False},
 }
 
 TOOL_CATEGORIES = {
     "Data Retrieval": [
-        {"id": "web_search", "label": "Web Search", "desc": "Search the internet via SerpAPI"},
+        {
+            "id": "web_search",
+            "label": "Web Search",
+            "desc": "Search the internet via SerpAPI",
+        },
         {"id": "http_client", "label": "HTTP Client", "desc": "Make REST API requests"},
-        {"id": "sql_query", "label": "SQL Query", "desc": "Execute read-only SQL queries"},
+        {
+            "id": "sql_query",
+            "label": "SQL Query",
+            "desc": "Execute read-only SQL queries",
+        },
     ],
     "Document Processing": [
-        {"id": "pdf_reader", "label": "PDF Reader", "desc": "Extract text from PDF files"},
-        {"id": "vector_search", "label": "Vector Search", "desc": "Semantic similarity search"},
+        {
+            "id": "pdf_reader",
+            "label": "PDF Reader",
+            "desc": "Extract text from PDF files",
+        },
+        {
+            "id": "vector_search",
+            "label": "Vector Search",
+            "desc": "Semantic similarity search",
+        },
     ],
     "Output": [
-        {"id": "file_writer", "label": "File Writer", "desc": "Write content to files safely"},
+        {
+            "id": "file_writer",
+            "label": "File Writer",
+            "desc": "Write content to files safely",
+        },
     ],
 }
 
@@ -116,12 +137,20 @@ def _build_file_tree(files: dict) -> list:
             if dir_path not in dirs_seen:
                 dirs_seen.add(dir_path)
                 tree.append({"path": dir_path, "name": parts[i], "type": "dir", "depth": i})
-        tree.append({"path": filepath, "name": parts[-1], "type": "file", "depth": len(parts) - 1})
+        tree.append(
+            {
+                "path": filepath,
+                "name": parts[-1],
+                "type": "file",
+                "depth": len(parts) - 1,
+            }
+        )
     return tree
 
 
 def _validate_files(files: dict[str, str]) -> list[dict]:
     import ast as _ast
+
     results = []
     for filepath, content in files.items():
         if filepath.endswith(".py"):
@@ -129,7 +158,13 @@ def _validate_files(files: dict[str, str]) -> list[dict]:
                 _ast.parse(content, filename=filepath)
                 results.append({"file": filepath, "status": "ok", "message": "Valid Python"})
             except SyntaxError as exc:
-                results.append({"file": filepath, "status": "error", "message": f"SyntaxError line {exc.lineno}: {exc.msg}"})
+                results.append(
+                    {
+                        "file": filepath,
+                        "status": "error",
+                        "message": f"SyntaxError line {exc.lineno}: {exc.msg}",
+                    }
+                )
         elif filepath.endswith((".yaml", ".yml")):
             try:
                 yaml.safe_load(content)
@@ -152,8 +187,9 @@ def _spec_to_plan_dict(spec) -> dict:
     }
 
 
-def _plan_and_build(prompt: str, framework: str = "auto",
-                    artifact_mode: str = "code_and_yaml") -> tuple[dict, dict[str, str]]:
+def _plan_and_build(
+    prompt: str, framework: str = "auto", artifact_mode: str = "code_and_yaml"
+) -> tuple[dict, dict[str, str]]:
     """Use production pipeline to plan and build. Returns (plan_dict, files_dict)."""
     fw = framework if framework != "auto" else None
     spec, warnings = plan_spec(prompt, framework=fw)
@@ -170,8 +206,13 @@ def _plan_and_build(prompt: str, framework: str = "auto",
 async def home(request: Request):
     inference = get_inference_client()
     return templates.TemplateResponse(
-        request=request, name="home.html",
-        context={"request": request, "examples": EXAMPLES, "inference_available": inference.available},
+        request=request,
+        name="home.html",
+        context={
+            "request": request,
+            "examples": EXAMPLES,
+            "inference_available": inference.available,
+        },
     )
 
 
@@ -196,14 +237,27 @@ async def plan(request: Request, prompt: str = Form(...)):
                 llm_enhanced = True
 
         return templates.TemplateResponse(
-            request=request, name="plan.html",
-            context={"request": request, "plan": plan_data, "plan_json": json.dumps(plan_data, indent=2),
-                      "prompt": prompt, "llm_enhanced": llm_enhanced, "frameworks": FRAMEWORK_LABELS},
+            request=request,
+            name="plan.html",
+            context={
+                "request": request,
+                "plan": plan_data,
+                "plan_json": json.dumps(plan_data, indent=2),
+                "prompt": prompt,
+                "llm_enhanced": llm_enhanced,
+                "frameworks": FRAMEWORK_LABELS,
+            },
         )
     except Exception as e:
         return templates.TemplateResponse(
-            request=request, name="home.html",
-            context={"request": request, "examples": EXAMPLES, "error": f"Planning failed: {e}", "inference_available": False},
+            request=request,
+            name="home.html",
+            context={
+                "request": request,
+                "examples": EXAMPLES,
+                "error": f"Planning failed: {e}",
+                "inference_available": False,
+            },
         )
 
 
@@ -215,7 +269,13 @@ async def edit_plan(request: Request):
     combined = f"{prompt}. Additionally: {edits}" if edits else prompt
     try:
         spec, warnings = plan_spec(combined)
-        return JSONResponse(content={"ok": True, "plan": _spec_to_plan_dict(spec), "llm_enhanced": False})
+        return JSONResponse(
+            content={
+                "ok": True,
+                "plan": _spec_to_plan_dict(spec),
+                "llm_enhanced": False,
+            }
+        )
     except Exception as e:
         return JSONResponse(content={"ok": False, "error": str(e)}, status_code=500)
 
@@ -248,12 +308,18 @@ async def configure(request: Request, plan_json: str = Form(...), prompt: str = 
             tool_ids.append(t)
 
     return templates.TemplateResponse(
-        request=request, name="configure.html",
+        request=request,
+        name="configure.html",
         context={
-            "request": request, "plan": plan_data, "plan_json": json.dumps(plan_data),
-            "prompt": prompt, "frameworks": FRAMEWORK_LABELS,
-            "framework_capabilities": FRAMEWORK_CAPABILITIES, "tool_categories": TOOL_CATEGORIES,
-            "preview_tree": preview_tree, "selected_tools": tool_ids,
+            "request": request,
+            "plan": plan_data,
+            "plan_json": json.dumps(plan_data),
+            "prompt": prompt,
+            "frameworks": FRAMEWORK_LABELS,
+            "framework_capabilities": FRAMEWORK_CAPABILITIES,
+            "tool_categories": TOOL_CATEGORIES,
+            "preview_tree": preview_tree,
+            "selected_tools": tool_ids,
         },
     )
 
@@ -281,10 +347,14 @@ async def generate(
 
     try:
         effective_prompt = plan_data.get("description", prompt or "agent project")
-        plan_result, files = _plan_and_build(effective_prompt, plan_data.get("framework", "crewai"), artifact_mode)
+        plan_result, files = _plan_and_build(
+            effective_prompt, plan_data.get("framework", "crewai"), artifact_mode
+        )
 
         plan_result["name"] = plan_data.get("name", plan_result.get("name", "agent-project"))
-        plan_result["description"] = plan_data.get("description", plan_result.get("description", ""))
+        plan_result["description"] = plan_data.get(
+            "description", plan_result.get("description", "")
+        )
 
         validation = _validate_files(files)
         errors = [v for v in validation if v["status"] == "error"]
@@ -294,19 +364,36 @@ async def generate(
         projects[project_id] = {"plan": plan_result, "files": files, "prompt": prompt}
 
         file_tree = _build_file_tree(files)
-        fw_label = FRAMEWORK_LABELS.get(plan_result.get("framework", ""), plan_result.get("framework", ""))
+        fw_label = FRAMEWORK_LABELS.get(
+            plan_result.get("framework", ""), plan_result.get("framework", "")
+        )
 
         return templates.TemplateResponse(
-            request=request, name="result.html",
-            context={"request": request, "project_id": project_id, "plan": plan_result,
-                      "files": files, "file_tree": file_tree, "fw_label": fw_label,
-                      "prompt": prompt, "validation": validation,
-                      "validation_errors": errors, "validation_ok": ok_count},
+            request=request,
+            name="result.html",
+            context={
+                "request": request,
+                "project_id": project_id,
+                "plan": plan_result,
+                "files": files,
+                "file_tree": file_tree,
+                "fw_label": fw_label,
+                "prompt": prompt,
+                "validation": validation,
+                "validation_errors": errors,
+                "validation_ok": ok_count,
+            },
         )
     except Exception as e:
         return templates.TemplateResponse(
-            request=request, name="home.html",
-            context={"request": request, "examples": EXAMPLES, "error": f"Generation failed: {e}", "inference_available": False},
+            request=request,
+            name="home.html",
+            context={
+                "request": request,
+                "examples": EXAMPLES,
+                "error": f"Generation failed: {e}",
+                "inference_available": False,
+            },
         )
 
 
@@ -323,8 +410,11 @@ async def download(project_id: str):
         for filepath, content in project["files"].items():
             zf.writestr(f"{project['plan']['name']}/{filepath}", content)
     buf.seek(0)
-    return StreamingResponse(buf, media_type="application/zip",
-                             headers={"Content-Disposition": f"attachment; filename={project['plan']['name']}.zip"})
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={project['plan']['name']}.zip"},
+    )
 
 
 @router.post("/api/verify/{project_id}")
@@ -341,6 +431,7 @@ async def verify_project(project_id: str):
     sandbox_url = os.environ.get("MATRIXLAB_SANDBOX_URL", "")
     if sandbox_url:
         import requests
+
         try:
             buf = io.BytesIO()
             with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -365,36 +456,100 @@ async def verify_project(project_id: str):
         if filepath.endswith(".py"):
             try:
                 tree = ast.parse(content)
-                steps.append({"name": "syntax", "status": "success", "message": f"{filepath}: valid Python", "logs": ""})
+                steps.append(
+                    {
+                        "name": "syntax",
+                        "status": "success",
+                        "message": f"{filepath}: valid Python",
+                        "logs": "",
+                    }
+                )
                 for node in ast.walk(tree):
-                    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in forbidden_calls:
-                        steps.append({"name": "security", "status": "error", "message": f"{filepath}: {node.func.id}() at line {node.lineno}", "logs": ""})
+                    if (
+                        isinstance(node, ast.Call)
+                        and isinstance(node.func, ast.Name)
+                        and node.func.id in forbidden_calls
+                    ):
+                        steps.append(
+                            {
+                                "name": "security",
+                                "status": "error",
+                                "message": f"{filepath}: {node.func.id}() at line {node.lineno}",
+                                "logs": "",
+                            }
+                        )
                         security_ok = False
             except SyntaxError as e:
-                steps.append({"name": "syntax", "status": "error", "message": f"{filepath}: {e.msg} at line {e.lineno}", "logs": ""})
+                steps.append(
+                    {
+                        "name": "syntax",
+                        "status": "error",
+                        "message": f"{filepath}: {e.msg} at line {e.lineno}",
+                        "logs": "",
+                    }
+                )
                 syntax_ok = False
         elif filepath.endswith((".yaml", ".yml")):
             try:
                 yaml.safe_load(content)
-                steps.append({"name": "syntax", "status": "success", "message": f"{filepath}: valid YAML", "logs": ""})
+                steps.append(
+                    {
+                        "name": "syntax",
+                        "status": "success",
+                        "message": f"{filepath}: valid YAML",
+                        "logs": "",
+                    }
+                )
             except yaml.YAMLError as e:
-                steps.append({"name": "syntax", "status": "error", "message": f"{filepath}: {str(e)[:80]}", "logs": ""})
+                steps.append(
+                    {
+                        "name": "syntax",
+                        "status": "error",
+                        "message": f"{filepath}: {str(e)[:80]}",
+                        "logs": "",
+                    }
+                )
                 syntax_ok = False
 
     if security_ok:
-        steps.append({"name": "security", "status": "success", "message": "No dangerous patterns", "logs": ""})
+        steps.append(
+            {
+                "name": "security",
+                "status": "success",
+                "message": "No dangerous patterns",
+                "logs": "",
+            }
+        )
 
     has_deps = any(f in files for f in ("requirements.txt", "pyproject.toml"))
-    steps.append({"name": "dependencies", "status": "success" if has_deps else "warning", "message": "Dependencies found" if has_deps else "No dependency file", "logs": ""})
-    steps.append({"name": "import_test", "status": "success", "message": "AST parse passed for all files", "logs": ""})
+    steps.append(
+        {
+            "name": "dependencies",
+            "status": "success" if has_deps else "warning",
+            "message": "Dependencies found" if has_deps else "No dependency file",
+            "logs": "",
+        }
+    )
+    steps.append(
+        {
+            "name": "import_test",
+            "status": "success",
+            "message": "AST parse passed for all files",
+            "logs": "",
+        }
+    )
 
     overall = "error" if not syntax_ok or not security_ok else "success"
     ok_count = len([s for s in steps if s["status"] == "success"])
 
     return {
-        "ok": True, "source": "local", "status": overall,
-        "language": "python", "framework": project["plan"].get("framework", ""),
-        "files_count": len(files), "steps": steps,
+        "ok": True,
+        "source": "local",
+        "status": overall,
+        "language": "python",
+        "framework": project["plan"].get("framework", ""),
+        "files_count": len(files),
+        "steps": steps,
         "summary": f"{ok_count}/{len(steps)} checks passed",
     }
 

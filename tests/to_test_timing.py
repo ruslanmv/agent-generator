@@ -16,9 +16,7 @@ from agent_generator.utils.parser import parse_natural_language_to_workflow
 from agent_generator.utils.prompts import render_prompt
 
 
-def measure_timing_single(
-    prompt: str, framework_name: str, provider_name: str
-) -> dict[str, float]:
+def measure_timing_single(prompt: str, framework_name: str, provider_name: str) -> dict[str, float]:
     """
     Measure and return timings (in seconds) for each phase of the workflow (single run).
     """
@@ -94,17 +92,11 @@ def measure_timing(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Measure timings for agent-generator workflow."
-    )
+    parser = argparse.ArgumentParser(description="Measure timings for agent-generator workflow.")
     parser.add_argument("--prompt", default="Build an agent", help="Prompt text")
-    parser.add_argument(
-        "--framework", default="watsonx_orchestrate", help="Framework name"
-    )
+    parser.add_argument("--framework", default="watsonx_orchestrate", help="Framework name")
     parser.add_argument("--provider", default="watsonx", help="Provider name")
-    parser.add_argument(
-        "-n", "--runs", type=int, default=3, help="Number of runs to average"
-    )
+    parser.add_argument("-n", "--runs", type=int, default=3, help="Number of runs to average")
     args = parser.parse_args()
 
     print("Measuring workflow timings for:")

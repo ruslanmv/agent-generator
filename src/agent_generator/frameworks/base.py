@@ -108,11 +108,7 @@ class BaseFrameworkGenerator(ABC):
             )
             for t in spec.tasks
         ]
-        edges = [
-            WorkflowEdge(source=dep, target=t.id)
-            for t in spec.tasks
-            for dep in t.depends_on
-        ]
+        edges = [WorkflowEdge(source=dep, target=t.id) for t in spec.tasks for dep in t.depends_on]
         workflow = WF(agents=agents, tasks=tasks, edges=edges)
         return self._emit_core_code(workflow, settings)
 
@@ -145,8 +141,7 @@ class BaseFrameworkGenerator(ABC):
 
         Expects the core code to expose `main()` returning serialisable output.
         """
-        wrapper = textwrap.dedent(
-            f"""
+        wrapper = textwrap.dedent(f"""
             # ──────────────────────────────────────────────────────
             #  MCP HTTP wrapper (auto-generated)
             # ──────────────────────────────────────────────────────
@@ -172,8 +167,7 @@ class BaseFrameworkGenerator(ABC):
                     return json.loads(json.dumps(result, default=str))
 
                 uvicorn.run(app, host="0.0.0.0", port={port})
-            """
-        ).lstrip()
+            """).lstrip()
 
         return f"{code}\n{wrapper}"
 

@@ -1,4 +1,5 @@
 """WatsonX Orchestrate renderer — generates ADK-compatible YAML."""
+
 from __future__ import annotations
 
 import textwrap
@@ -40,11 +41,7 @@ class WatsonXRenderer(BaseRenderer):
         primary = spec.agents[0]
 
         # Build instruction text from tasks assigned to the primary agent
-        task_lines = [
-            f"- {t.description}"
-            for t in spec.tasks
-            if t.agent_id == primary.id
-        ]
+        task_lines = [f"- {t.description}" for t in spec.tasks if t.agent_id == primary.id]
         instructions = (
             "You are an AI agent that can:\n" + "\n".join(task_lines)
             if task_lines

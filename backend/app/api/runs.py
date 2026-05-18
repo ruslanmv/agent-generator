@@ -60,7 +60,7 @@ class RunOut(BaseModel):
     updated_at: str
 
     @classmethod
-    def from_orm_run(cls, r: Run) -> "RunOut":
+    def from_orm_run(cls, r: Run) -> RunOut:
         return cls(
             id=r.id,
             project_id=r.project_id,
@@ -187,7 +187,7 @@ async def _ws_authorize(
         await ws.close(code=4401)
         return None
 
-    Session = get_sessionmaker()  # noqa: N806
+    Session = get_sessionmaker()
     async with Session() as session:
         user = await session.get(User, payload["sub"])
         if user is None:
@@ -213,7 +213,7 @@ async def stream_run(ws: WebSocket, run_id: str) -> None:
     after_str = ws.query_params.get("after")
     after = int(after_str) if after_str is not None else -1
 
-    Session = get_sessionmaker()  # noqa: N806
+    Session = get_sessionmaker()
 
     # Replay missed events before joining the live feed.
     async with Session() as session:

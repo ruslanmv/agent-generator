@@ -1,4 +1,5 @@
 """Release build integration tests."""
+
 from agent_generator.application.build_service import build
 from agent_generator.application.planning_service import plan
 

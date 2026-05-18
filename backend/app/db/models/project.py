@@ -11,7 +11,7 @@ table because we stream them out to the Run / Docker pipelines.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
 from sqlalchemy import ForeignKey, Index, String, Text
@@ -49,14 +49,14 @@ class Project(Base, TimestampMixin):
     # The full wizard state (Step 1-6 fields) serialised as JSON. Lets
     # the wizard surface a single project row in the dashboard and
     # restore the user mid-flow.
-    state: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    state: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     visibility: Mapped[Visibility] = mapped_column(
         String(16), default="private", nullable=False
     )
 
-    owner: Mapped["User"] = relationship(lazy="joined")
-    files: Mapped[list["ProjectFile"]] = relationship(
+    owner: Mapped[User] = relationship(lazy="joined")
+    files: Mapped[list[ProjectFile]] = relationship(
         back_populates="project",
         cascade="all, delete-orphan",
         lazy="selectin",

@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -12,8 +14,9 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Agent Generator", version="0.1.3")
     app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
-    from agent_generator.web.routes.pages import router as pages_router
     from agent_generator.web.routes.api import router as api_router
+    from agent_generator.web.routes.pages import router as pages_router
+
     app.include_router(pages_router)
     app.include_router(api_router, prefix="/api")
 

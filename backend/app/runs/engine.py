@@ -16,11 +16,11 @@ exactly once after the row transitions to ``running``).
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.db.models.run import Run, RunEvent
 from app.db.session import get_sessionmaker
@@ -30,13 +30,17 @@ log = structlog.get_logger("runs.engine")
 
 
 async def _persist_and_publish(
-    Session: async_sessionmaker, run_id: str, seq: int, kind: str, payload: dict[str, Any]
+    Session: async_sessionmaker[AsyncSession],
+    run_id: str,
+    seq: int,
+    kind: str,
+    payload: dict[str, Any],
 ) -> None:
     event = {
         "seq": seq,
         "kind": kind,
         "payload": payload,
-        "created_at": datetime.now(tz=timezone.utc).isoformat(),
+        "created_at": datetime.now(tz=UTC).isoformat(),
     }
     async with Session() as session:
         session.add(RunEvent(run_id=run_id, **event))
@@ -49,7 +53,7 @@ async def _run_stub(run_id: str) -> None:
 
     Replace with the CLI invocation in Batch 22.
     """
-    Session = get_sessionmaker()  # noqa: N806
+    Session = get_sessionmaker()
     seq = 0
     try:
         async with Session() as session:

@@ -104,12 +104,12 @@ async def get_or_create_user(
 
     if row is None:
         row = User(
-            provider=provider,  # type: ignore[arg-type]
+            provider=provider,
             provider_user_id=provider_user_id,
             username=username,
             email=email,
             avatar_url=avatar_url,
-            role=role,  # type: ignore[arg-type]
+            role=role,
         )
         session.add(row)
         await session.flush()

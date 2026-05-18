@@ -57,3 +57,4 @@ site/
 /temp
 .DS_Store
 .run/
+frontend/*.tsbuildinfo

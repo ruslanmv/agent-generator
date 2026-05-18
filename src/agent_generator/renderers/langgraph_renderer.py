@@ -1,4 +1,5 @@
 """LangGraph renderer — generates a StateGraph-based project."""
+
 from __future__ import annotations
 
 import textwrap
@@ -48,7 +49,7 @@ class LangGraphRenderer(BaseRenderer):
             f'        "context": {{}},\n'
             f'        "output": "",\n'
             f"    }}\n"
-            f'    result = graph.invoke(initial_state)\n'
+            f"    result = graph.invoke(initial_state)\n"
             f'    print(result.get("output", result))\n'
             f"\n"
             f"\n"
@@ -64,9 +65,7 @@ class LangGraphRenderer(BaseRenderer):
         node_imports = ", ".join(f"node_{t.id}" for t in spec.tasks)
         task_ids = [t.id for t in spec.tasks]
 
-        add_nodes_lines = [
-            f'    graph.add_node("{tid}", node_{tid})' for tid in task_ids
-        ]
+        add_nodes_lines = [f'    graph.add_node("{tid}", node_{tid})' for tid in task_ids]
         edge_lines = [f'    graph.add_edge(START, "{task_ids[0]}")']
         for i in range(len(task_ids) - 1):
             edge_lines.append(f'    graph.add_edge("{task_ids[i]}", "{task_ids[i + 1]}")')
@@ -163,8 +162,12 @@ class LangGraphRenderer(BaseRenderer):
             lines.append("")
             lines.append("    response = llm.invoke(messages)")
             lines.append("    return {")
-            lines.append(f'        "messages": state.get("messages", []) + [{{"role": "{t.agent_id}", "content": response.content}}],')
-            lines.append(f'        "context": {{**state.get("context", {{}}), "{t.id}": response.content}},')
+            lines.append(
+                f'        "messages": state.get("messages", []) + [{{"role": "{t.agent_id}", "content": response.content}}],'
+            )
+            lines.append(
+                f'        "context": {{**state.get("context", {{}}), "{t.id}": response.content}},'
+            )
             lines.append('        "output": response.content,')
             lines.append("    }")
 

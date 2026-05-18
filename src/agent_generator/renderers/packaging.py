@@ -1,4 +1,5 @@
 """Packaging utilities — ZIP bundling, pyproject.toml, README, .gitignore."""
+
 from __future__ import annotations
 
 import io
@@ -92,12 +93,8 @@ class Packager:
         str
             Rendered README content.
         """
-        agents_section = "\n".join(
-            f"- **{a.role}**: {a.goal}" for a in spec.agents
-        )
-        tasks_section = "\n".join(
-            f"- **{t.id}**: {t.description}" for t in spec.tasks
-        )
+        agents_section = "\n".join(f"- **{a.role}**: {a.goal}" for a in spec.agents)
+        tasks_section = "\n".join(f"- **{t.id}**: {t.description}" for t in spec.tasks)
 
         return textwrap.dedent(f"""\
             # {spec.name}
