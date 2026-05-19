@@ -297,14 +297,40 @@ build-android: build-frontend ## Build the Android debug APK (requires Android S
 	@cd $(MOBILE_DIR)/android && ./gradlew assembleDebug
 
 # ----------------------------------------------------------------
+#  Hugging Face Space  (hf/)
+# ----------------------------------------------------------------
+HF_IMAGE ?= agent-generator-hf:dev
+HF_PORT  ?= 7860
+
+hf-stage: ## Stage backend/api shared modules into hf/space_app/_shared/ (mirrors CI)
+	@mkdir -p hf/space_app/_shared
+	@cp backend/app/api/compatibility.py hf/space_app/_shared/compatibility.py
+	@cp backend/app/api/marketplace.py   hf/space_app/_shared/marketplace.py
+	@echo "  ✓ vendored compatibility.py + marketplace.py into hf/space_app/_shared/"
+
+hf-build: hf-stage ## Build the HF Space Docker image locally
+	docker build -f hf/Dockerfile -t $(HF_IMAGE) .
+
+hf-run: hf-build ## Run the HF Space image on :$(HF_PORT)
+	docker run --rm -p $(HF_PORT):7860 --name agent-generator-hf $(HF_IMAGE)
+
+hf-test: hf-stage ## Run the Space smoke tests against an in-process app
+	cd hf && PYTHONPATH=. $(PYTHON) -m pytest tests -q
+
+hf-clean: ## Drop vendored shared modules
+	@rm -f hf/space_app/_shared/compatibility.py hf/space_app/_shared/marketplace.py
+	@echo "  ✓ removed vendored modules from hf/space_app/_shared/"
+
+# ----------------------------------------------------------------
 #  Misc
 # ----------------------------------------------------------------
-clean: clean-dist app-stop ## Remove caches + artefacts + dev-server PIDs
+clean: clean-dist app-stop hf-clean ## Remove caches + artefacts + dev-server PIDs
 	rm -rf $(VENV) .mypy_cache .pytest_cache .ruff_cache $(LOG_DIR)
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
 .PHONY: help setup install dev-install install-extras lint format type test \
         run web docs docs-build docs-deploy dist clean-dist clean \
+        hf-stage hf-build hf-run hf-test hf-clean \
         install-all test-all start build stop \
         app-install backend-install frontend-install \
         app-test backend-test frontend-test \

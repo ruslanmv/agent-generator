@@ -2,21 +2,30 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { DesktopShell } from '@/layouts/DesktopShell';
 import { MobileShell } from '@/layouts/MobileShell';
 import { GeneratePage } from '@/pages/Generate';
+import { HistoryPage } from '@/pages/History';
 import { RunPage } from '@/pages/Run';
+import { TestPage } from '@/pages/Test';
 import { PipelinePage } from '@/pages/Pipeline';
+import { ProjectsHub } from '@/pages/projects/ProjectsHub';
+import { ProjectDetailPage } from '@/pages/projects/ProjectDetail';
+import { PublishHF } from '@/pages/publish-hf/PublishHF';
 import { MarketplacePage } from '@/pages/Marketplace';
 import { ExportPage } from '@/pages/Export';
 import { DockerPage } from '@/pages/Docker';
 import { SettingsPage } from '@/pages/Settings';
-import { Placeholder } from '@/pages/Placeholder';
 import { MobileGenerate } from '@/pages/mobile/MobileGenerate';
 import { MobileMarketplace } from '@/pages/mobile/MobileMarketplace';
 import { MobileExport } from '@/pages/mobile/MobileExport';
 import { useIsMobile } from '@/lib/use-media';
+import { BUILD_CHANNEL } from '@/lib/build-channel';
 import { DeepLinkBridge } from '@/lib/deep-link';
 
 export default function App() {
-  const mobile = useIsMobile();
+  // The Capacitor shell is always the mobile experience — even when
+  // the WebView reports a CSS viewport >= 768 px (some Android emulator
+  // profiles do this), we want MobileApp. Web/Tauri fall back to the
+  // viewport-driven check so resizing a desktop window still works.
+  const mobile = useIsMobile() || BUILD_CHANNEL === 'capacitor';
   return mobile ? <MobileApp /> : <DesktopApp />;
 }
 
@@ -29,11 +38,17 @@ function DesktopApp() {
         <Route path="/generate" element={<GeneratePage />} />
         <Route path="/pipeline" element={<PipelinePage />} />
         <Route path="/run" element={<RunPage />} />
+        <Route path="/test" element={<TestPage />} />
         <Route path="/export" element={<ExportPage />} />
         <Route path="/docker" element={<DockerPage />} />
-        <Route path="/projects" element={<Placeholder title="Projects" blurb="Saved generations, runs, and history for the current admin." stage="coming-soon" batch="WORKSPACE  ·  BATCH 8" />} />
+        <Route path="/projects" element={<ProjectsHub />} />
+        <Route path="/projects/:id" element={<ProjectDetailPage />} />
+        <Route path="/projects/:id/publish/hf" element={<PublishHF />} />
+        <Route path="/history" element={<HistoryPage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        {/* The desktop shell exposes Settings as a modal opened from the
+            avatar/account menu — no longer a routed full page. The
+            catch-all redirect below handles stale /settings bookmarks. */}
         <Route path="*" element={<Navigate to="/generate" replace />} />
       </Routes>
     </DesktopShell>

@@ -54,7 +54,7 @@ app = typer.Typer(
 
 console = Console()
 
-VERSION = "0.2.1"  # 🛈 bump on release
+VERSION = "0.1.3"  # 🛈 bump on release
 
 
 # ---------------------------------------------------------------- #
@@ -65,6 +65,15 @@ def _validate_choice(value: str, allowed: set[str], name: str) -> str:
         console.print(f"[red]{name} '{value}' is invalid. Options: {sorted(allowed)}[/]")
         raise typer.Exit(code=1)
     return value
+
+
+def _version_callback(value: bool) -> None:
+    """Eager callback so `agent-generator --version` short-circuits
+    Typer's argument parser before it complains about the missing
+    PROMPT positional."""
+    if value:
+        rprint(f"[bold]agent‑generator {VERSION}[/]")
+        raise typer.Exit()
 
 
 def _write_or_echo(text: str, output: Optional[Path]) -> None:
@@ -104,12 +113,16 @@ def generate(
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Skip LLM call."),
     show_cost: bool = typer.Option(False, "--show-cost", help="Display token/cost info."),
-    version: bool = typer.Option(False, "--version", "-V", is_eager=True),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        callback=_version_callback,
+        is_eager=True,
+        help="Print the installed version and exit.",
+    ),
 ):
     """Generate code (or YAML) for a multi‑agent workflow."""
-    if version:
-        rprint(f"[bold]agent‑generator {VERSION}[/]")
-        raise typer.Exit()
 
     # ────────────── Pre‑flight env check ──────────────
     provider_name = provider or os.getenv("AGENTGEN_PROVIDER", "watsonx")

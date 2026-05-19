@@ -9,7 +9,7 @@ def test_build_returns_valid_artifact_bundle():
     artifact = build(spec)
     assert artifact.files
     assert artifact.manifest["framework"] == "langgraph"
-    assert artifact.manifest["generator_version"] == "0.2.1"
+    assert artifact.manifest["generator_version"] == "0.1.3"
     assert artifact.manifest["template_tier"] == "production"
 
 
@@ -18,4 +18,4 @@ def test_all_frameworks_build_valid():
         spec, _ = plan(f"Build a {fw} hello world agent", framework=fw)
         artifact = build(spec)
         assert artifact.files, f"{fw} produced no files"
-        assert artifact.manifest["generator_version"] == "0.2.1"
+        assert artifact.manifest["generator_version"] == "0.1.3"

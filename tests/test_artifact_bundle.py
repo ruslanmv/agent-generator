@@ -33,5 +33,5 @@ def test_all_frameworks_produce_bundles():
         spec, _ = plan(f"Hello world {fw} agent", framework=fw)
         artifact = build(spec)
         assert artifact.files, f"{fw} produced no files"
-        assert artifact.manifest.get("generator_version") == "0.2.1"
+        assert artifact.manifest.get("generator_version") == "0.1.3"
         assert artifact.manifest.get("framework") == fw

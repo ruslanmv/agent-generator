@@ -6,9 +6,9 @@
 
 interface ImportMetaEnv {
   readonly APP_VERSION: string;
-  /** "web" | "tauri" | "capacitor" — set per shell in CI; defaults to
-   * "web" when `vite build` is invoked directly. */
-  readonly AG_BUILD_CHANNEL: 'web' | 'tauri' | 'capacitor';
+  /** "web" | "tauri" | "capacitor" | "hf" — set per shell / channel
+   * in CI; defaults to "web" when `vite build` is invoked directly. */
+  readonly AG_BUILD_CHANNEL: 'web' | 'tauri' | 'capacitor' | 'hf';
 }
 
 interface ImportMeta {

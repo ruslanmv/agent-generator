@@ -203,9 +203,15 @@ jobs:
           # Ad-hoc signing produces an unsigned-but-bundled .app that
           # PR CI can still publish as an artefact.
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '-' }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Apple notarization credentials are forwarded to the Tauri
+          # bundler only when *all three* are configured. Tauri's macOS
+          # bundler enters its notarize path the moment APPLE_ID is set,
+          # so a half-populated secret set (e.g. APPLE_ID configured but
+          # APPLE_TEAM_ID scoped to a production environment) crashes
+          # the build with "Team ID must be at least 3 characters".
+          APPLE_ID: ${{ (secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '') && secrets.APPLE_ID || '' }}
+          APPLE_PASSWORD: ${{ (secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '') && secrets.APPLE_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ (secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '') && secrets.APPLE_TEAM_ID || '' }}
           # Windows
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
           # Tauri auto-update signing
@@ -222,7 +228,10 @@ jobs:
 
       # ── macOS notarization ──────────────────────────────────────
       - name: Notarize + staple
-        if: matrix.platform.id == 'macos' && env.APPLE_ID != ''
+        # Step-scoped `env:` is not visible in this step's own `if`,
+        # so check the underlying secrets directly. Requires all three
+        # Apple credentials to be configured.
+        if: matrix.platform.id == 'macos' && secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != ''
         working-directory: ${{ env.DESKTOP_DIR }}/src-tauri/target/universal-apple-darwin/release/bundle
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}

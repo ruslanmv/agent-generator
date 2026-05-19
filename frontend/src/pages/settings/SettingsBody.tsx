@@ -1,26 +1,36 @@
 // Shared settings tab body — rendered by both the modal (opened from the
 // AdminAccountMenu) and the full /settings route, so the tab content stays
-// in one place.
+// in one place. All seven tabs in `SETTINGS_TABS` are wired here.
 
-import { tokens } from '@/styles/tokens';
+import { AccountSettings } from './Account';
+import { DataControlsSettings } from './DataControls';
+import { DefaultsSettings } from './Defaults';
 import { GeneralSettings } from './General';
 import { ProvidersSettings } from './Providers';
+import { ShortcutsSettings } from './Shortcuts';
+import { TemplatesSettings } from './Templates';
 
 interface Props {
   tabId: string;
 }
 
 export function SettingsBody({ tabId }: Props) {
-  if (tabId === 'general') return <GeneralSettings />;
-  if (tabId === 'providers') return <ProvidersSettings />;
-  return <ComingSoon tabId={tabId} />;
-}
-
-function ComingSoon({ tabId }: { tabId: string }) {
-  return (
-    <div className="ag-body" style={{ color: tokens.muted, padding: '8px 0' }}>
-      The <span className="ag-mono" style={{ color: tokens.ink }}>{tabId}</span> tab arrives in a
-      follow-up batch. General and Providers are wired today.
-    </div>
-  );
+  switch (tabId) {
+    case 'general':
+      return <GeneralSettings />;
+    case 'account':
+      return <AccountSettings />;
+    case 'providers':
+      return <ProvidersSettings />;
+    case 'templates':
+      return <TemplatesSettings />;
+    case 'defaults':
+      return <DefaultsSettings />;
+    case 'shortcuts':
+      return <ShortcutsSettings />;
+    case 'data':
+      return <DataControlsSettings />;
+    default:
+      return <GeneralSettings />;
+  }
 }

@@ -6,6 +6,7 @@ import { Fragment, useEffect, useRef } from 'react';
 import { tokens } from '@/styles/tokens';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { Pill } from '@/components/primitives/Pill';
+import { IS_DEMO } from '@/lib/build-channel';
 import { ABOUT, ADMIN } from '@/lib/settings-data';
 
 export type AdminMenuAction = 'about' | 'settings' | 'help' | 'logout';
@@ -111,7 +112,7 @@ export function AdminAccountMenu({ onAction, onClose }: Props) {
       </div>
 
       <div style={{ padding: 6 }}>
-        {ITEMS.map((it) => (
+        {ITEMS.filter((it) => !(IS_DEMO && it.id === 'logout')).map((it) => (
           <Fragment key={it.id}>
             {it.danger && (
               <div style={{ height: 1, background: tokens.border, margin: '6px 4px' }} />
@@ -159,7 +160,9 @@ export function AdminAccountMenu({ onAction, onClose }: Props) {
       >
         <span className="ag-mono ag-small" style={{ color: tokens.muted }}>{ABOUT.version}</span>
         <span style={{ flex: 1 }} />
-        <span className="ag-mono ag-small" style={{ color: tokens.faint }}>self-hosted</span>
+        <span className="ag-mono ag-small" style={{ color: tokens.faint }}>
+          {IS_DEMO ? 'demo · hugging face' : 'self-hosted'}
+        </span>
       </div>
     </div>
   );

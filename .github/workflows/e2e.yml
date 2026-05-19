@@ -121,6 +121,11 @@ jobs:
           api-level: 33
           target: default
           arch: x86_64
+          # Pin a phone-sized hardware profile so the WebView viewport
+          # is < 768 CSS px and the SPA's responsive layout switches to
+          # the mobile shell. Without this the action falls back to a
+          # generic AVD whose viewport varies between runs.
+          profile: pixel_6
           force-avd-creation: false
           emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true

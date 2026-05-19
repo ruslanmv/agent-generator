@@ -5,14 +5,20 @@ Cutting a release takes one tag push. Everything else is automation.
 ## The short version
 
 ```bash
-# 1. Bump versions (see "Version locations" below).
+# 1. Bump versions in all four locations (see "Version locations" below).
 # 2. Commit & push to master.
 # 3. Tag and push the tag:
-git tag v0.2.1
-git push origin v0.2.1
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
-Tag `v*.*.*` and `.github/workflows/release-app.yml` takes over:
+The PyPI release is gated on a GitHub Release being **published**
+(not just drafted). `release.yml` builds the sdist + wheel, runs a
+clean-venv smoke install of the wheel, and only then publishes to
+PyPI via OIDC trusted publishing.
+
+Tag `v*.*.*` additionally fans out to `.github/workflows/release-app.yml`
+for the cross-platform application bundles:
 
 1. Drafts a GitHub Release with auto-generated notes.
 2. Builds the backend image (cosign keyless · SBOM · SLSA-3 provenance).
@@ -31,20 +37,26 @@ Tag `v*.*.*` and `.github/workflows/release-app.yml` takes over:
 ruff check src/
 pytest tests/ -v
 python -m build
+python -m twine check dist/*
 pip install dist/*.whl       # smoke-test the wheel locally
-git tag v0.2.1
+agent-generator --version    # should print the tagged version
+git tag v0.1.3
 twine upload dist/*
 ```
 
 ## Version locations
 
-Bump all four. They should agree.
+Bump all four. They **must** agree — the smoke job in `release.yml`
+fails the publish if `agent-generator --version` doesn't match the
+wheel filename.
 
 - `pyproject.toml` — package version
 - `src/agent_generator/__init__.py` — runtime `__version__`
 - `src/agent_generator/cli.py` — version printed by `--version`
 - `src/agent_generator/application/build_service.py` —
   `generator_version` stamped into every manifest
+
+`CHANGELOG.md` gets a new top-of-file section for every release.
 
 ## Where signing material lives
 

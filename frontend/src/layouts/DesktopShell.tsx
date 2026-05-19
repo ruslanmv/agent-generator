@@ -12,6 +12,7 @@ import { Pill } from '@/components/primitives/Pill';
 import { AdminAccountMenu, type AdminMenuAction } from '@/components/admin/AdminAccountMenu';
 import { AboutModal } from '@/components/admin/AboutModal';
 import { SettingsModal } from '@/components/admin/SettingsModal';
+import { DemoBadge } from '@/components/demo/DemoBadge';
 import { ADMIN } from '@/lib/settings-data';
 
 interface RailItem {
@@ -25,10 +26,16 @@ const RAIL: RailItem[] = [
   { id: 'generate',    label: 'Generate',    path: '/generate',    icon: 'spark' },
   { id: 'pipeline',    label: 'Pipeline',    path: '/pipeline',    icon: 'flow' },
   { id: 'run',         label: 'Run',         path: '/run',         icon: 'play' },
+  { id: 'test',        label: 'Test',        path: '/test',        icon: 'agent' },
   { id: 'projects',    label: 'Projects',    path: '/projects',    icon: 'folder' },
+  { id: 'history',     label: 'History',     path: '/history',     icon: 'history' },
   { id: 'marketplace', label: 'Marketplace', path: '/marketplace', icon: 'cube' },
-  { id: 'settings',    label: 'Settings',    path: '/settings',    icon: 'cog' },
+  { id: 'export',      label: 'Export',      path: '/export',      icon: 'send' },
+  { id: 'docker',      label: 'Runtime',     path: '/docker',      icon: 'square' },
 ];
+// Settings is intentionally **not** in the rail — it opens as a
+// modal from the avatar/account menu instead, so it doesn't compete
+// with the core workflow (Generate → Run → Test → Projects).
 
 type Overlay = 'menu' | 'settings' | 'about' | null;
 
@@ -185,6 +192,9 @@ export function DesktopShell({ children, projectName = 'untitled', running }: De
             <span style={{ fontSize: 13, fontWeight: 500 }}>{projectName}</span>
             <span style={{ marginLeft: 6 }}>
               <Pill>v0.4.2</Pill>
+            </span>
+            <span style={{ marginLeft: 6 }}>
+              <DemoBadge />
             </span>
           </div>
           <div style={{ flex: 1 }} />

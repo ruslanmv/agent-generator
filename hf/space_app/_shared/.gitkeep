@@ -1,0 +1,4 @@
+# Populated by `.github/workflows/hf-space.yml` at deploy time. The
+# workflow copies the two backend modules listed in space_app/routes/
+# (compatibility.py, marketplace.py) here so the Space serves the same
+# data as production without a code fork.

@@ -2,38 +2,81 @@
 title: Agent Generator
 emoji: 🤖
 colorFrom: blue
-colorTo: blue
+colorTo: indigo
 sdk: docker
 app_port: 7860
 license: apache-2.0
-short_description: Generate multi-agent AI projects from plain English
+pinned: false
+short_description: Describe an AI team in English. Get runnable code.
+tags:
+  - agents
+  - crewai
+  - langgraph
+  - watsonx
+  - code-generation
 ---
 
-# Agent Generator
+# Agent Generator — Live Demo
 
-Generate complete, production-ready multi-agent AI projects from a simple text description.
+This is the **public demo** of [agent-generator](https://github.com/ruslanmv/agent-generator) running as a [Hugging Face Space](https://huggingface.co/spaces). It serves the **same React SPA** shipped with the web, desktop, and mobile builds — there is no separate demo UI to maintain.
 
-## Supported Frameworks
+## What you can try
 
-- **CrewAI** — Python + YAML config (agents.yaml, tasks.yaml, crew.py, tools)
-- **LangGraph** — StateGraph with typed state and node functions
-- **WatsonX Orchestrate** — ADK-compliant YAML for IBM WatsonX
-- **CrewAI Flow** — Event-driven pipelines with @start/@listen
-- **ReAct** — Reasoning + action loop with tool registry
+| Feature | Works in demo |
+|---|---|
+| Describe an agent team in natural language | ✅ |
+| Pick a framework (CrewAI, LangGraph, WatsonX, CrewAI Flow, ReAct) | ✅ |
+| Inspect the compatibility matrix (8 frameworks × 5 hyperscalers × 2 patterns × 7 models) | ✅ |
+| Browse the marketplace fixture | ✅ |
+| Generate a project + download as ZIP | ✅ |
+| Sign in with GitHub | 🚫 disabled in demo |
+| Persistent project history | 🚫 in-memory only |
+| Real run executions / Docker builds | 🚫 demo-mode stubs |
 
-## Features
+## How it works
 
-- 6 built-in tool templates (web search, PDF reader, SQL, HTTP, file writer, vector search)
-- Glassmorphism dark theme UI with file tree and syntax highlighting
-- Download generated projects as ZIP
-- Iterate with follow-up prompts
-- Full validation pipeline (AST, YAML, security scan)
-
-## Local Run
-
-```bash
-docker build -t agent-generator .
-docker run -p 7860:7860 agent-generator
+```
+            HuggingFace Space (Docker SDK, port 7860)
+            ┌──────────────────────────────────────────────┐
+            │  GET /            → frontend/dist (real SPA)  │
+            │  POST /api/plan   ┐                            │
+            │  POST /api/build  │ ─→ agent_generator         │
+            │  POST /api/generate┘   (PyPI / git+ pinned)    │
+            │  GET  /api/compatibility/*  (reused verbatim  │
+            │  GET  /api/marketplace/*    from backend/app) │
+            └──────────────────────────────────────────────┘
 ```
 
-Open http://localhost:7860
+- The SPA bundle is built from the **same `frontend/` source** as the desktop and mobile shells with `AG_BUILD_CHANNEL=hf`. A single `IS_DEMO` flag gates auth, persistence, and run history.
+- The generator pipeline (`planning_service → ProjectSpec → build_service`) is the **published `agent-generator` Python package**, pinned by CI to the deployed commit so the demo never drifts.
+- The compatibility matrix and marketplace endpoints are **literally the production modules** at `backend/app/api/{compatibility,marketplace}.py`, copied in at deploy time.
+
+## Local reproduction
+
+```bash
+docker build -t agent-generator-hf hf
+docker run --rm -p 7860:7860 agent-generator-hf
+```
+
+Open <http://localhost:7860>.
+
+You can also use the Makefile targets at the repo root:
+
+```bash
+make hf-build      # build the Space image locally
+make hf-run        # start it on :7860
+```
+
+## Continuous deployment
+
+Every push to `master` triggers `.github/workflows/hf-space.yml`, which:
+
+1. Builds the SPA with `AG_BUILD_CHANNEL=hf`.
+2. Stages the deploy tree (vendoring `frontend/dist/` and the two reused backend modules).
+3. Pushes to <https://huggingface.co/spaces/ruslanmv/agent-generator>.
+
+A second workflow (`hf-space-pr.yml`) smoke-tests the same tree on pull requests without deploying.
+
+## License
+
+Apache-2.0.

@@ -122,7 +122,7 @@ def build(
     manifest: dict[str, Any] = {
         "framework": framework_name,
         "diagram": diagram,
-        "generator_version": "0.2.1",
+        "generator_version": "0.1.3",
         "project_name": project_name,
         "template_tier": spec.template_tier.value,
     }
