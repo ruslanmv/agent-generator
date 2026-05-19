@@ -193,6 +193,13 @@ class LLMPlanner:
                     json_str = extract_json_block(raw_response)
 
                 spec_dict = json.loads(json_str)
+                # Auto-repair the most common LLM mistake: agents
+                # reference a tool name that isn't listed in the
+                # top-level `tools` array. We backfill missing tool
+                # entries (with a sensible default template) so
+                # validation succeeds instead of burning another
+                # round-trip on a structural typo.
+                _backfill_agent_tools(spec_dict)
                 return ProjectSpec(**spec_dict)
 
             except (json.JSONDecodeError, ValueError) as exc:
@@ -214,3 +221,92 @@ class LLMPlanner:
 
         log.error("LLMPlanner exhausted %d attempts", self.MAX_ATTEMPTS)
         return None
+
+
+# ── Spec repair helpers ────────────────────────────────────────────
+
+
+# Tool templates the renderer + spec validator both accept. Keep this
+# list in sync with the design's tool catalogue.
+_TOOL_TEMPLATES = {
+    "web_search",
+    "http_request",
+    "pdf_reader",
+    "file_writer",
+    "sql_query",
+    "vector_search",
+    "email_send",
+    "slack_post",
+    "speech_to_text",
+    "image_analyze",
+    "cloud_storage",
+    "shell_exec",
+}
+
+# Map ambiguous aliases the LLM tends to invent onto canonical templates.
+_TOOL_ALIASES = {
+    "search": "web_search",
+    "web": "web_search",
+    "pdf": "pdf_reader",
+    "http": "http_request",
+    "filesystem": "file_writer",
+    "writer": "file_writer",
+    "sql": "sql_query",
+    "vector": "vector_search",
+    "email": "email_send",
+    "slack": "slack_post",
+    "stt": "speech_to_text",
+    "voice": "speech_to_text",
+    "vision": "image_analyze",
+    "image": "image_analyze",
+    "s3": "cloud_storage",
+    "shell": "shell_exec",
+}
+
+
+def _canonical_tool_id(tool_id: str) -> str:
+    """Normalise an LLM-emitted tool reference."""
+    if tool_id in _TOOL_TEMPLATES:
+        return tool_id
+    return _TOOL_ALIASES.get(tool_id, tool_id)
+
+
+def _backfill_agent_tools(spec_dict: dict) -> None:
+    """Repair common LLM mistakes in-place before Pydantic validation.
+
+    Handles the case where an agent's ``tools`` list references a
+    template id (``file_writer``, ``web_search`` …) that the LLM
+    forgot to declare at the spec's top level. We backfill the missing
+    top-level entries so the ProjectSpec validator's cross-reference
+    check passes.
+
+    Also normalises common alias names (``search`` → ``web_search``).
+    Unknown tool ids that aren't templates are dropped from the agent
+    rather than left to fail validation — the spec_normalizer would
+    have done this anyway after validation, just less robustly.
+    """
+    tools = spec_dict.get("tools")
+    if not isinstance(tools, list):
+        tools = []
+        spec_dict["tools"] = tools
+
+    known_ids: set[str] = {t.get("id") for t in tools if isinstance(t, dict) and t.get("id")}
+    referenced: set[str] = set()
+
+    for agent in spec_dict.get("agents") or []:
+        if not isinstance(agent, dict):
+            continue
+        raw = agent.get("tools") or []
+        cleaned: list[str] = []
+        for tid in raw:
+            if not isinstance(tid, str):
+                continue
+            canonical = _canonical_tool_id(tid)
+            if canonical in _TOOL_TEMPLATES:
+                cleaned.append(canonical)
+                referenced.add(canonical)
+        agent["tools"] = cleaned
+
+    # Append any referenced tool that the LLM forgot to declare.
+    for tid in referenced - known_ids:
+        tools.append({"id": tid, "template": tid, "inputs": {}})

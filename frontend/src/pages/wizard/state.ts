@@ -19,6 +19,12 @@ export interface WizardState {
   tools: string[];
   llm: LlmProvider;
   model: string;
+  /** Model access layer. `ollabridge` (default) routes generated
+   * projects through the OpenAI-compatible gateway; `direct` lets
+   * the user pick a provider + model from the Advanced providers row. */
+  modelAccess: 'ollabridge' | 'direct';
+  /** OllaBridge alias — only meaningful when `modelAccess === 'ollabridge'`. */
+  modelAlias: string;
   agents: number;
   memory: 'none' | 'short' | 'vector';
   errorHandling: 'raise' | 'retry' | 'fallback';
@@ -32,8 +38,10 @@ export const INITIAL_WIZARD: WizardState = {
   hyperscaler: 'azure',
   pattern: 'supervisor',
   tools: ['search', 'pdf', 'email'],
-  llm: 'anthropic',
-  model: 'claude-opus-4',
+  llm: 'ollabridge',
+  model: 'local-private',
+  modelAccess: 'ollabridge',
+  modelAlias: 'local-private',
   agents: 3,
   memory: 'vector',
   errorHandling: 'retry',

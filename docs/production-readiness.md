@@ -20,9 +20,12 @@ duplicate code, no untested branches.
 
 A release ships only when all of these are green:
 
-- CI passes on Python 3.10, 3.11, 3.12
-- `pytest` passes (51+ tests)
+- CI passes on Python 3.10, 3.11, 3.12, 3.13
+- `pytest` passes (53+ tests)
 - Wheel + sdist build cleanly
+- `twine check` passes both distributions
+- Smoke job installs the built wheel in a clean venv and runs
+  `agent-generator --version` before publish
 - `ruff` + `mypy` clean
 - Security validator enabled on every generated artifact
 - No errors in generated outputs across the smoke matrix

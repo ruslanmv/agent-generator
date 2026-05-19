@@ -1,0 +1,11 @@
+# Production backend modules are vendored here at deploy time
+# (see .github/workflows/hf-space.yml). They are intentionally not
+# committed — the source of truth lives at backend/app/api/.
+space_app/_shared/compatibility.py
+space_app/_shared/marketplace.py
+
+# Build artefacts.
+__pycache__/
+*.pyc
+.pytest_cache/
+frontend_dist/

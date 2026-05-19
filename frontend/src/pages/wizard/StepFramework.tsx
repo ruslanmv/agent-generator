@@ -26,6 +26,7 @@ import {
 } from './components/PhilosophyFilter';
 import { PatternCard } from './components/PatternCard';
 import { ModelRow } from './components/ModelRow';
+import { ModelAccessRow } from './components/ModelAccessRow';
 import {
   FRAMEWORKS_X,
   visibleFrameworks,
@@ -58,14 +59,16 @@ export function StepFramework() {
   return (
     <div style={{ padding: '40px 80px', maxWidth: 1280, margin: '0 auto' }}>
       <div className="ag-eyebrow" style={{ marginBottom: 12 }}>
-        STEP 2 / 4 · FRAMEWORK & MODEL
+        STEP 2 / 4 · ORCHESTRATION & MODEL ACCESS
       </div>
       <h2 className="ag-h2" style={{ marginBottom: 8 }}>
-        Pick your framework, hyperscaler, pattern, and model.
+        Pick the framework, pattern, and model gateway.
       </h2>
       <p className="ag-body" style={{ marginBottom: 28, color: tokens.ink3 }}>
-        Compatibility updates live as you click. Anything dimmed needs an
-        adapter; anything blocked tells you which lever to move.
+        Frameworks differ by <b>who decides the flow</b>. Models can come from a cloud provider,
+        a local runtime, or our preferred local/cloud gateway <b>OllaBridge</b>. Compatibility
+        updates live as you click — anything dimmed needs an adapter; anything blocked tells you
+        which lever to move.
       </p>
 
       <div
@@ -192,12 +195,39 @@ export function StepFramework() {
             onChange={(id) => actions.set('pattern', id)}
           />
 
-          {/* Model row */}
-          <ModelRow
-            hyperscaler={state.hyperscaler}
-            value={state.model}
-            onChange={(id) => actions.set('model', id)}
+          {/* Model access — OllaBridge gateway by default, with the
+              OpenAI-compatible aliases the gateway exposes. */}
+          <ModelAccessRow
+            access={state.modelAccess}
+            alias={state.modelAlias}
+            onAccessChange={(next) => {
+              actions.set('modelAccess', next);
+              if (next === 'ollabridge') {
+                actions.set('llm', 'ollabridge');
+                actions.set('model', state.modelAlias || 'local-private');
+              }
+            }}
+            onAliasChange={(next) => {
+              actions.set('modelAlias', next);
+              actions.set('model', next);
+              actions.set('llm', 'ollabridge');
+            }}
           />
+
+          {/* Advanced providers — only shown when the user wants to
+              bypass the gateway and pick a specific provider+model. */}
+          {state.modelAccess === 'direct' && (
+            <>
+              <div className="ag-cap" style={{ marginBottom: 10 }}>
+                Advanced providers
+              </div>
+              <ModelRow
+                hyperscaler={state.hyperscaler}
+                value={state.model}
+                onChange={(id) => actions.set('model', id)}
+              />
+            </>
+          )}
         </div>
       </div>
 

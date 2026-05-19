@@ -5,20 +5,16 @@ tags:
 ---
 - launchApp:
     clearState: true
-- assertVisible:
-    text: "Generate"
-- tapOn:
-    text: "Generate"
-- assertVisible:
-    text: "STEP 1 / 4"
-- tapOn:
-    id: "prompt-textarea"
-    optional: true
-- inputText: "Research crew that drafts arXiv digests."
-- tapOn:
-    text: "Continue"
-    index: 0
-- assertVisible:
-    text: "STEP 2 / 4"
-- assertVisible:
-    text: "HYPERSCALER"
+# Cold launch routes to /generate, which renders the 6-step
+# MobileGenerate flow at step 1 (Describe). Give the WebView up to
+# 30 s to load the SPA before asserting — fonts.googleapis.com may be
+# unreachable from the emulator and the network timeout dominates the
+# first paint.
+- extendedWaitUntil:
+    visible: "New project"
+    timeout: 30000
+- assertVisible: "Generate"
+- tapOn: "Generate"
+# Step 2 — Framework picker.
+- assertVisible: "Framework"
+- assertVisible: "CrewAI"

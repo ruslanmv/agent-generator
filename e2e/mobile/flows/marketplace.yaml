@@ -5,11 +5,16 @@ tags:
 ---
 - launchApp:
     clearState: true
-- tapOn:
-    text: "Marketplace"
+# Wait for the WebView to mount the SPA before reaching for tabs.
+# Bottom-tab label is "Market" (see MobileShell.tsx TABS); tapping
+# it navigates to /marketplace, where MobileMarketplace renders an
+# AHeader with the full "Marketplace" title.
+- extendedWaitUntil:
+    visible: "Market"
+    timeout: 30000
+- tapOn: "Market"
+- assertVisible: "Marketplace"
+# The offline MH_ITEMS fixture (frontend/src/lib/marketplace-data.ts)
+# ships these entries; at least one should render without a backend.
 - assertVisible:
-    text: "Marketplace"
-# The offline fixture ships these three entries; at least one should
-# render even without a backend connection on the device.
-- assertVisible:
-    text: ".*(Research Assistant|Customer Analytics|Social Media Team).*"
+    text: ".*(PDF Summarizer|Browser Use|Docling|Research Crew).*"

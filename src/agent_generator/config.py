@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     )
 
     # LLM provider - default is *watsonx*
-    provider: Literal["watsonx", "openai"] = Field(
+    provider: Literal["watsonx", "openai", "ollabridge", "ollama"] = Field(
         default="watsonx",
         description="Default LLM provider; can be overridden by CLI flag or env.",
     )
@@ -59,6 +59,23 @@ class Settings(BaseSettings):
         validation_alias="WATSONX_URL",
     )
     openai_api_key: Optional[str] = Field(default=None, validation_alias="OPENAI_API_KEY")
+
+    # OllaBridge / Ollama (OpenAI-compatible /v1 endpoints).
+    # No credentials are required — the public OllaBridge Space serves
+    # a free tier at qwen2.5:1.5b. Provide a token to unlock paid tiers
+    # (returned by the device-pairing exchange).
+    ollabridge_url: str = Field(
+        default="https://ruslanmv-ollabridge.hf.space",
+        validation_alias="OLLABRIDGE_URL",
+    )
+    ollabridge_model: Optional[str] = Field(default=None, validation_alias="OLLABRIDGE_MODEL")
+    ollabridge_token: Optional[str] = Field(default=None, validation_alias="OLLABRIDGE_TOKEN")
+    ollama_url: str = Field(
+        default="http://localhost:11434",
+        validation_alias="OLLAMA_URL",
+    )
+    ollama_model: Optional[str] = Field(default=None, validation_alias="OLLAMA_MODEL")
+    ollama_token: Optional[str] = Field(default=None, validation_alias="OLLAMA_TOKEN")
 
     # Misc
     log_level: str = Field(default="INFO")
@@ -91,11 +108,21 @@ class Settings(BaseSettings):
             else:
                 object.__setattr__(self, "model", "gpt-4o")
 
+        # For OllaBridge / Ollama, default to qwen2.5:1.5b (the free
+        # tier the public OllaBridge Space exposes) when the user
+        # hasn't pinned a model.
+        if self.provider == "ollabridge":
+            object.__setattr__(self, "model", self.ollabridge_model or "qwen2.5:1.5b")
+        elif self.provider == "ollama":
+            object.__setattr__(self, "model", self.ollama_model or "qwen2.5:1.5b")
+
         # Skip credential checks if requested
         if self.skip_credential_check:
             return self
 
-        # Credential checks with copy-pasteable guidance
+        # Credential checks with copy-pasteable guidance.
+        # OllaBridge / Ollama: no credentials required; the gateway
+        # decides whether to gate model access via the bearer token.
         if self.provider == "openai":
             if not self.openai_api_key:
                 raise SettingsError(
@@ -130,6 +157,14 @@ class Settings(BaseSettings):
     @property
     def is_openai(self) -> bool:
         return self.provider == "openai"
+
+    @property
+    def is_ollabridge(self) -> bool:
+        return self.provider == "ollabridge"
+
+    @property
+    def is_ollama(self) -> bool:
+        return self.provider == "ollama"
 
 
 # ────────────────────────────────────────────────

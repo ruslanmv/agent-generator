@@ -1,0 +1,201 @@
+name: hf-space
+
+# Deploy the Hugging Face Space at
+# https://huggingface.co/spaces/${HF_SPACE_OWNER}/${HF_SPACE_NAME}
+# on every push to master.
+#
+# The Space repo on HF is a separate git remote that we push to with
+# a write-scoped HF_TOKEN. We stage the deploy tree in a temp
+# directory, mirror it onto the cloned Space repo (preserving its
+# .git/), and force-push so the Space rebuilds.
+#
+# Required repository secrets:
+#   HF_TOKEN          fine-grained HF token with "write" on the Space
+#
+# Optional repository variables (defaults shown):
+#   HF_SPACE_OWNER    ruslanmv
+#   HF_SPACE_NAME     agent-generator
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "hf/**"
+      - "frontend/**"
+      - "backend/app/api/compatibility.py"
+      - "backend/app/api/marketplace.py"
+      - ".github/workflows/hf-space.yml"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (defaults to master)."
+        required: false
+        default: master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-space
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build + push to huggingface.co/spaces/${{ vars.HF_SPACE_OWNER || 'ruslanmv' }}/${{ vars.HF_SPACE_NAME || 'agent-generator' }}
+    runs-on: ubuntu-latest
+    env:
+      HF_SPACE_OWNER: ${{ vars.HF_SPACE_OWNER || 'ruslanmv' }}
+      HF_SPACE_NAME: ${{ vars.HF_SPACE_NAME || 'agent-generator' }}
+      AG_BUILD_CHANNEL: hf
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build the SPA (hf channel)
+        working-directory: frontend
+        env:
+          AG_BUILD_CHANNEL: hf
+        run: |
+          npm ci
+          npm run build
+          test -f dist/index.html
+
+      - name: Stage deploy tree
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/hf-space"
+          mkdir -p "$STAGE"
+          # Mirror the hf/ tree.
+          rsync -a --delete \
+            --exclude='tests' \
+            --exclude='__pycache__' \
+            hf/ "$STAGE/"
+          # The hf/.gitignore excludes the deploy-time-only artefacts
+          # (frontend_dist/, vendored _shared modules) so they never
+          # land in the *source* repo. On the Space we *do* commit
+          # them, so the gitignore must be rewritten to only exclude
+          # caches.
+          cat > "$STAGE/.gitignore" <<'IGNORE'
+          __pycache__/
+          *.pyc
+          .pytest_cache/
+          IGNORE
+          # Vendor the production backend modules the Space re-uses.
+          mkdir -p "$STAGE/space_app/_shared"
+          cp backend/app/api/compatibility.py "$STAGE/space_app/_shared/compatibility.py"
+          cp backend/app/api/marketplace.py   "$STAGE/space_app/_shared/marketplace.py"
+          # Drop the SPA bundle (the Dockerfile expects it pre-built so
+          # HF doesn't need Node at build time — saves several minutes
+          # of HF build queue).
+          mkdir -p "$STAGE/frontend_dist"
+          rsync -a --delete frontend/dist/ "$STAGE/frontend_dist/"
+          # Pin agent-generator to this commit so the Space tracks
+          # source-of-truth exactly.
+          python3 - <<PY
+          import os, pathlib, re
+          sha = os.environ['GITHUB_SHA']
+          req = pathlib.Path(os.environ['STAGE'], 'requirements.txt')
+          req.write_text(re.sub(
+              r'(agent-generator @ git\+https://github\.com/ruslanmv/agent-generator@)\S+',
+              r'\g<1>' + sha,
+              req.read_text(),
+          ))
+          print(req.read_text())
+          PY
+          echo "STAGE=$STAGE" >> $GITHUB_ENV
+        env:
+          STAGE: ${{ runner.temp }}/hf-space
+
+      - name: Replace Dockerfile with a SPA-prebuilt variant
+        run: |
+          # The committed hf/Dockerfile builds the SPA in a node stage
+          # so local docker-build works without a prior `npm run build`.
+          # In CI we already have dist/ on disk and the Space image
+          # shouldn't carry Node, so swap to a Python-only Dockerfile.
+          cat > "$STAGE/Dockerfile" <<'DOCKER'
+          # syntax=docker/dockerfile:1.7
+          FROM python:3.11-slim
+
+          ENV PYTHONUNBUFFERED=1 \
+              PYTHONDONTWRITEBYTECODE=1 \
+              PIP_NO_CACHE_DIR=1 \
+              AG_SPACE_PORT=7860
+
+          WORKDIR /app
+
+          RUN apt-get update && apt-get install -y --no-install-recommends git \
+              && rm -rf /var/lib/apt/lists/*
+
+          COPY space_app /app/space_app
+          COPY frontend_dist /app/frontend_dist
+          COPY requirements.txt /app/requirements.txt
+          RUN pip install --upgrade pip && pip install -r /app/requirements.txt
+
+          RUN groupadd --system --gid 1000 spaceuser && \
+              useradd  --system --uid 1000 --gid 1000 --create-home spaceuser && \
+              chown -R spaceuser:spaceuser /app
+          USER spaceuser
+
+          EXPOSE 7860
+          CMD ["python","-m","uvicorn","space_app.main:app","--host","0.0.0.0","--port","7860","--proxy-headers","--forwarded-allow-ips","*"]
+          DOCKER
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name  "agent-generator-bot"
+          git config --global user.email "agent-generator-bot@users.noreply.github.com"
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::HF_TOKEN secret is not set; cannot deploy."
+            exit 1
+          fi
+          SPACE_URL="https://huggingface:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_OWNER}/${HF_SPACE_NAME}"
+          SPACE_DIR="$RUNNER_TEMP/space-repo"
+          git clone --depth 1 "$SPACE_URL" "$SPACE_DIR"
+          # Remove every tracked file except the git metadata, then
+          # rsync the staged tree on top. This makes the deploy fully
+          # deterministic — anything not produced by CI is dropped.
+          (
+            cd "$SPACE_DIR"
+            git ls-files -z | xargs -0 rm -f
+            find . -depth -type d -empty ! -path './.git*' -delete
+          )
+          rsync -a "$STAGE/" "$SPACE_DIR/"
+          (
+            cd "$SPACE_DIR"
+            git add -A
+            if git diff --cached --quiet; then
+              echo "No deploy diff; skipping push."
+              exit 0
+            fi
+            git commit -m "deploy: agent-generator@${GITHUB_SHA::12}
+
+            Source: https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}
+            Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            git push origin HEAD:main
+          )
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "## Hugging Face Space deployed"
+            echo ""
+            echo "- **Space:** https://huggingface.co/spaces/${HF_SPACE_OWNER}/${HF_SPACE_NAME}"
+            echo "- **Commit:** \`${GITHUB_SHA::12}\`"
+            echo "- **SPA channel:** \`${AG_BUILD_CHANNEL}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

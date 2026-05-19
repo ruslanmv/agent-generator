@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { tokens } from '@/styles/tokens';
 import { Icon } from '@/components/icons/Icon';
 import { Button } from '@/components/primitives/Button';
 import { useWizard } from './state';
 import { SAMPLE_PROMPT, STARTERS } from '@/lib/wizard-data';
+import { planPrompt, readApiError } from './api';
+import { applySpecToWizard } from './spec-mapping';
 
 const MAX = 600;
 
@@ -11,15 +13,47 @@ export function StepDescribe() {
   const { state, actions, setStep } = useWizard();
   const ref = useRef<HTMLTextAreaElement>(null);
   const value = state.prompt;
+  const [planning, setPlanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   useEffect(() => {
     ref.current?.focus();
   }, []);
 
-  const submit = () => {
+  const submit = useCallback(
+    async (event?: React.MouseEvent | React.KeyboardEvent) => {
+      event?.preventDefault?.();
+      if (planning) return;
+      const prompt = value.trim() ? value : SAMPLE_PROMPT;
+      if (!value.trim()) actions.set('prompt', prompt);
+      setError(null);
+      setWarnings([]);
+      setPlanning(true);
+      try {
+        const r = await planPrompt({
+          prompt,
+          framework: state.framework,
+          provider: state.llm,
+          use_llm: true,
+        });
+        applySpecToWizard(r.spec, state, actions);
+        if (r.warnings.length > 0) setWarnings(r.warnings);
+        setStep(1);
+      } catch (e) {
+        setError(readApiError(e));
+      } finally {
+        setPlanning(false);
+      }
+    },
+    [actions, planning, setStep, state, value],
+  );
+
+  const skipPlanning = useCallback(() => {
     if (!value.trim()) actions.set('prompt', SAMPLE_PROMPT);
+    setError(null);
     setStep(1);
-  };
+  }, [actions, setStep, value]);
 
   return (
     <div style={{ padding: '60px 80px', maxWidth: 980, margin: '0 auto' }}>
@@ -52,9 +86,10 @@ export function StepDescribe() {
             value={value}
             placeholder={SAMPLE_PROMPT}
             maxLength={MAX}
+            disabled={planning}
             onChange={(e) => actions.set('prompt', e.target.value)}
             onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submit();
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submit(e);
             }}
             style={{
               width: '100%',
@@ -91,11 +126,80 @@ export function StepDescribe() {
           <span className="ag-mono ag-num" style={{ fontSize: 11, color: tokens.muted }}>
             {(value || SAMPLE_PROMPT).length} / {MAX}
           </span>
-          <Button variant="primary" size="sm" onClick={submit}>
-            Generate <Icon name="arrow" size={13} stroke="#fff" />
+          <Button variant="primary" size="sm" onClick={submit} disabled={planning}>
+            {planning ? (
+              <>
+                <Spinner /> Planning…
+              </>
+            ) : (
+              <>
+                Generate <Icon name="arrow" size={13} stroke="#fff" />
+              </>
+            )}
           </Button>
         </div>
       </div>
+
+      {error && (
+        <div
+          role="alert"
+          style={{
+            marginTop: 16,
+            padding: '12px 16px',
+            border: `1px solid ${tokens.err}`,
+            background: '#fff5f5',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            color: tokens.err,
+            fontSize: 13,
+          }}
+        >
+          <span style={{ flex: 1 }}>{error}</span>
+          <Button variant="ghost" size="sm" onClick={() => submit()}>
+            Retry
+          </Button>
+          <Button variant="ghost" size="sm" onClick={skipPlanning}>
+            Continue without LLM
+          </Button>
+        </div>
+      )}
+
+      {warnings.length > 0 && !error && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: '10px 16px',
+            border: `1px solid ${tokens.warn}`,
+            background: '#fcf4d6',
+            color: '#684e00',
+            fontSize: 12.5,
+          }}
+        >
+          {warnings.slice(0, 3).map((w) => (
+            <div key={w}>· {w}</div>
+          ))}
+        </div>
+      )}
+
+      {planning && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: '10px 16px',
+            border: `1px solid ${tokens.border}`,
+            background: tokens.surface,
+            color: tokens.ink2,
+            fontSize: 12.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <Spinner />
+          Planning your project with the configured LLM provider — typically 4–10 seconds.
+        </div>
+      )}
 
       <div style={{ marginTop: 28 }}>
         <div className="ag-cap" style={{ marginBottom: 12 }}>Try a starting point</div>
@@ -104,6 +208,7 @@ export function StepDescribe() {
             <button
               key={s.title}
               type="button"
+              disabled={planning}
               onClick={() => actions.set('prompt', `${s.title}: ${s.blurb}`)}
               style={{
                 padding: 16,
@@ -120,5 +225,22 @@ export function StepDescribe() {
         </div>
       </div>
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: 'inline-block',
+        width: 12,
+        height: 12,
+        border: `2px solid ${tokens.faint}`,
+        borderTopColor: tokens.ink,
+        borderRadius: '50%',
+        animation: 'ag-spin .8s linear infinite',
+      }}
+    />
   );
 }

@@ -1,12 +1,15 @@
-// Docker wizard host — Batches 13-14.
+// Docker wizard host.
 //
 // 5 steps: Configure → Env/Secrets → Build → Publish → Published. Reads
-// `?project={id}` from the route; without a project id we redirect to
-// /generate (the wizard creates a project, then hands off here).
+// `?project={id}` from the route. When opened directly from the rail
+// without a project id, we render a small landing page that walks the
+// user to /generate, instead of silently bouncing.
 
 import { useMemo, useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { tokens } from '@/styles/tokens';
+import { Icon } from '@/components/icons/Icon';
+import { Button } from '@/components/primitives/Button';
 import { Stepper } from '@/components/primitives/Stepper';
 import {
   DockerContext,
@@ -45,7 +48,7 @@ export function DockerPage() {
   );
 
   if (!ctx) {
-    return <Navigate to="/generate" replace />;
+    return <DockerLanding />;
   }
 
   return (
@@ -68,5 +71,45 @@ export function DockerPage() {
         </div>
       </div>
     </DockerContext.Provider>
+  );
+}
+
+function DockerLanding() {
+  const navigate = useNavigate();
+  return (
+    <div style={{ padding: '60px 80px', maxWidth: 720, margin: '0 auto' }}>
+      <div className="ag-eyebrow" style={{ marginBottom: 12 }}>
+        RUNTIME · DOCKER
+      </div>
+      <h2 className="ag-h2" style={{ marginBottom: 8 }}>
+        Bundle a generated project into a Docker image.
+      </h2>
+      <p className="ag-body" style={{ color: tokens.ink3, marginBottom: 24 }}>
+        The Docker wizard wires a 5-step flow — Configure → Env &amp; Secrets → Build →
+        Publish → Published — for any project you've generated. Pick a project to start, or
+        run the wizard first.
+      </p>
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          padding: 20,
+          background: tokens.surface,
+          border: `1px solid ${tokens.border}`,
+        }}
+      >
+        <Icon name="square" size={18} stroke={tokens.ink2} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 500 }}>No project selected</div>
+          <div className="ag-small" style={{ color: tokens.muted, marginTop: 2 }}>
+            The Docker wizard needs a generated project. Use the wizard, then click
+            "Runtime" again from the post-generate screen.
+          </div>
+        </div>
+        <Button variant="primary" onClick={() => navigate('/generate')}>
+          <Icon name="spark" size={13} stroke="#fff" /> Open the wizard
+        </Button>
+      </div>
+    </div>
   );
 }
