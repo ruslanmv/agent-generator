@@ -1,0 +1,79 @@
+checksums:
+  combined.pack.yaml: sha256:ba66509b4e2805006af031f9298a42dffcb92405bbb7a53428368456f05ec770
+  industry.pack.yaml: sha256:4c565126ddedaf2d759d4aeaa889a2c3b0d7b864ee9ecfd867b5c794629da98b
+  manifest.json: sha256:01df7e7b57566c975819eeba9f2e5f00845519d0023d13d868c52d193c4cbeda
+  matrixhub.pack.yaml: sha256:ca3f2acab926a39be576dde3714887193b6347e439ac38e0d13f32e6c3f3666a
+  reports/rule-counts.json: sha256:e6c67bdec354df5cc156a380bf3529191fb3223c563ef795614bba6d25eb55d9
+  reports/validation-report.json: sha256:9c579a7c0be36e5e4188ee552e51024e2f94a2a9907e565ddd5cfbbc00c148b5
+  ruslan.pack.yaml: sha256:8be514ce44d6fd7c2c7bd2f06b8d8e94b50debc1172230c52f8ab0739435779c
+control_files:
+- MATRIX_BLUEPRINT.yaml
+- MATRIX_STANDARDS.lock
+- MATRIX_TASKS.md
+- MATRIX_ALLOWED_CHANGES.md
+- MATRIX_ACCEPTANCE_CRITERIA.md
+- MATRIX_VALIDATION.md
+definitions_pack:
+  checksum: sha256:ba66509b4e2805006af031f9298a42dffcb92405bbb7a53428368456f05ec770
+  pack_id: matrix-definitions-current
+  version: 2026.06.0
+generated_at: '2026-06-12T14:00:00Z'
+quality_level: standard
+rules:
+- AGENT-001
+- AGENT-002
+- AGENT-003
+- AGENT-009
+- AGENT-011
+- AGENT-014
+- DOCKER-001
+- DOCKER-002
+- DOCKER-004
+- FASTAPI-003
+- FASTAPI-007
+- FASTAPI-008
+- FASTAPI-009
+- FASTAPI-011
+- FE-005
+- FE-006
+- GHA-001
+- GHA-002
+- GHA-008
+- GHA-012
+- NEXT-004
+- OBS-005
+- PY-001
+- PY-005
+- PY-008
+- PY-010
+- PY-011
+- PY-012
+- PY-015
+- PY-016
+- RMD-001
+- RMD-002
+- RMD-003
+- RMD-004
+- RMD-006
+- RMD-009
+- RMD-101
+- RMD-102
+- RMD-103
+- RMD-105
+- RMD-107
+- RMD-108
+- RMD-109
+- RMD-110
+- RMD-111
+- RMD-112
+- RMD-113
+- RMD-114
+- RMD-115
+- RMD-116
+- RMD-117
+- RMD-118
+- RMD-119
+- RMD-120
+- SUPPLY-001
+- SUPPLY-003
+schema_version: '1.0'

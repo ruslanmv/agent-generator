@@ -1,0 +1,34 @@
+# Code owners for agent-generator (the Matrix Builder engine).
+#
+# Enforces Ruslan Magana Definition GHA-003: CI workflows, release config, the standards
+# loader, the public engine surface, and the shared contracts require an explicit human
+# review before they can change. GitHub applies the LAST matching pattern, so the specific
+# rules below override the catch-all.
+
+# Default owner for everything in the repo.
+*                                   @ruslanmv
+
+# CI/CD and release surface — highest-blast-radius files.
+/.github/                           @ruslanmv
+/.github/workflows/                 @ruslanmv
+/.github/CODEOWNERS                 @ruslanmv
+
+# Public engine boundary (Batch 1) — the SDK contract Matrix Builder depends on.
+/src/agent_generator/engine.py      @ruslanmv
+/src/agent_generator/version.py     @ruslanmv
+/src/agent_generator/errors.py      @ruslanmv
+/src/agent_generator/runtime.py     @ruslanmv
+/src/agent_generator/result.py      @ruslanmv
+
+# Shared Matrix contracts (Batch 2) — changing a shape is a cross-repo event.
+/src/agent_generator/contracts/     @ruslanmv
+
+# Standards loader and Matrix engine docs (Batch 3+).
+/src/agent_generator/standards/     @ruslanmv
+/docs/matrix-engine/                @ruslanmv
+
+# Vendored matrix-definitions schemas backing the cross-repo contract test.
+/tests/contracts/schemas/           @ruslanmv
+
+# Packaging metadata.
+/pyproject.toml                     @ruslanmv

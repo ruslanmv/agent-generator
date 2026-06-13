@@ -1,0 +1,124 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "cand-0de1c4378154",
+      "name": "Starter controlled blueprint",
+      "quality_level": "starter",
+      "risks": [
+        "required_files_present",
+        "control_files_unchanged"
+      ],
+      "schema_version": "1.0",
+      "score": 0.6,
+      "summary": "Small controlled build of Document Q&A Agent: Answers questions from your documents using retrieval with citations.",
+      "template": "document-qa-agent-starter",
+      "why": "Matches the Document Q&A Agent template (document, pdf, q&a). (fit score 0.85)"
+    },
+    {
+      "candidate_id": "cand-5f89bf6ab417",
+      "name": "Standard Matrix Bundle",
+      "quality_level": "standard",
+      "risks": [
+        "required_files_present",
+        "forbidden_changes_absent",
+        "dependency_drift_absent"
+      ],
+      "schema_version": "1.0",
+      "score": 0.77,
+      "summary": "Recommended controlled build of Document Q&A Agent: Answers questions from your documents using retrieval with citations.",
+      "template": "document-qa-agent",
+      "why": "Matches the Document Q&A Agent template (document, pdf, q&a). Matches your requested standard quality level. (fit score 1.00)"
+    },
+    {
+      "candidate_id": "cand-6fe60ec73823",
+      "name": "Production-ready controlled blueprint",
+      "quality_level": "production",
+      "risks": [
+        "sbom_present",
+        "attestation_present",
+        "policy_validation_passes"
+      ],
+      "schema_version": "1.0",
+      "score": 0.48,
+      "summary": "Hardened, release-ready build of Document Q&A Agent: Answers questions from your documents using retrieval with citations.",
+      "template": "document-qa-agent-production",
+      "why": "Matches the Document Q&A Agent template (document, pdf, q&a). (fit score 0.85)"
+    }
+  ],
+  "idea": "A document Q&A assistant that answers questions from uploaded PDFs with citations",
+  "selected_blueprint": {
+    "allowed_change_scopes": [
+      {
+        "allowed_files": [
+          "backend/app/api/documents.py",
+          "backend/tests/test_documents_api.py"
+        ],
+        "task_id": "TASK-001"
+      },
+      {
+        "allowed_files": [
+          "backend/app/api/questions.py",
+          "backend/tests/test_questions_api.py"
+        ],
+        "task_id": "TASK-002"
+      },
+      {
+        "allowed_files": [
+          "frontend/app/ask/page.tsx",
+          "frontend/components/question-box.tsx"
+        ],
+        "task_id": "TASK-003"
+      }
+    ],
+    "allowed_stack": {
+      "backend": "fastapi",
+      "database": "postgresql",
+      "deploy": "docker",
+      "frontend": "nextjs",
+      "worker": "python"
+    },
+    "blueprint_id": "bp-5742d4d4bf88",
+    "forbidden": [
+      "MATRIX_BLUEPRINT.yaml",
+      "MATRIX_STANDARDS.lock",
+      ".github/workflows/"
+    ],
+    "goal": "A document Q&A assistant that answers questions from uploaded PDFs with citations",
+    "name": "Document Q&A Agent",
+    "project_type": "fullstack",
+    "quality_level": "standard",
+    "required_api_routes": [
+      {
+        "method": "GET",
+        "path": "/api/v1/health"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/documents"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/questions"
+      }
+    ],
+    "required_files": [
+      "README.md",
+      "MATRIX_BLUEPRINT.yaml",
+      "MATRIX_STANDARDS.lock",
+      "MATRIX_TASKS.md",
+      "MATRIX_ALLOWED_CHANGES.md",
+      "MATRIX_ACCEPTANCE_CRITERIA.md",
+      "MATRIX_VALIDATION.md",
+      "docs/architecture.md",
+      "docs/security.md",
+      "docs/standards-report.md"
+    ],
+    "required_pages": [
+      "/",
+      "/upload",
+      "/ask",
+      "/about"
+    ],
+    "schema_version": "1.0"
+  }
+}

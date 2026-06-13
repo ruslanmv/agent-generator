@@ -14,6 +14,39 @@
 
 ---
 
+## The Matrix Builder engine
+
+agent-generator is also the **deterministic engine behind [Matrix Builder](https://ruslanmv.com/matrix-builder)** — *give AI coders a contract, not a prompt.* It turns an idea into a controlled, hash-locked bundle (blueprint + locked standards + tasks), emits a contract-bound prompt for each AI coder (Claude Code, Codex, Cursor, GitPilot, IBM Bob, generic), and **validates** the AI's output against that contract — approving, rejecting, or returning a bounded repair prompt.
+
+**Local-first `mb` CLI + Matrix MCP server:** run the controlled loop offline (`mb init/next/prompt/check/repair/commit/sync`) or expose it as live MCP tools with `mb mcp serve` for GitPilot/Claude Code/Cursor.
+See [docs/mcp-01.md](docs/mcp-01.md) and [docs/gitpilot-integration.md](docs/gitpilot-integration.md) (GitPilot reads the emitted `.gitpilotrules` natively).
+
+```python
+from agent_generator import AgentGenerator
+from agent_generator.contracts import IdeaRequest
+
+engine = AgentGenerator()
+idea = IdeaRequest(idea="An AI app that analyzes GitHub repositories")
+blueprint = engine.generate_controlled_blueprint(idea)
+engine.export_zip(blueprint, "dist/app.zip", release_evidence=True)
+report = engine.validate_ai_coder_patch("b1", repo_path="dist/out", blueprint=blueprint)
+print(report.status)   # approved | needs-repair | rejected
+```
+
+```bash
+agent-generator matrix candidates --idea "An AI app that analyzes GitHub repositories"
+agent-generator matrix export     --idea "..." --out dist/app.zip --release-evidence
+agent-generator matrix validate   --idea "..." --repo dist/app
+```
+
+The engine is deterministic (no credentials, no network for generation/validation), enforces
+the [**Ruslan Magana Definitions**](docs/matrix-engine/ruslan-magana-definitions.md) loaded from
+the signed [`matrix-definitions`](https://github.com/agent-matrix/matrix-definitions) pack, and
+exposes a stable SDK + optional HTTP facade. See **[docs/matrix-engine/](docs/matrix-engine/)**
+— start with the [quickstart](docs/matrix-engine/quickstart.md).
+
+---
+
 ## Two surfaces, one repo
 
 | Surface       | What you get                                                            | Use when…                                  |

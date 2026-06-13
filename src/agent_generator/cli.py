@@ -47,14 +47,32 @@ load_dotenv(dotenv_path=project_root / ".env", override=False)
 # ────────────────────────────────────────────────────────────────
 # Typer app
 # ────────────────────────────────────────────────────────────────
+from typer.core import TyperGroup  # noqa: E402
+
+
+class _DefaultCommandGroup(TyperGroup):
+    """Route a bare positional prompt to ``generate`` (the historical default command).
+
+    Preserves ``agent-generator "<prompt>" --framework ...`` after the ``matrix`` subcommand
+    group was added, while leaving real subcommands (``generate``, ``matrix``) and top-level
+    flags (``--version``, ``--help``) untouched.
+    """
+
+    def resolve_command(self, ctx, args):  # type: ignore[override]
+        if args and not args[0].startswith("-") and args[0] not in self.commands:
+            args = ["generate", *args]
+        return super().resolve_command(ctx, args)
+
+
 app = typer.Typer(
+    cls=_DefaultCommandGroup,
     add_completion=False,
     help="Transform plain English into fully configured multi‑agent teams.",
 )
 
 console = Console()
 
-VERSION = "0.1.3"  # 🛈 bump on release
+VERSION = "1.1.0"  # 🛈 bump on release
 
 
 # ---------------------------------------------------------------- #
@@ -239,6 +257,32 @@ def generate(
 
     # ───────── Output ─────────
     _write_or_echo(code, output)
+
+
+# ---------------------------------------------------------------- #
+# Top-level callback so `agent-generator --version` works alongside
+# the subcommand groups below.
+# ---------------------------------------------------------------- #
+@app.callback()
+def _root(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        callback=_version_callback,
+        is_eager=True,
+        help="Print the installed version and exit.",
+    ),
+) -> None:
+    """Transform plain English into controlled multi-agent projects."""
+
+
+# ---------------------------------------------------------------- #
+# Matrix engine command group: `agent-generator matrix ...`
+# ---------------------------------------------------------------- #
+from agent_generator.matrix_cli import matrix_app  # noqa: E402
+
+app.add_typer(matrix_app, name="matrix")
 
 
 # ---------------------------------------------------------------- #

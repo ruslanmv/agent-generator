@@ -1,0 +1,124 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "cand-26493136804d",
+      "name": "Starter controlled blueprint",
+      "quality_level": "starter",
+      "risks": [
+        "required_files_present",
+        "control_files_unchanged"
+      ],
+      "schema_version": "1.0",
+      "score": 0.6,
+      "summary": "Small controlled build of GitHub Repo Intelligence Agent: Analyzes GitHub repositories and produces architecture, risk, and improvement reports.",
+      "template": "github-repo-intelligence-agent-starter",
+      "why": "Matches the GitHub Repo Intelligence Agent template (github, repositories, repo). (fit score 0.85)"
+    },
+    {
+      "candidate_id": "cand-a8a454aff7f0",
+      "name": "Standard Matrix Bundle",
+      "quality_level": "standard",
+      "risks": [
+        "required_files_present",
+        "forbidden_changes_absent",
+        "dependency_drift_absent"
+      ],
+      "schema_version": "1.0",
+      "score": 0.77,
+      "summary": "Recommended controlled build of GitHub Repo Intelligence Agent: Analyzes GitHub repositories and produces architecture, risk, and improvement reports.",
+      "template": "github-repo-intelligence-agent",
+      "why": "Matches the GitHub Repo Intelligence Agent template (github, repositories, repo). Matches your requested standard quality level. (fit score 1.00)"
+    },
+    {
+      "candidate_id": "cand-71ad3c61e026",
+      "name": "Production-ready controlled blueprint",
+      "quality_level": "production",
+      "risks": [
+        "sbom_present",
+        "attestation_present",
+        "policy_validation_passes"
+      ],
+      "schema_version": "1.0",
+      "score": 0.48,
+      "summary": "Hardened, release-ready build of GitHub Repo Intelligence Agent: Analyzes GitHub repositories and produces architecture, risk, and improvement reports.",
+      "template": "github-repo-intelligence-agent-production",
+      "why": "Matches the GitHub Repo Intelligence Agent template (github, repositories, repo). (fit score 0.85)"
+    }
+  ],
+  "idea": "An AI agent that analyzes GitHub repositories and produces architecture, risk, and improvement reports",
+  "selected_blueprint": {
+    "allowed_change_scopes": [
+      {
+        "allowed_files": [
+          "backend/app/api/repos.py",
+          "backend/tests/test_repos_api.py"
+        ],
+        "task_id": "TASK-001"
+      },
+      {
+        "allowed_files": [
+          "frontend/app/analyze/page.tsx",
+          "frontend/components/repo-form.tsx"
+        ],
+        "task_id": "TASK-002"
+      },
+      {
+        "allowed_files": [
+          "worker/app/analysis.py",
+          "worker/tests/test_analysis.py"
+        ],
+        "task_id": "TASK-003"
+      }
+    ],
+    "allowed_stack": {
+      "backend": "fastapi",
+      "database": "postgresql",
+      "deploy": "docker",
+      "frontend": "nextjs",
+      "worker": "python"
+    },
+    "blueprint_id": "bp-304d312941c1",
+    "forbidden": [
+      "MATRIX_BLUEPRINT.yaml",
+      "MATRIX_STANDARDS.lock",
+      ".github/workflows/"
+    ],
+    "goal": "An AI agent that analyzes GitHub repositories and produces architecture, risk, and improvement reports",
+    "name": "GitHub Repo Intelligence Agent",
+    "project_type": "fullstack",
+    "quality_level": "standard",
+    "required_api_routes": [
+      {
+        "method": "GET",
+        "path": "/api/v1/health"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/repos/analyze"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/reports/{report_id}"
+      }
+    ],
+    "required_files": [
+      "README.md",
+      "MATRIX_BLUEPRINT.yaml",
+      "MATRIX_STANDARDS.lock",
+      "MATRIX_TASKS.md",
+      "MATRIX_ALLOWED_CHANGES.md",
+      "MATRIX_ACCEPTANCE_CRITERIA.md",
+      "MATRIX_VALIDATION.md",
+      "docs/architecture.md",
+      "docs/security.md",
+      "docs/standards-report.md"
+    ],
+    "required_pages": [
+      "/",
+      "/analyze",
+      "/report/:id",
+      "/about"
+    ],
+    "schema_version": "1.0"
+  }
+}

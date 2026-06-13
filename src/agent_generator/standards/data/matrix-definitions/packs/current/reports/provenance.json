@@ -1,0 +1,65 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "packs/current/manifest.json",
+      "digest": {
+        "sha256": "01df7e7b57566c975819eeba9f2e5f00845519d0023d13d868c52d193c4cbeda"
+      }
+    },
+    {
+      "name": "packs/current/combined.pack.yaml",
+      "digest": {
+        "sha256": "ba66509b4e2805006af031f9298a42dffcb92405bbb7a53428368456f05ec770"
+      }
+    },
+    {
+      "name": "packs/current/checksums.txt",
+      "digest": {
+        "sha256": "135e88d3e9015f334e6ce759ff84ecae3733f0af277f4dc4ff4baa03a4adcaca"
+      }
+    }
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "builder": {
+      "id": "local/ruslanmv/matrix-definitions",
+      "version": "2026.06.0"
+    },
+    "buildType": "https://ruslanmv.com/matrix-definitions/build-pack/v1",
+    "invocation": {
+      "configSource": {
+        "uri": "local/ruslanmv/matrix-definitions",
+        "digest": {
+          "sha1": "local"
+        },
+        "entryPoint": "tools/create_release_bundle.py"
+      }
+    },
+    "metadata": {
+      "buildStartedOn": "2026-06-12T00:00:00Z",
+      "buildFinishedOn": "2026-06-12T00:00:00Z",
+      "reproducible": false
+    },
+    "materials": [
+      {
+        "name": "packs/current/manifest.json",
+        "digest": {
+          "sha256": "01df7e7b57566c975819eeba9f2e5f00845519d0023d13d868c52d193c4cbeda"
+        }
+      },
+      {
+        "name": "packs/current/combined.pack.yaml",
+        "digest": {
+          "sha256": "ba66509b4e2805006af031f9298a42dffcb92405bbb7a53428368456f05ec770"
+        }
+      },
+      {
+        "name": "packs/current/checksums.txt",
+        "digest": {
+          "sha256": "135e88d3e9015f334e6ce759ff84ecae3733f0af277f4dc4ff4baa03a4adcaca"
+        }
+      }
+    ]
+  }
+}

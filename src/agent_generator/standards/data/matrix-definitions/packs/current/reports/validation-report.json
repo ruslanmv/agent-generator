@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "status": "passed",
+  "created_at": "2026-06-12T00:00:00Z",
+  "definitions_pack": "2026.06.0",
+  "checks": [
+    {
+      "id": "pack-build",
+      "status": "passed",
+      "message": "Pack built successfully with 161 rules (117 industry, 44 Ruslan)."
+    }
+  ]
+}

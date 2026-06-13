@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "domain_counts": {
+    "ai-agents": 16,
+    "application-security": 10,
+    "docker": 12,
+    "fastapi": 14,
+    "frontend": 12,
+    "github-actions": 12,
+    "observability": 8,
+    "python": 16,
+    "ruslan-core": 10,
+    "ruslan-ai-coder-control": 20,
+    "ruslan-agent-safety": 6,
+    "ruslan-matrixhub": 5,
+    "ruslan-branding": 3,
+    "supply-chain": 12,
+    "secure-development": 5
+  },
+  "severity_counts": {
+    "critical": 37,
+    "high": 66,
+    "medium": 51,
+    "low": 7
+  }
+}

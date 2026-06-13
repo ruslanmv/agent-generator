@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "status": "passed",
+  "created_at": "2026-06-12T00:00:00Z",
+  "policy": {
+    "digest_algorithm": "sha256"
+  },
+  "sources_checked": "placeholder-source-digest-report-for-batch-2"
+}

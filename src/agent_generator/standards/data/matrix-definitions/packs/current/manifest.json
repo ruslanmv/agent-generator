@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "pack_id": "matrix-definitions-current",
+  "version": "2026.06.0",
+  "status": "stable",
+  "created_at": "2026-06-12T00:00:00Z",
+  "owner": "Ruslan Magana",
+  "brand": "Ruslan Magana Definitions",
+  "website": "https://ruslanmv.com/definitions",
+  "compatibility": {
+    "agent_generator": ">=0.2.0",
+    "matrix_builder": ">=0.1.0",
+    "matrixhub": ">=0.1.0"
+  },
+  "packs": {
+    "industry": "industry.pack.yaml",
+    "ruslan": "ruslan.pack.yaml",
+    "matrixhub": "matrixhub.pack.yaml",
+    "combined": "combined.pack.yaml"
+  },
+  "signatures": {
+    "cosign_bundle": "signatures/cosign.bundle.json",
+    "github_attestation": "signatures/github-attestation.json",
+    "provenance": "signatures/provenance.intoto.jsonl"
+  },
+  "checksums": "checksums.txt"
+}
