@@ -62,17 +62,23 @@ def _export_svg(mermaid_src: str, svg_path: Path) -> None:
         )
         print(f"✓ SVG written to {svg_path}")
     except FileNotFoundError:
-        print("❌ Mermaid CLI (`mmdc`) not found. Install via npm: npm install -g @mermaid-js/mermaid-cli")
+        print(
+            "❌ Mermaid CLI (`mmdc`) not found. Install via npm: npm install -g @mermaid-js/mermaid-cli"
+        )
     except subprocess.CalledProcessError as exc:
         print("❌ mmdc error:", exc)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate Mermaid or SVG diagrams from a workflow spec.")
+    parser = argparse.ArgumentParser(
+        description="Generate Mermaid or SVG diagrams from a workflow spec."
+    )
     parser.add_argument("spec", type=Path, help="Path to workflow JSON or YAML file.")
     parser.add_argument(
-        "-o", "--output", type=Path,
-        help="Write Mermaid (.mmd) or SVG (.svg). Defaults to stdout for Mermaid."
+        "-o",
+        "--output",
+        type=Path,
+        help="Write Mermaid (.mmd) or SVG (.svg). Defaults to stdout for Mermaid.",
     )
     args = parser.parse_args()
 

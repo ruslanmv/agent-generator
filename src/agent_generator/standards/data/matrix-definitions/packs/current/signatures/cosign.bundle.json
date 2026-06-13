@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "status": "placeholder",
+  "mode": "development-metadata",
+  "warning": "This is not a production cryptographic signature. Production releases use Cosign keyless signing in GitHub Actions.",
+  "created_at": "2026-06-12T00:00:00Z",
+  "subject": [
+    {
+      "name": "packs/current/combined.pack.yaml",
+      "digest": {
+        "sha256": "ba66509b4e2805006af031f9298a42dffcb92405bbb7a53428368456f05ec770"
+      }
+    }
+  ]
+}

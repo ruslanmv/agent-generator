@@ -1,0 +1,158 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:matrix-definitions-2026.06.0",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-06-12T00:00:00Z",
+    "component": {
+      "type": "data",
+      "name": "matrix-definitions",
+      "version": "2026.06.0",
+      "supplier": {
+        "name": "Ruslan Magana"
+      }
+    },
+    "tools": [
+      {
+        "vendor": "RuslanMV",
+        "name": "matrix-definitions tools/generate_sbom.py",
+        "version": "2026.06.0"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "name": "packs/current/combined.pack.yaml",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ba66509b4e2805006af031f9298a42dffcb92405bbb7a53428368456f05ec770"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/combined.pack.yaml@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/industry.pack.yaml",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4c565126ddedaf2d759d4aeaa889a2c3b0d7b864ee9ecfd867b5c794629da98b"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/industry.pack.yaml@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/manifest.json",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "01df7e7b57566c975819eeba9f2e5f00845519d0023d13d868c52d193c4cbeda"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/manifest.json@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/matrixhub.pack.yaml",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ca3f2acab926a39be576dde3714887193b6347e439ac38e0d13f32e6c3f3666a"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/matrixhub.pack.yaml@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/reports/pack-verification.json",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "494a8a6a00263eb55f6739077abf16d75d7cf4f41ac8e178a73399f94341c5fa"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/reports/pack-verification.json@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/reports/provenance.json",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "130d50814a0132a3d6fe46190fee55392b413627377da392320c629753e39de8"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/reports/provenance.json@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/reports/rule-counts.json",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e6c67bdec354df5cc156a380bf3529191fb3223c563ef795614bba6d25eb55d9"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/reports/rule-counts.json@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/reports/sbom.cdx.json",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "104eb9c4976f39c5780c03aea1f8daa3395e476f501ac1e3db6e98266201e621"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/reports/sbom.cdx.json@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/reports/source-digests.json",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "77662046b6266c45e460dc0d558f7c6de7393d9e125aae591913e4a5a379f151"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/reports/source-digests.json@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/reports/validation-report.json",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9c579a7c0be36e5e4188ee552e51024e2f94a2a9907e565ddd5cfbbc00c148b5"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/reports/validation-report.json@2026.06.0"
+    },
+    {
+      "type": "file",
+      "name": "packs/current/ruslan.pack.yaml",
+      "version": "2026.06.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8be514ce44d6fd7c2c7bd2f06b8d8e94b50debc1172230c52f8ab0739435779c"
+        }
+      ],
+      "purl": "pkg:generic/matrix-definitions/packs/current/ruslan.pack.yaml@2026.06.0"
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "candidates": [
+    {
+      "candidate_id": "cand-d6da7568d8b0",
+      "name": "Starter controlled blueprint",
+      "quality_level": "starter",
+      "risks": [
+        "required_files_present",
+        "control_files_unchanged"
+      ],
+      "schema_version": "1.0",
+      "score": 0.6,
+      "summary": "Small controlled build of Developer Portfolio Reviewer: Provides structured feedback on developer portfolios and projects.",
+      "template": "developer-portfolio-reviewer-starter",
+      "why": "Matches the Developer Portfolio Reviewer template (portfolio, resume, review). (fit score 0.85)"
+    },
+    {
+      "candidate_id": "cand-9aa7977fc8f0",
+      "name": "Standard Matrix Bundle",
+      "quality_level": "standard",
+      "risks": [
+        "required_files_present",
+        "forbidden_changes_absent",
+        "dependency_drift_absent"
+      ],
+      "schema_version": "1.0",
+      "score": 0.77,
+      "summary": "Recommended controlled build of Developer Portfolio Reviewer: Provides structured feedback on developer portfolios and projects.",
+      "template": "developer-portfolio-reviewer",
+      "why": "Matches the Developer Portfolio Reviewer template (portfolio, resume, review). Matches your requested standard quality level. (fit score 1.00)"
+    },
+    {
+      "candidate_id": "cand-8f7521c65237",
+      "name": "Production-ready controlled blueprint",
+      "quality_level": "production",
+      "risks": [
+        "sbom_present",
+        "attestation_present",
+        "policy_validation_passes"
+      ],
+      "schema_version": "1.0",
+      "score": 0.48,
+      "summary": "Hardened, release-ready build of Developer Portfolio Reviewer: Provides structured feedback on developer portfolios and projects.",
+      "template": "developer-portfolio-reviewer-production",
+      "why": "Matches the Developer Portfolio Reviewer template (portfolio, resume, review). (fit score 0.85)"
+    }
+  ],
+  "idea": "A developer portfolio reviewer that gives structured feedback on projects and resume",
+  "selected_blueprint": {
+    "allowed_change_scopes": [
+      {
+        "allowed_files": [
+          "backend/app/api/reviews.py",
+          "backend/tests/test_reviews_api.py"
+        ],
+        "task_id": "TASK-001"
+      },
+      {
+        "allowed_files": [
+          "frontend/app/review/page.tsx",
+          "frontend/components/review-form.tsx"
+        ],
+        "task_id": "TASK-002"
+      }
+    ],
+    "allowed_stack": {
+      "backend": "fastapi",
+      "database": "postgresql",
+      "deploy": "docker",
+      "frontend": "nextjs",
+      "worker": "python"
+    },
+    "blueprint_id": "bp-f44f6a3af292",
+    "forbidden": [
+      "MATRIX_BLUEPRINT.yaml",
+      "MATRIX_STANDARDS.lock",
+      ".github/workflows/"
+    ],
+    "goal": "A developer portfolio reviewer that gives structured feedback on projects and resume",
+    "name": "Developer Portfolio Reviewer",
+    "project_type": "fullstack",
+    "quality_level": "standard",
+    "required_api_routes": [
+      {
+        "method": "GET",
+        "path": "/api/v1/health"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/reviews"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/reviews/{review_id}"
+      }
+    ],
+    "required_files": [
+      "README.md",
+      "MATRIX_BLUEPRINT.yaml",
+      "MATRIX_STANDARDS.lock",
+      "MATRIX_TASKS.md",
+      "MATRIX_ALLOWED_CHANGES.md",
+      "MATRIX_ACCEPTANCE_CRITERIA.md",
+      "MATRIX_VALIDATION.md",
+      "docs/architecture.md",
+      "docs/security.md",
+      "docs/standards-report.md"
+    ],
+    "required_pages": [
+      "/",
+      "/review",
+      "/result/:id",
+      "/about"
+    ],
+    "schema_version": "1.0"
+  }
+}

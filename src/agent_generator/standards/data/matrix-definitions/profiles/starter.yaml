@@ -1,0 +1,23 @@
+schema_version: '1.0'
+profile: starter
+description: Fast local prototype profile. Generates core control files, readable docs, safe environment examples,
+  and warning-level checks.
+required_rules:
+- RMD-001
+- RMD-002
+- RMD-006
+- RMD-009
+- RMD-101
+- RMD-102
+- PY-001
+- PY-011
+- RMD-107
+- RMD-108
+- RMD-109
+- RMD-115
+- RMD-116
+- RMD-117
+- RMD-118
+- RMD-119
+- RMD-120
+default_enforcement: warn
