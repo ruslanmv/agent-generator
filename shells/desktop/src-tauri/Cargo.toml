@@ -1,3 +1,10 @@
+# NOTE: Cargo.lock is committed (this is an app, not a library) for reproducible
+# CI builds. It pins `alloc-no-stdlib` to 2.0.4 so it matches `alloc-stdlib` 0.2.3
+# (the only published version). `brotli` 8.x — pulled by `tauri-utils` to compress
+# the embedded frontend — otherwise resolves `alloc-no-stdlib` 3.0.0 for itself
+# while StandardAlloc stays on 2.x, which fails to compile (E0277). Do NOT run
+# `cargo update -p alloc-no-stdlib` until `alloc-stdlib` ships a 3.x release (or
+# brotli is fixed); it will reintroduce the conflict and break the desktop build.
 [package]
 name        = "agent-generator-desktop"
 version     = "0.1.0"
