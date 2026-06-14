@@ -62,7 +62,10 @@ def test_full_matrix_half_idea_to_commit(tmp_path) -> None:
 
     # matrix-builder records Matrix Commit #001.
     commit = mcp.tool_commit(
-        project_path=proj, coder="gitpilot", provider="ollama", model="qwen2.5-coder:0.5b",
+        project_path=proj,
+        coder="gitpilot",
+        provider="ollama",
+        model="qwen2.5-coder:0.5b",
         files_changed=[HELLO_FILE],
     )
     assert commit["status"] == "ok"

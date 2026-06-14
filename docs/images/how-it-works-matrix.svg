@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-label="How Matrix Builder (mb) controls AI coders with versioned batches" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="mb-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#53f39d"/></marker>
+    <marker id="mb-arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#f0c44e"/></marker>
+  </defs>
+  <rect x="1" y="1" width="1198" height="638" rx="20" fill="#04140c" stroke="#163a28"/>
+
+  <text x="44" y="52" font-family="Georgia,'Times New Roman',serif" font-size="30" font-weight="600" fill="#f7fff9">2 · Control an AI coder with mb</text>
+  <text x="44" y="82" font-size="15" fill="#8fb2a2">AI coders are powerful but <tspan fill="#f0c44e">out of control</tspan>. mb gives them a <tspan fill="#53f39d">contract</tspan> — and versions every batch, end to end.</text>
+
+  <!-- WHY: two contrasting cards -->
+  <!-- left: without control -->
+  <rect x="44" y="104" width="534" height="132" rx="16" fill="#1c1408" stroke="#6b4a16"/>
+  <circle cx="78" cy="140" r="15" fill="#2a1d0a" stroke="#f0c44e"/><text x="78" y="146" text-anchor="middle" font-size="17" font-weight="700" fill="#f0c44e">✗</text>
+  <text x="104" y="146" font-size="17" font-weight="700" fill="#f0c44e">Prompt only — out of control</text>
+  <text x="72" y="182" font-size="14" fill="#d7c49a">• edits any file&#160;&#160;• invents its own architecture</text>
+  <text x="72" y="208" font-size="14" fill="#d7c49a">• drifts between runs&#160;&#160;• output you can't verify</text>
+
+  <!-- arrow between -->
+  <line x1="584" y1="170" x2="616" y2="170" stroke="#53f39d" stroke-width="2.4" marker-end="url(#mb-ar)"/>
+
+  <!-- right: under contract -->
+  <rect x="622" y="104" width="534" height="132" rx="16" fill="#0a2417" stroke="#2f7d52"/>
+  <circle cx="656" cy="140" r="15" fill="#0e3320" stroke="#53f39d"/><text x="656" y="146" text-anchor="middle" font-size="16" font-weight="700" fill="#53f39d">✓</text>
+  <text x="682" y="146" font-size="17" font-weight="700" fill="#53f39d">Matrix contract (mb) — under control</text>
+  <text x="650" y="182" font-size="14" fill="#bfe0cd">• locked blueprint&#160;&#160;• allowed files only</text>
+  <text x="650" y="208" font-size="14" fill="#bfe0cd">• validated, fail-closed&#160;&#160;• versioned commits</text>
+
+  <!-- THE mb LOOP -->
+  <text x="44" y="284" font-size="11" font-weight="700" letter-spacing="2" fill="#6f9a86">THE mb LOOP — EVERY CHANGE STAYS INSIDE THE CONTRACT</text>
+
+  <!-- boxes -->
+  <g>
+    <rect x="44"   y="300" width="150" height="76" rx="13" fill="#0a2417" stroke="#1f5238"/>
+    <text x="119" y="338" text-anchor="middle" font-size="14.5" font-weight="700" fill="#f7fff9">Blueprint</text>
+    <text x="119" y="358" text-anchor="middle" font-size="11.5" fill="#8fb2a2">locked · mb init</text>
+
+    <rect x="236"  y="300" width="150" height="76" rx="13" fill="#0a2417" stroke="#1f5238"/>
+    <text x="311" y="332" text-anchor="middle" font-size="14.5" font-weight="700" fill="#f7fff9">Batch</text>
+    <text x="311" y="351" text-anchor="middle" font-size="11.5" fill="#8fb2a2">scoped tasks</text>
+    <text x="311" y="367" text-anchor="middle" font-size="11.5" fill="#8fb2a2">+ allowed files</text>
+
+    <rect x="428"  y="300" width="150" height="76" rx="13" fill="#0a2417" stroke="#1f5238"/>
+    <text x="503" y="338" text-anchor="middle" font-size="14.5" font-weight="700" fill="#f7fff9">Prompt</text>
+    <text x="503" y="358" text-anchor="middle" font-size="11.5" fill="#8fb2a2">per AI coder</text>
+
+    <rect x="620"  y="300" width="150" height="76" rx="13" fill="#0a2417" stroke="#1f5238"/>
+    <text x="695" y="332" text-anchor="middle" font-size="14.5" font-weight="700" fill="#f7fff9">AI coder</text>
+    <text x="695" y="351" text-anchor="middle" font-size="11" fill="#8fb2a2">Claude · Codex</text>
+    <text x="695" y="367" text-anchor="middle" font-size="11" fill="#8fb2a2">Cursor · GitPilot</text>
+
+    <rect x="812"  y="300" width="150" height="76" rx="13" fill="#0a2417" stroke="#1f5238"/>
+    <text x="887" y="338" text-anchor="middle" font-size="14.5" font-weight="700" fill="#f7fff9">Validate</text>
+    <text x="887" y="358" text-anchor="middle" font-size="11.5" fill="#8fb2a2">fail-closed 0·1·2</text>
+
+    <rect x="1004" y="300" width="150" height="76" rx="13" fill="#103a26" stroke="#53f39d" stroke-width="1.6"/>
+    <text x="1079" y="332" text-anchor="middle" font-size="14.5" font-weight="700" fill="#eafff4">Matrix Commit</text>
+    <text x="1079" y="351" text-anchor="middle" font-size="11.5" fill="#7dffb5">immutable</text>
+    <text x="1079" y="367" text-anchor="middle" font-size="11.5" fill="#7dffb5">#001 · #002 …</text>
+  </g>
+
+  <!-- forward arrows -->
+  <line x1="194" y1="338" x2="232" y2="338" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <line x1="386" y1="338" x2="424" y2="338" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <line x1="578" y1="338" x2="616" y2="338" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <line x1="770" y1="338" x2="808" y2="338" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <line x1="962" y1="338" x2="1000" y2="338" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <text x="981" y="328" text-anchor="middle" font-size="10.5" font-weight="700" fill="#53f39d">approved ✓</text>
+
+  <!-- feedback: rejected → repair → back to Prompt -->
+  <path d="M887 376 V412 H503 V380" fill="none" stroke="#f0c44e" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#mb-arw)"/>
+  <text x="695" y="406" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f0c44e">rejected → mb repair (scoped fix)</text>
+
+  <!-- VERSIONED TIMELINE -->
+  <text x="44" y="476" font-size="11" font-weight="700" letter-spacing="2" fill="#6f9a86">VERSIONED — A COMPLETE PROJECT, ONE SAFE BATCH AT A TIME</text>
+
+  <g>
+    <rect x="140" y="492" width="150" height="56" rx="13" fill="#0a2417" stroke="#2f7d52"/>
+    <text x="215" y="518" text-anchor="middle" font-size="13.5" font-weight="700" fill="#f7fff9">Batch 01</text>
+    <text x="215" y="536" text-anchor="middle" font-size="11.5" fill="#7dffb5">✓ commit #001</text>
+
+    <rect x="320" y="492" width="150" height="56" rx="13" fill="#0a2417" stroke="#2f7d52"/>
+    <text x="395" y="518" text-anchor="middle" font-size="13.5" font-weight="700" fill="#f7fff9">Batch 02</text>
+    <text x="395" y="536" text-anchor="middle" font-size="11.5" fill="#7dffb5">✓ commit #002</text>
+
+    <rect x="500" y="492" width="150" height="56" rx="13" fill="#0a2417" stroke="#2f7d52"/>
+    <text x="575" y="518" text-anchor="middle" font-size="13.5" font-weight="700" fill="#f7fff9">Batch 03</text>
+    <text x="575" y="536" text-anchor="middle" font-size="11.5" fill="#7dffb5">✓ commit #003</text>
+
+    <rect x="680" y="492" width="150" height="56" rx="13" fill="#0a2417" stroke="#2f7d52"/>
+    <text x="755" y="518" text-anchor="middle" font-size="13.5" font-weight="700" fill="#f7fff9">Batch 04</text>
+    <text x="755" y="536" text-anchor="middle" font-size="11.5" fill="#7dffb5">✓ commit #004</text>
+
+    <rect x="860" y="492" width="200" height="56" rx="13" fill="#103a26" stroke="#53f39d" stroke-width="1.6"/>
+    <text x="960" y="518" text-anchor="middle" font-size="14" font-weight="700" fill="#eafff4">Complete project</text>
+    <text x="960" y="536" text-anchor="middle" font-size="11.5" fill="#7dffb5">end to end · under contract</text>
+  </g>
+  <line x1="290" y1="520" x2="316" y2="520" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <line x1="470" y1="520" x2="496" y2="520" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <line x1="650" y1="520" x2="676" y2="520" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+  <line x1="830" y1="520" x2="856" y2="520" stroke="#53f39d" stroke-width="2" marker-end="url(#mb-ar)"/>
+
+  <text x="600" y="600" text-anchor="middle" font-family="'JetBrains Mono',Consolas,monospace" font-size="13" fill="#8fb2a2">mb init  →  mb next  →  mb prompt  →  mb check  →  (mb repair)  →  mb timeline</text>
+</svg>

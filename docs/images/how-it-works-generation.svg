@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-label="How agent-generator generates a multi-agent project" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="ag-ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#53f39d"/></marker>
+  </defs>
+  <rect x="1" y="1" width="1198" height="428" rx="20" fill="#04140c" stroke="#163a28"/>
+
+  <text x="44" y="52" font-family="Georgia,'Times New Roman',serif" font-size="30" font-weight="600" fill="#f7fff9">1 · Generate a multi-agent project</text>
+  <text x="44" y="82" font-size="15" fill="#8fb2a2">One LLM call to plan — everything else is deterministic, so the same sentence yields byte-identical code.</text>
+
+  <!-- pipeline -->
+  <!-- 0 Your idea -->
+  <rect x="44"  y="130" width="157" height="92" rx="14" fill="#0a2417" stroke="#1f5238"/>
+  <text x="122" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="#f7fff9">Your idea</text>
+  <text x="122" y="192" text-anchor="middle" font-size="12" fill="#8fb2a2">plain English</text>
+  <!-- 1 Planner (the only LLM step) -->
+  <rect x="235" y="130" width="157" height="92" rx="14" fill="#0a2417" stroke="#53f39d" stroke-width="1.6"/>
+  <text x="313" y="166" text-anchor="middle" font-size="15" font-weight="700" fill="#f7fff9">Planner</text>
+  <text x="313" y="187" text-anchor="middle" font-size="12" fill="#53f39d">1 LLM call</text>
+  <text x="313" y="205" text-anchor="middle" font-size="10.5" fill="#6f9a86">the only AI step</text>
+  <!-- 2 ProjectSpec -->
+  <rect x="426" y="130" width="157" height="92" rx="14" fill="#0a2417" stroke="#1f5238"/>
+  <text x="504" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="#f7fff9">ProjectSpec</text>
+  <text x="504" y="192" text-anchor="middle" font-size="12" fill="#8fb2a2">validated</text>
+  <!-- 3 Templates -->
+  <rect x="617" y="130" width="157" height="92" rx="14" fill="#0a2417" stroke="#1f5238"/>
+  <text x="695" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="#f7fff9">Templates</text>
+  <text x="695" y="192" text-anchor="middle" font-size="12" fill="#8fb2a2">deterministic render</text>
+  <!-- 4 Safety scan -->
+  <rect x="808" y="130" width="157" height="92" rx="14" fill="#0a2417" stroke="#1f5238"/>
+  <text x="886" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="#f7fff9">Safety scan</text>
+  <text x="886" y="192" text-anchor="middle" font-size="12" fill="#8fb2a2">AST guard</text>
+  <!-- 5 Output -->
+  <rect x="999" y="130" width="157" height="92" rx="14" fill="#103a26" stroke="#53f39d" stroke-width="1.6"/>
+  <text x="1077" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="#eafff4">Project</text>
+  <text x="1077" y="192" text-anchor="middle" font-size="12" fill="#7dffb5">runnable ZIP</text>
+
+  <!-- arrows -->
+  <line x1="204" y1="176" x2="231" y2="176" stroke="#53f39d" stroke-width="2" marker-end="url(#ag-ar)"/>
+  <line x1="395" y1="176" x2="422" y2="176" stroke="#53f39d" stroke-width="2" marker-end="url(#ag-ar)"/>
+  <line x1="586" y1="176" x2="613" y2="176" stroke="#53f39d" stroke-width="2" marker-end="url(#ag-ar)"/>
+  <line x1="777" y1="176" x2="804" y2="176" stroke="#53f39d" stroke-width="2" marker-end="url(#ag-ar)"/>
+  <line x1="968" y1="176" x2="995" y2="176" stroke="#53f39d" stroke-width="2" marker-end="url(#ag-ar)"/>
+
+  <!-- framework chips -->
+  <text x="44" y="296" font-size="11" font-weight="700" letter-spacing="2" fill="#6f9a86">ONE PROJECT · YOUR FRAMEWORK</text>
+  <g font-size="13" font-weight="600" fill="#cfe0d6">
+    <rect x="44"  y="312" width="92"  height="32" rx="16" fill="#0a2417" stroke="#1f5238"/><text x="90"  y="333" text-anchor="middle">CrewAI</text>
+    <rect x="148" y="312" width="112" height="32" rx="16" fill="#0a2417" stroke="#1f5238"/><text x="204" y="333" text-anchor="middle">LangGraph</text>
+    <rect x="272" y="312" width="158" height="32" rx="16" fill="#0a2417" stroke="#1f5238"/><text x="351" y="333" text-anchor="middle">WatsonX Orchestrate</text>
+    <rect x="442" y="312" width="118" height="32" rx="16" fill="#0a2417" stroke="#1f5238"/><text x="501" y="333" text-anchor="middle">CrewAI Flow</text>
+    <rect x="572" y="312" width="82"  height="32" rx="16" fill="#0a2417" stroke="#1f5238"/><text x="613" y="333" text-anchor="middle">ReAct</text>
+  </g>
+
+  <text x="44" y="392" font-size="13.5" fill="#8fb2a2">Hallucination-resistant: code renders from a <tspan fill="#cfe0d6">validated spec</tspan>, not raw LLM text — and an AST scanner blocks <tspan fill="#cfe0d6">eval / exec / os.system</tspan>.</text>
+</svg>

@@ -14,10 +14,10 @@ ruslanmv.com     explains the standard.
 
 | Component | Version (observed) | Notes |
 |---|---|---|
-| agent-generator (package) | `1.1.0` | Adds the Continuous Build engine: batch planning, commit snapshots/diffs, tool-native handoffs (CLAUDE.md/AGENTS.md). Satisfies matrix-definitions `>=0.2.0` |
+| agent-generator (package) | `0.2.0` | The Matrix engine release: `AgentGenerator` SDK, the `mb` local-first CLI, batch planning, commit snapshots/diffs, tool-native handoffs (CLAUDE.md/AGENTS.md). Satisfies matrix-definitions `>=0.2.0` (verified `standards_metadata()["compatibility"]["ok"] == True`). Supersedes PyPI `0.1.2` |
 | agent-generator engine API | `1` | `ENGINE_API_VERSION`; the six SDK methods are stable |
 | shared contracts | `1.0` | `agent_generator.contracts.CONTRACTS_VERSION` |
-| matrix-builder | `0.9.0-batch.9` | Adapter imports `agent_generator.engine.AgentGenerator`; runs in `mock` until the SDK ships |
+| matrix-builder | `0.9.0-batch.9` | Adapter imports `agent_generator.engine.AgentGenerator`. To use the real engine it must depend on `agent-generator>=0.2.0` and set `AGENT_GENERATOR_MODE=sdk`; otherwise the adapter stays in `mock` |
 | matrix-definitions | `2026.06.0` | Declares `compatibility.agent_generator >= 0.2.0` |
 
 ## The 0.2.0 milestone (reached in Batch 3)

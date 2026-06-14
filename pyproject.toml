@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name            = "agent-generator"
-version         = "1.1.0"
+version         = "0.2.0"
 description     = "Turn plain-English requirements into production-ready multi-agent AI projects (CrewAI, LangGraph, WatsonX Orchestrate)."
 readme          = "README.md"
 requires-python = ">=3.10"

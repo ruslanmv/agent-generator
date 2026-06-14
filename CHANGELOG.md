@@ -1,6 +1,14 @@
 # Changelog
 
-## 1.1.0 (2026-06-12)
+## 0.2.0 (2026-06-14)
+
+The Matrix Builder engine — the Matrix Builder-facing `AgentGenerator` SDK
+(idea → blueprint → bundle → coder prompt → validation), the `mb` local-first CLI,
+batch planning, commit snapshots/diffs, and repair prompts. This is the milestone that
+unlocks matrix-definitions compatibility: it can load and verify a signed standards pack
+(`compatibility.agent_generator >= 0.2.0`), so Matrix Builder can run in `AGENT_GENERATOR_MODE=sdk`.
+
+
 
 The Continuous Build engine track (milestones N1): plan incremental batches, snapshot/diff
 commits, and hand work to AI coders with tool-native instruction files.

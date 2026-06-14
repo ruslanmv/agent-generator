@@ -12,7 +12,7 @@ import agent_generator
 # The package version is frozen so an accidental bump is caught in review. Update this
 # deliberately as part of a release. 0.2.0 = standards loader (Batch 3); 0.3.0 = strict
 # Matrix Bundle exporter (Batch 6), completing milestone M2 (real generation).
-EXPECTED_VERSION = "1.1.0"
+EXPECTED_VERSION = "0.2.0"
 
 # The five generation frameworks the README and users rely on.
 EXPECTED_FRAMEWORKS = {

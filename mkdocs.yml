@@ -11,13 +11,35 @@ site_dir: site
 
 nav:
   - Home: index.md
-  - Install in 30s: installation.md
-  - Usage: usage.md
-  - Pick a framework: frameworks.md
-  - How it works: architecture.md
+  - Get started:
+      - Install in 30s: installation.md
+      - Usage: usage.md
+      - Pick a framework: frameworks.md
+  - Matrix engine:
+      - Quickstart: matrix-engine/quickstart.md
+      - mb — local-first CLI: matrix-engine/mb-cli.md
+      - Public engine API (SDK): matrix-engine/public-engine-api.md
+      - HTTP API: matrix-engine/http-api.md
+      - Contracts: matrix-engine/contracts.md
+      - Blueprint candidates: matrix-engine/blueprint-candidates.md
+      - Controlled blueprint compiler: matrix-engine/controlled-blueprint-compiler.md
+      - Standards loader: matrix-engine/standards-loader.md
+      - Validation & repair: matrix-engine/validation-and-repair.md
+      - AI coder adapters: matrix-engine/ai-coder-adapters.md
+      - Matrix Bundle export: matrix-engine/matrix-bundle-export.md
+      - MatrixHub publishing: matrix-engine/matrixhub-publishing.md
+      - Repo boundary: matrix-engine/repo-boundary.md
+      - Ruslan Magana Definitions: matrix-engine/ruslan-magana-definitions.md
+      - Compatibility matrix: matrix-engine/compatibility-matrix.md
+      - CI self-compliance: matrix-engine/ci-self-compliance.md
+  - Integrations:
+      - GitPilot: gitpilot-integration.md
+      - MCP server: mcp-01.md
+  - Architecture: architecture.md
   - Platform overview: platform.md
-  - Production readiness: production-readiness.md
-  - Release process: release-process.md
+  - Operations:
+      - Production readiness: production-readiness.md
+      - Release process: release-process.md
 
 theme:
   name: material
