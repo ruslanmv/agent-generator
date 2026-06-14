@@ -227,25 +227,11 @@ jobs:
           npx tauri build --bundles ${{ matrix.platform.bundle_targets }} ${{ matrix.platform.tauri_args }} ${{ contains(matrix.platform.bundle_targets, 'app') && secrets.TAURI_SIGNING_PRIVATE_KEY != '' && '--features updater' || '' }}
 
       # ── macOS notarization ──────────────────────────────────────
-      - name: Notarize + staple
-        # Step-scoped `env:` is not visible in this step's own `if`,
-        # so check the underlying secrets directly. Requires all three
-        # Apple credentials to be configured.
-        if: matrix.platform.id == 'macos' && secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != ''
-        working-directory: ${{ env.DESKTOP_DIR }}/src-tauri/target/universal-apple-darwin/release/bundle
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          set -euo pipefail
-          DMG="$(ls dmg/*.dmg | head -n1)"
-          xcrun notarytool submit "$DMG" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait
-          xcrun stapler staple "$DMG"
+      # Apple publishing (notarize + staple) is intentionally skipped for now —
+      # not needed. The macOS build still produces an (ad-hoc signed) .app/.dmg
+      # artifact. When Apple distribution is required, re-add a notarize step and
+      # gate it via a job-level `env` flag — never `secrets` in `if:`, which
+      # GitHub rejects as an invalid workflow (startup failure).
 
       # ── Windows signtool ────────────────────────────────────────
       - name: Sign Windows installers
