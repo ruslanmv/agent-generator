@@ -59,7 +59,9 @@ def test_realistic_session_offline(tmp_path, monkeypatch) -> None:
     assert (tmp_path / "CLAUDE.md").exists()  # tool-native helper emitted to cwd
     assert _read(tmp_path / ".mb" / "batches" / "01" / "batch.json")["status"] == "ready"
 
-    chk = runner.invoke(app, ["check", "--changed", "backend/app/api/health.py", "tests/test_health.py"])
+    chk = runner.invoke(
+        app, ["check", "--changed", "backend/app/api/health.py", "tests/test_health.py"]
+    )
     assert chk.exit_code == 0, chk.output  # approved
     assert "MATRIX_STATUS: approved" in chk.output
     # A commit was recorded and the batch is committed.

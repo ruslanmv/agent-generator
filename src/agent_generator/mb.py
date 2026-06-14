@@ -85,7 +85,7 @@ class Store:
 
     def require(self) -> None:
         if not self.exists():
-            console.print("[red]No .mb/ project here. Run `mb init \"<idea>\"` first.[/]")
+            console.print('[red]No .mb/ project here. Run `mb init "<idea>"` first.[/]')
             raise typer.Exit(code=2)
 
     # -- project ---------------------------------------------------------
@@ -105,7 +105,9 @@ class Store:
         )
 
     def load_blueprint(self) -> BlueprintResult:
-        return BlueprintResult.model_validate_json((self.base / "blueprint.json").read_text("utf-8"))
+        return BlueprintResult.model_validate_json(
+            (self.base / "blueprint.json").read_text("utf-8")
+        )
 
     # -- batches ---------------------------------------------------------
     def batch_dir(self, ordinal: int) -> Path:
@@ -281,7 +283,11 @@ def _sync_payload(store: "Store", project: dict) -> dict:
         for c in store.list_commits()
     ]
     return {
-        "project": {"id": project["project_id"], "slug": project["slug"], "title": project["title"]},
+        "project": {
+            "id": project["project_id"],
+            "slug": project["slug"],
+            "title": project["title"],
+        },
         "version": {
             "id": version_id,
             "project_id": project["project_id"],
@@ -327,8 +333,12 @@ def _root(
 @app.command()
 def init(
     idea: str = typer.Argument(..., help="What you want to build."),
-    quality: str = typer.Option("standard", "--quality", help="starter|standard|production|enterprise"),
-    title: Optional[str] = typer.Option(None, "--title", help="Project title (defaults to the blueprint name)."),
+    quality: str = typer.Option(
+        "standard", "--quality", help="starter|standard|production|enterprise"
+    ),
+    title: Optional[str] = typer.Option(
+        None, "--title", help="Project title (defaults to the blueprint name)."
+    ),
     force: bool = typer.Option(False, "--force", help="Overwrite an existing .mb/ project."),
 ) -> None:
     """Turn an idea into a controlled blueprint and scaffold the local .mb/ workspace."""
@@ -363,14 +373,18 @@ def init(
     console.print(f"[green]Initialized .mb/ for[/] [bold]{blueprint.name}[/]")
     console.print(f"  project   {blueprint.blueprint_id}")
     console.print(f"  version   v1.0.0  ·  quality {quality}")
-    console.print(f"  blueprint {len(blueprint.tasks)} task(s)  ·  stack {blueprint.stack.backend}/{blueprint.stack.frontend}")
-    console.print("  next      [dim]mb next \"<goal>\"[/]")
+    console.print(
+        f"  blueprint {len(blueprint.tasks)} task(s)  ·  stack {blueprint.stack.backend}/{blueprint.stack.frontend}"
+    )
+    console.print('  next      [dim]mb next "<goal>"[/]')
 
 
 @app.command()
 def next(  # noqa: A001 - "next" is the intended verb
     goal: str = typer.Argument(..., help="What this batch should add or fix."),
-    change_type: str = typer.Option("add-feature", "--change-type", help="small-update|add-feature|fix-issue"),
+    change_type: str = typer.Option(
+        "add-feature", "--change-type", help="small-update|add-feature|fix-issue"
+    ),
 ) -> None:
     """Plan the next batch inside the current version (Continue build)."""
     store = Store()
@@ -412,11 +426,17 @@ def next(  # noqa: A001 - "next" is the intended verb
 
 @app.command()
 def prompt(
-    coder: str = typer.Option("claude", "--coder", help="claude|codex|cursor|gitpilot|ibm-bob|generic"),
-    batch: Optional[int] = typer.Option(None, "--batch", help="Batch ordinal (defaults to latest)."),
+    coder: str = typer.Option(
+        "claude", "--coder", help="claude|codex|cursor|gitpilot|ibm-bob|generic"
+    ),
+    batch: Optional[int] = typer.Option(
+        None, "--batch", help="Batch ordinal (defaults to latest)."
+    ),
     copy: bool = typer.Option(False, "--copy", help="Copy the prompt to the clipboard."),
     file: Optional[Path] = typer.Option(None, "--file", help="Write the prompt to this path."),
-    no_helpers: bool = typer.Option(False, "--no-helpers", help="Do not emit CLAUDE.md/AGENTS.md helpers."),
+    no_helpers: bool = typer.Option(
+        False, "--no-helpers", help="Do not emit CLAUDE.md/AGENTS.md helpers."
+    ),
 ) -> None:
     """Render the contract-bound prompt for a batch and emit tool-native helper files."""
     store = Store()
@@ -425,7 +445,7 @@ def prompt(
     blueprint = store.load_blueprint()
     ordinal = batch or store.latest_batch_ordinal()
     if ordinal is None:
-        console.print("[red]No batches yet. Run `mb next \"<goal>\"` first.[/]")
+        console.print('[red]No batches yet. Run `mb next "<goal>"` first.[/]')
         raise typer.Exit(code=2)
 
     coder_id = _coder(coder)
@@ -458,10 +478,18 @@ def prompt(
 @app.command()
 def check(
     files: Optional[list[str]] = typer.Argument(None, help="Changed file path(s) to validate."),
-    changed: Optional[list[str]] = typer.Option(None, "--changed", help="Changed file path(s) (repeatable)."),
-    repo: Optional[Path] = typer.Option(None, "--repo", help="Validate a working directory instead."),
-    batch: Optional[int] = typer.Option(None, "--batch", help="Batch ordinal (defaults to latest)."),
-    watch: bool = typer.Option(False, "--watch", help="Run on the server and stream the run-event log live."),
+    changed: Optional[list[str]] = typer.Option(
+        None, "--changed", help="Changed file path(s) (repeatable)."
+    ),
+    repo: Optional[Path] = typer.Option(
+        None, "--repo", help="Validate a working directory instead."
+    ),
+    batch: Optional[int] = typer.Option(
+        None, "--batch", help="Batch ordinal (defaults to latest)."
+    ),
+    watch: bool = typer.Option(
+        False, "--watch", help="Run on the server and stream the run-event log live."
+    ),
 ) -> None:
     """Validate a change set against the contract. Exit 0 approved, 1 needs-repair, 2 rejected.
 
@@ -485,7 +513,9 @@ def check(
     request = None
     if repo is None:
         if not changed_paths:
-            console.print("[red]Provide changed files (e.g. `--changed a.py b.py`) or --repo <dir>.[/]")
+            console.print(
+                "[red]Provide changed files (e.g. `--changed a.py b.py`) or --repo <dir>.[/]"
+            )
             raise typer.Exit(code=2)
         request = ValidationRequest(
             bundle_id=project["project_id"],
@@ -511,7 +541,9 @@ def check(
 
     if status == "approved":
         tree_hash = (
-            engine.bundle_tree_hash(repo_path=repo) if repo is not None else _synthetic_tree_hash(changed_paths)
+            engine.bundle_tree_hash(repo_path=repo)
+            if repo is not None
+            else _synthetic_tree_hash(changed_paths)
         )
         commit_no = project["next_commit_no"]
         ref = _commit_ref(project["project_id"], commit_no, tree_hash)
@@ -554,7 +586,9 @@ def check(
 @app.command()
 def repair(
     copy: bool = typer.Option(False, "--copy", help="Copy the repair prompt to the clipboard."),
-    file: Optional[Path] = typer.Option(None, "--file", help="Write the repair prompt to this path."),
+    file: Optional[Path] = typer.Option(
+        None, "--file", help="Write the repair prompt to this path."
+    ),
 ) -> None:
     """Turn the last failing validation into a repair prompt and a fix-issue batch."""
     store = Store()
@@ -596,7 +630,9 @@ def repair(
     )
     if repair_prompt:
         (store.batch_dir(ordinal) / "prompts").mkdir(parents=True, exist_ok=True)
-        (store.batch_dir(ordinal) / "prompts" / "repair.md").write_text(repair_prompt, encoding="utf-8")
+        (store.batch_dir(ordinal) / "prompts" / "repair.md").write_text(
+            repair_prompt, encoding="utf-8"
+        )
     project["next_batch_ordinal"] = ordinal + 1
     store.save_project(project)
 
@@ -609,7 +645,9 @@ def repair(
 
 @app.command()
 def timeline(
-    remote: bool = typer.Option(False, "--remote", help="Merge in the server's timeline (needs mb login)."),
+    remote: bool = typer.Option(
+        False, "--remote", help="Merge in the server's timeline (needs mb login)."
+    ),
 ) -> None:
     """Show the build history: every batch and commit in this version, in order."""
     store = Store()
@@ -642,7 +680,7 @@ def timeline(
             except Exception as exc:  # noqa: BLE001
                 console.print(f"[yellow]Could not fetch server timeline: {exc}[/]")
     if not batches:
-        console.print("[dim]No batches yet. Run `mb next \"<goal>\"`.[/]")
+        console.print('[dim]No batches yet. Run `mb next "<goal>"`.[/]')
         return
 
     for b in batches:
@@ -661,10 +699,18 @@ def timeline(
 
 @app.command()
 def login(
-    api_url: str = typer.Option("http://localhost:8000", "--api-url", help="Matrix Builder API base URL."),
-    as_user: Optional[str] = typer.Option(None, "--as", help="User id to mint a self-issued token for."),
-    token: Optional[str] = typer.Option(None, "--token", help="Use an externally-issued JWT instead."),
-    secret: Optional[str] = typer.Option(None, "--secret", help="HS256 secret (else $MB_JWT_SECRET)."),
+    api_url: str = typer.Option(
+        "http://localhost:8000", "--api-url", help="Matrix Builder API base URL."
+    ),
+    as_user: Optional[str] = typer.Option(
+        None, "--as", help="User id to mint a self-issued token for."
+    ),
+    token: Optional[str] = typer.Option(
+        None, "--token", help="Use an externally-issued JWT instead."
+    ),
+    secret: Optional[str] = typer.Option(
+        None, "--secret", help="HS256 secret (else $MB_JWT_SECRET)."
+    ),
     days: int = typer.Option(30, "--days", help="Token lifetime when minting."),
 ) -> None:
     """Store credentials for `mb sync` (self-issued HS256 JWT, ADR 0002 — no external IdP)."""
@@ -719,7 +765,9 @@ def sync() -> None:
         f"[green]Synced[/] {applied.get('batches', 0)} batch(es), {applied.get('commits', 0)} commit(s)."
     )
     # Pull: reflect server statuses back onto local batches (merge by id).
-    server = {e["id"]: e for e in data.get("timeline", {}).get("entries", []) if e["kind"] == "batch"}
+    server = {
+        e["id"]: e for e in data.get("timeline", {}).get("entries", []) if e["kind"] == "batch"
+    }
     for meta in store.list_batches():
         srv = server.get(meta["batch_id"])
         if srv and srv.get("status") and srv["status"] != meta.get("status"):
@@ -758,7 +806,9 @@ def _check_watch(store: "Store", ordinal: int, changed_paths: list[str]) -> int:
     after, terminal = 0, {"run.completed", "run.failed"}
     status = "running"
     for _ in range(600):  # ~60s budget
-        ev = requests.get(f"{base}/api/v1/runs/{run_id}/events?after={after}", headers=hdr, timeout=30)
+        ev = requests.get(
+            f"{base}/api/v1/runs/{run_id}/events?after={after}", headers=hdr, timeout=30
+        )
         for e in ev.json():
             after = e["seq"]
             console.print(f"  [dim]{e['seq']:02d}[/] {e['event_type']}")
@@ -775,7 +825,9 @@ def _check_watch(store: "Store", ordinal: int, changed_paths: list[str]) -> int:
     return _EXIT.get(status, 2)
 
 
-mcp_app = typer.Typer(add_completion=False, help="Matrix MCP server (expose the build loop as MCP tools).")
+mcp_app = typer.Typer(
+    add_completion=False, help="Matrix MCP server (expose the build loop as MCP tools)."
+)
 app.add_typer(mcp_app, name="mcp")
 
 
@@ -786,7 +838,9 @@ def mcp_serve(
 ) -> None:
     """Start the Matrix MCP server so AI coders (GitPilot, Claude Code, Cursor) call Matrix tools."""
     if transport != "stdio":
-        console.print(f"[red]Transport '{transport}' not supported in MCP-01; use --transport stdio.[/]")
+        console.print(
+            f"[red]Transport '{transport}' not supported in MCP-01; use --transport stdio.[/]"
+        )
         raise typer.Exit(code=2)
     try:
         from agent_generator.mcp_server import serve_stdio

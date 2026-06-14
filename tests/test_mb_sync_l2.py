@@ -26,9 +26,11 @@ SECRET = "dev-only-change-me"
 def _verify_hs256(token: str, secret: str) -> dict:
     header_b64, body_b64, sig_b64 = token.split(".")
     signing_input = f"{header_b64}.{body_b64}".encode("ascii")
-    expected = base64.urlsafe_b64encode(
-        hmac.new(secret.encode(), signing_input, hashlib.sha256).digest()
-    ).rstrip(b"=").decode()
+    expected = (
+        base64.urlsafe_b64encode(hmac.new(secret.encode(), signing_input, hashlib.sha256).digest())
+        .rstrip(b"=")
+        .decode()
+    )
     assert sig_b64 == expected, "signature mismatch"
     pad = "=" * (-len(body_b64) % 4)
     return json.loads(base64.urlsafe_b64decode(body_b64 + pad))
@@ -38,7 +40,12 @@ def _seed_committed(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     assert runner.invoke(app, ["init", IDEA]).exit_code == 0
     assert runner.invoke(app, ["next", "Add a /health endpoint"]).exit_code == 0
-    assert runner.invoke(app, ["prompt", "--coder", "claude", "--file", str(tmp_path / "p.md")]).exit_code == 0
+    assert (
+        runner.invoke(
+            app, ["prompt", "--coder", "claude", "--file", str(tmp_path / "p.md")]
+        ).exit_code
+        == 0
+    )
     assert runner.invoke(app, ["check", "--changed", "backend/app/api/health.py"]).exit_code == 0
 
 
@@ -51,7 +58,9 @@ def test_mint_jwt_is_valid_hs256() -> None:
 def test_login_stores_credentials(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     runner.invoke(app, ["init", IDEA])
-    res = runner.invoke(app, ["login", "--as", USER, "--api-url", "http://localhost:8000", "--secret", SECRET])
+    res = runner.invoke(
+        app, ["login", "--as", USER, "--api-url", "http://localhost:8000", "--secret", SECRET]
+    )
     assert res.exit_code == 0, res.output
     creds = json.loads((tmp_path / ".mb" / "credentials.json").read_text())
     assert creds["api_url"] == "http://localhost:8000"
@@ -92,15 +101,29 @@ def test_sync_posts_and_merges(tmp_path, monkeypatch) -> None:
         captured["url"] = url
         captured["json"] = json
         entries = [
-            {"kind": "batch", "id": b["id"], "title": b["title"], "status": "committed",
-             "ui_label": "Passed", "created_at": "now"}
+            {
+                "kind": "batch",
+                "id": b["id"],
+                "title": b["title"],
+                "status": "committed",
+                "ui_label": "Passed",
+                "created_at": "now",
+            }
             for b in json["batches"]
         ]
-        return _Resp(200, {
-            "project_id": json["project"]["id"], "version_id": json["version"]["id"],
-            "applied": {"batches": len(json["batches"]), "commits": len(json["commits"])},
-            "timeline": {"version_id": json["version"]["id"], "version_label": "v1.0.0", "entries": entries},
-        })
+        return _Resp(
+            200,
+            {
+                "project_id": json["project"]["id"],
+                "version_id": json["version"]["id"],
+                "applied": {"batches": len(json["batches"]), "commits": len(json["commits"])},
+                "timeline": {
+                    "version_id": json["version"]["id"],
+                    "version_label": "v1.0.0",
+                    "entries": entries,
+                },
+            },
+        )
 
     monkeypatch.setattr("requests.post", fake_post)
     res = runner.invoke(app, ["sync"])
@@ -132,10 +155,13 @@ def test_check_watch_streams_to_terminal(tmp_path, monkeypatch) -> None:
 
     def fake_get(url, headers=None, timeout=None):
         if "events" in url:
-            return _Resp(200, [
-                {"seq": 1, "event_type": "run.started", "payload": {}},
-                {"seq": 2, "event_type": "run.completed", "payload": {"status": "approved"}},
-            ])
+            return _Resp(
+                200,
+                [
+                    {"seq": 1, "event_type": "run.started", "payload": {}},
+                    {"seq": 2, "event_type": "run.completed", "payload": {"status": "approved"}},
+                ],
+            )
         return _Resp(200, {"status": "approved"})
 
     monkeypatch.setattr("requests.post", fake_post)

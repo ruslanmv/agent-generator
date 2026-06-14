@@ -53,6 +53,24 @@ The CLI is the original tool. The platform adds a FastAPI backend, a SPA,
 desktop installers (Tauri), an Android app (Capacitor), audit logs, a
 project marketplace, and Helm charts. Same generator under the hood.
 
+## Also: the Matrix Builder engine
+
+The same package is the deterministic engine behind **Matrix Builder** — *give AI coders a
+contract, not a prompt*. It turns an idea into a **controlled bundle** (blueprint, locked
+standards, scoped tasks, per-coder prompts), then validates what your AI coder produced and
+records each accepted change as an immutable **Matrix Commit**.
+
+- **`mb` — local-first CLI:** the full git-for-AI loop on your machine, offline and
+  deterministic — `mb init → next → prompt → check → timeline`. See [mb — local-first CLI](matrix-engine/mb-cli.md).
+- **`AgentGenerator` SDK:** `parse_idea`, `generate_blueprint_candidates`,
+  `generate_controlled_blueprint`, `generate_matrix_bundle`, `generate_coder_prompt_pack`,
+  `validate_ai_coder_patch`. See [Public engine API](matrix-engine/public-engine-api.md).
+- **HTTP API:** `uvicorn agent_generator.http.app:app` (`/api/v1/...`). See [HTTP API](matrix-engine/http-api.md).
+- Works with **Claude Code, Codex, Cursor, GitPilot, IBM Bob**, and any AI coder; publishes
+  validated bundles to **MatrixHub** under the [Ruslan Magana Definitions](matrix-engine/ruslan-magana-definitions.md).
+
+Start here: **[Matrix engine quickstart](matrix-engine/quickstart.md)**.
+
 ---
 
-**Next:** [Install in 30 seconds](installation.md) · [Usage recipes](usage.md) · [Pick a framework](frameworks.md)
+**Next:** [Install in 30 seconds](installation.md) · [Usage recipes](usage.md) · [Pick a framework](frameworks.md) · [Matrix engine](matrix-engine/quickstart.md)
