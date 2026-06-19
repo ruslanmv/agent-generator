@@ -130,6 +130,12 @@ def generate(
         help="Wrap Python output in an MCP FastAPI server.",
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Skip LLM call."),
+    use_llm: bool = typer.Option(
+        False,
+        "--use-llm/--no-llm",
+        help="Use the LLM provider to plan the spec (routes through OllaBridge/Ollama/etc.). "
+        "Default is the offline keyword planner.",
+    ),
     show_cost: bool = typer.Option(False, "--show-cost", help="Display token/cost info."),
     version: bool = typer.Option(
         False,
@@ -184,6 +190,7 @@ def generate(
         framework=framework,
         provider=provider_name,
         mcp=mcp,
+        use_llm=use_llm,
     )
     if plan_warnings:
         for w in plan_warnings:

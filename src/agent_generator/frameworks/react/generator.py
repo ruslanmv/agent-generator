@@ -6,6 +6,7 @@ from jinja2 import Template
 
 from agent_generator.config import Settings
 from agent_generator.frameworks.base import BaseFrameworkGenerator
+from agent_generator.frameworks.llm_runtime import LLM_HELPER_SNIPPET
 from agent_generator.models.workflow import Workflow
 
 _REACT_TEMPLATE = Template(
@@ -75,6 +76,8 @@ _REACT_TEMPLATE = Template(
             return _safe_eval(expression)
 
 
+        {{ llm_helper }}
+
         # ─────────────────────────────────────────────────────────
         # ReAct loop
         # ─────────────────────────────────────────────────────────
@@ -83,7 +86,28 @@ _REACT_TEMPLATE = Template(
 
 
         def think(question: str, history: list[dict]) -> dict[str, str]:
-            """Reasoning step: decide what to do next."""
+            """Reasoning step: ask the LLM what to do next.
+
+            Calls the configured model (via OllaBridge / Ollama / OpenAI). On any
+            failure — no endpoint, offline — it falls back to a deterministic
+            heuristic so the agent always runs.
+            """
+            tool_names = ", ".join(TOOLS) or "none"
+            transcript = "\\n".join(
+                f"Step {h['step']}: {h['action']}({h['action_input']}) -> {str(h['observation'])[:160]}"
+                for h in history
+            )
+            prompt = (
+                f"Question: {question}\\n"
+                f"Available tools: {tool_names}\\n"
+                f"History so far:\\n{transcript or '(none)'}\\n\\n"
+                "Give the user the final answer now. Be concise and direct."
+            )
+            reply = _llm(prompt, system="You are a helpful ReAct agent. Answer directly.")
+            if reply:
+                return {"thought": "Answered via LLM.", "action": "finish", "action_input": reply}
+
+            # Offline fallback: simple search-then-finish heuristic.
             if not history:
                 return {
                     "thought": f"I need to break down this question: {question}",
@@ -176,6 +200,7 @@ class ReActGenerator(BaseFrameworkGenerator):
             _REACT_TEMPLATE.render(
                 tasks=workflow.tasks,
                 agents=workflow.agents,
+                llm_helper=LLM_HELPER_SNIPPET,
             )
             + "\n"
         )

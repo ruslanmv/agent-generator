@@ -19,6 +19,7 @@ import { Icon } from '@/components/icons/Icon';
 import { Button } from '@/components/primitives/Button';
 import { StagePillBadge } from '@/components/primitives/Pill';
 import { useWizard } from './state';
+import { useCatalogue } from './useCatalogue';
 import { HyperscalerRail } from './components/HyperscalerRail';
 import {
   PhilosophyFilter,
@@ -42,14 +43,15 @@ export function StepFramework() {
   const { state, actions, setStep } = useWizard();
   const [philosophy, setPhilosophy] = useState<PhilosophyFilterValue>('any');
 
-  const frameworks = useMemo(
-    () =>
-      visibleFrameworks({
-        hyperscaler: state.hyperscaler,
-        philosophy,
-      }),
-    [state.hyperscaler, philosophy],
-  );
+  // Batch 2: render the real catalogue — the backend (/api/compatibility/catalogue)
+  // decides which frameworks are available; static list is the offline fallback.
+  const { frameworkIds } = useCatalogue();
+  const frameworks = useMemo(() => {
+    const base = visibleFrameworks({ hyperscaler: state.hyperscaler, philosophy });
+    if (!frameworkIds) return base;
+    const gated = base.filter((f) => frameworkIds.has(String(f.id)));
+    return gated.length ? gated : base;
+  }, [state.hyperscaler, philosophy, frameworkIds]);
 
   const selected =
     frameworks.find((f) => f.id === state.framework) ??

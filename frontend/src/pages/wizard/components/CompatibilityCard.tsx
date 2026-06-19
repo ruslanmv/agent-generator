@@ -13,11 +13,11 @@ import { useMemo } from 'react';
 import { tokens } from '@/styles/tokens';
 import { Icon } from '@/components/icons/Icon';
 import {
-  compatibilityFor,
   type Diagnostic,
   type DiagnosticSeverity,
   type WizardCompatibilityState,
 } from '@/lib/compatibility';
+import { useDiagnostics } from '../useDiagnostics';
 
 interface Props {
   state: WizardCompatibilityState;
@@ -38,7 +38,9 @@ const SEVERITY_LABEL: Record<DiagnosticSeverity, string> = {
 };
 
 export function CompatibilityCard({ state, onResolve }: Props) {
-  const rows = useMemo(() => compatibilityFor(state), [state]);
+  // Batch 2: the backend flags incompatible combos (/api/compatibility/diagnose);
+  // falls back to the local matrix when the network is unavailable.
+  const { rows } = useDiagnostics(state);
   const counts = useMemo(() => {
     const c: Record<DiagnosticSeverity, number> = { ok: 0, warn: 0, err: 0 };
     rows.forEach((r) => {

@@ -6,10 +6,11 @@ import { Fragment, useEffect, useRef } from 'react';
 import { tokens } from '@/styles/tokens';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { Pill } from '@/components/primitives/Pill';
-import { IS_DEMO } from '@/lib/build-channel';
-import { ABOUT, ADMIN } from '@/lib/settings-data';
+import { useIsDemo } from '@/lib/capabilities';
+import { ABOUT } from '@/lib/settings-data';
+import { useAuth, userInitials } from '@/lib/auth';
 
-export type AdminMenuAction = 'about' | 'settings' | 'help' | 'logout';
+export type AdminMenuAction = 'about' | 'settings' | 'help' | 'logout' | 'signin';
 
 interface MenuItem {
   id: AdminMenuAction;
@@ -19,11 +20,10 @@ interface MenuItem {
   danger?: boolean;
 }
 
-const ITEMS: MenuItem[] = [
+const BASE_ITEMS: MenuItem[] = [
   { id: 'about',    icon: 'doc',     label: 'About' },
   { id: 'settings', icon: 'cog',     label: 'Settings', shortcut: '⌘,' },
   { id: 'help',     icon: 'doc',     label: 'Help & docs' },
-  { id: 'logout',   icon: 'arrow-l', label: 'Log out', danger: true },
 ];
 
 interface Props {
@@ -33,6 +33,32 @@ interface Props {
 
 export function AdminAccountMenu({ onAction, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const { user, status, signIn, signOut } = useAuth();
+  const authed = status === 'authed' && !!user;
+  const isDemo = useIsDemo();
+
+  // Sign in / out is handled here; About / Settings / Help bubble to the shell.
+  // The demo backend has no auth routes, so we omit the sign-in item there
+  // (it would dead-end at a 404 /api/auth/github/login).
+  const authItem: MenuItem | null = authed
+    ? { id: 'logout', icon: 'arrow-l', label: 'Log out', danger: true }
+    : isDemo
+      ? null
+      : { id: 'signin', icon: 'arrow-l', label: 'Sign in with GitHub' };
+  const items: MenuItem[] = authItem ? [...BASE_ITEMS, authItem] : [...BASE_ITEMS];
+
+  function handleItem(id: AdminMenuAction) {
+    if (id === 'signin') {
+      signIn();
+      return;
+    }
+    if (id === 'logout') {
+      void signOut();
+      onClose();
+      return;
+    }
+    onAction(id);
+  }
 
   // Close on outside click or Escape — matches the ChatGPT/Claude pattern.
   useEffect(() => {
@@ -75,26 +101,38 @@ export function AdminAccountMenu({ onAction, onClose }: Props) {
           borderBottom: `1px solid ${tokens.border}`,
         }}
       >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: tokens.ink,
-            color: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: tokens.mono,
-            fontSize: 13,
-            fontWeight: 500,
-            flexShrink: 0,
-          }}
-        >
-          {ADMIN.initials}
-        </div>
+        {authed && user?.avatar_url ? (
+          <img
+            src={user.avatar_url}
+            alt=""
+            width={40}
+            height={40}
+            style={{ borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: tokens.ink,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: tokens.mono,
+              fontSize: 13,
+              fontWeight: 500,
+              flexShrink: 0,
+            }}
+          >
+            {userInitials(user)}
+          </div>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.ink }}>{ADMIN.name}</div>
+          <div style={{ fontSize: 13.5, fontWeight: 500, color: tokens.ink }}>
+            {authed ? user!.username : status === 'loading' ? 'Loading…' : 'Not signed in'}
+          </div>
           <div
             className="ag-mono"
             style={{
@@ -105,22 +143,26 @@ export function AdminAccountMenu({ onAction, onClose }: Props) {
               whiteSpace: 'nowrap',
             }}
           >
-            {ADMIN.email}
+            {authed
+              ? (user!.email ?? `@${user!.username}`)
+              : isDemo
+                ? 'Public demo · sign-in disabled'
+                : 'Sign in to save your work'}
           </div>
         </div>
-        <Pill variant="ok">{ADMIN.role}</Pill>
+        {authed && <Pill variant="ok">{user!.role}</Pill>}
       </div>
 
       <div style={{ padding: 6 }}>
-        {ITEMS.filter((it) => !(IS_DEMO && it.id === 'logout')).map((it) => (
+        {items.map((it) => (
           <Fragment key={it.id}>
-            {it.danger && (
+            {(it.danger || it.id === 'signin') && (
               <div style={{ height: 1, background: tokens.border, margin: '6px 4px' }} />
             )}
             <button
               type="button"
               role="menuitem"
-              onClick={() => onAction(it.id)}
+              onClick={() => handleItem(it.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -161,7 +203,7 @@ export function AdminAccountMenu({ onAction, onClose }: Props) {
         <span className="ag-mono ag-small" style={{ color: tokens.muted }}>{ABOUT.version}</span>
         <span style={{ flex: 1 }} />
         <span className="ag-mono ag-small" style={{ color: tokens.faint }}>
-          {IS_DEMO ? 'demo · hugging face' : 'self-hosted'}
+          {isDemo ? 'demo · hugging face' : 'self-hosted'}
         </span>
       </div>
     </div>

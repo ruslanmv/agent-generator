@@ -9,16 +9,29 @@ import { Pill } from '@/components/primitives/Pill';
 import { Input } from '@/components/primitives/Input';
 import { Toggle } from '@/components/primitives/Toggle';
 import { DemoBanner } from '@/components/demo/DemoBanner';
-import { ADMIN } from '@/lib/settings-data';
+import { useAuth } from '@/lib/auth';
+import { useIsDemo } from '@/lib/capabilities';
 import { SettingsRow, SettingSection } from '@/pages/wizard/review/SettingsRow';
 
 export function AccountSettings() {
+  // Batch 7: identity comes from the real session (`GET /api/auth/me`). On the
+  // public demo there is no auth backend, so we fall back to single-user copy.
+  const { user, status, signIn, signOut } = useAuth();
+  const isDemo = useIsDemo();
+  const authed = status === 'authed' && !!user;
+  const displayName = user?.username ?? 'Demo user';
+  const email = user?.email ?? 'not signed in';
+  const role = user?.role ?? 'guest';
+
   return (
     <div>
-      <DemoBanner compact>
-        The public demo runs in single-user mode. Self-host the backend to enable real
-        sign-in.
-      </DemoBanner>
+      {!authed && (
+        <DemoBanner compact>
+          {status === 'loading'
+            ? 'Checking your session…'
+            : 'Not signed in — this demo runs in single-user mode. Self-host the backend to enable real sign-in.'}
+        </DemoBanner>
+      )}
 
       <SettingSection label="Identity">
         <div
@@ -30,13 +43,22 @@ export function AccountSettings() {
         >
           <SettingsRow
             label="Display name"
-            control={<Input defaultValue={ADMIN.name} style={{ maxWidth: 320 }} />}
+            control={
+              <Input
+                key={displayName}
+                defaultValue={displayName}
+                readOnly={!authed}
+                style={{ maxWidth: 320 }}
+              />
+            }
           />
           <SettingsRow
             label="Email"
             control={
               <Input
-                defaultValue={ADMIN.email}
+                key={email}
+                defaultValue={email}
+                readOnly={!authed}
                 style={{ maxWidth: 320, fontFamily: tokens.mono }}
               />
             }
@@ -45,11 +67,21 @@ export function AccountSettings() {
           <SettingsRow
             label="Role"
             control={
-              <span style={{ display: 'inline-flex', gap: 6 }}>
-                <Pill variant="ok">{ADMIN.role}</Pill>
-                <span className="ag-small" style={{ color: tokens.muted, marginLeft: 4 }}>
-                  workspace-wide
-                </span>
+              <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                <Pill variant={authed ? 'ok' : 'default'}>{role}</Pill>
+                {authed ? (
+                  <span className="ag-small" style={{ color: tokens.muted, marginLeft: 4 }}>
+                    workspace-wide
+                  </span>
+                ) : isDemo ? (
+                  <span className="ag-small" style={{ color: tokens.muted, marginLeft: 4 }}>
+                    sign-in disabled in the demo
+                  </span>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={() => signIn()}>
+                    <Icon name="agent" size={12} /> Sign in with GitHub
+                  </Button>
+                )}
               </span>
             }
             last
@@ -99,6 +131,8 @@ export function AccountSettings() {
           </div>
           <Button
             variant="ghost"
+            disabled={!authed}
+            onClick={() => signOut()}
             style={{ color: tokens.err, borderColor: tokens.err }}
           >
             <Icon name="arrow-l" size={13} stroke={tokens.err} /> Sign out everywhere

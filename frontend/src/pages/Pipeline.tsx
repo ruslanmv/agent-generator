@@ -2,21 +2,35 @@
 // State (nodes, edges, selection) lives here so the canvas can stay
 // presentational and the inspector can mutate node fields.
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Library } from './pipeline/Library';
 import { Canvas } from './pipeline/Canvas';
 import { Inspector } from './pipeline/Inspector';
+import { usePipeline } from './pipeline/usePipeline';
 import {
-  INITIAL_EDGES,
-  INITIAL_NODES,
   type NodeKind,
   type PipelineNode,
 } from '@/lib/pipeline-data';
 
 export function PipelinePage() {
-  const [nodes, setNodes] = useState<PipelineNode[]>(INITIAL_NODES);
-  const [edges] = useState<[string, string][]>(INITIAL_EDGES);
-  const [selectedId, setSelectedId] = useState<string | null>('s');
+  const [params] = useSearchParams();
+  const projectId = params.get('project');
+
+  // Batch 8: derive the graph from the real project spec; seed fixture is the fallback.
+  const { nodes: derivedNodes, edges: derivedEdges, source } = usePipeline(projectId);
+
+  const [nodes, setNodes] = useState<PipelineNode[]>(derivedNodes);
+  const [edges, setEdges] = useState<[string, string][]>(derivedEdges);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Re-seed when the derived graph changes (project loaded / changed).
+  useEffect(() => {
+    setNodes(derivedNodes);
+    setEdges(derivedEdges);
+    setSelectedId(derivedNodes.find((n) => n.kind === 'agent')?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, projectId, derivedNodes.length, derivedEdges.length]);
 
   const handleMove = useCallback((id: string, x: number, y: number) => {
     setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, x, y } : n)));

@@ -6,6 +6,7 @@ from jinja2 import Template
 
 from agent_generator.config import Settings
 from agent_generator.frameworks.base import BaseFrameworkGenerator
+from agent_generator.frameworks.llm_runtime import LLM_HELPER_SNIPPET
 from agent_generator.models.workflow import Workflow
 
 _LANG_TEMPLATE = Template(
@@ -17,6 +18,8 @@ _LANG_TEMPLATE = Template(
         from typing import Any, TypedDict
 
         from langgraph.graph import START, StateGraph
+
+        {{ llm_helper }}
 
         # ─────────────────────────────────────────────────────────
         # State schema
@@ -45,7 +48,9 @@ _LANG_TEMPLATE = Template(
                 context = f"{context}\\n{prev}"
             {% endfor %}
             {% endif %}
-            result = f"[{{ task.id }}] Processed: {context[:200]}"
+            # Ask the model to perform this step; fall back offline.
+            reply = _llm(f"""{{ task.goal }}\\n\\nContext: {context}""".strip())
+            result = reply or f"[{{ task.id }}] Processed: {context[:200]}"
             return {"{{ task.id }}_output": result}
 
         {% endfor %}
@@ -100,6 +105,7 @@ class LangGraphGenerator(BaseFrameworkGenerator):
             _LANG_TEMPLATE.render(
                 tasks=workflow.tasks,
                 edges=workflow.edges,
+                llm_helper=LLM_HELPER_SNIPPET,
             )
             + "\n"
         )
