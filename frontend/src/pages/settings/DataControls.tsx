@@ -9,12 +9,13 @@ import { Button } from '@/components/primitives/Button';
 import { Icon } from '@/components/icons/Icon';
 import { Segmented } from '@/pages/wizard/components/Segmented';
 import { DemoBanner } from '@/components/demo/DemoBanner';
-import { IS_DEMO } from '@/lib/build-channel';
+import { useIsDemo } from '@/lib/capabilities';
 import { SettingsRow, SettingSection } from '@/pages/wizard/review/SettingsRow';
 
 const RETENTION_OPTS = ['7d', '30d', '90d', 'forever'] as const;
 
 export function DataControlsSettings() {
+  const IS_DEMO = useIsDemo();
   const [retention, setRetention] = useState<(typeof RETENTION_OPTS)[number]>('30d');
   const [telemetry, setTelemetry] = useState(false);
   const [crash, setCrash] = useState(true);

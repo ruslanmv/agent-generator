@@ -1,10 +1,11 @@
 import { tokens } from '@/styles/tokens';
 import { Icon } from '@/components/icons/Icon';
 import { Pill } from '@/components/primitives/Pill';
-import { AGENT_ROWS, type AgentRunStatus } from '@/lib/run-data';
+import { AGENT_ROWS, type AgentRow, type AgentRunStatus } from '@/lib/run-data';
 
-export function AgentSidebar() {
-  const total = AGENT_ROWS.reduce((sum, a) => sum + a.tokens, 0);
+export function AgentSidebar({ agents = AGENT_ROWS }: { agents?: AgentRow[] }) {
+  const rows = agents.length ? agents : AGENT_ROWS;
+  const total = rows.reduce((sum, a) => sum + a.tokens, 0);
   return (
     <aside
       style={{
@@ -16,12 +17,12 @@ export function AgentSidebar() {
     >
       <div style={{ padding: 16, borderBottom: `1px solid ${tokens.border}` }}>
         <div className="ag-cap" style={{ marginBottom: 8 }}>Agents</div>
-        {AGENT_ROWS.map((a, i) => (
+        {rows.map((a, i) => (
           <div
             key={a.role}
             style={{
               padding: '12px 0',
-              borderBottom: i < AGENT_ROWS.length - 1 ? `1px solid ${tokens.border}` : 'none',
+              borderBottom: i < rows.length - 1 ? `1px solid ${tokens.border}` : 'none',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -55,7 +56,7 @@ export function AgentSidebar() {
 
       <div style={{ padding: 16 }}>
         <div className="ag-cap" style={{ marginBottom: 8 }}>Token usage</div>
-        {AGENT_ROWS.map((a) => (
+        {rows.map((a) => (
           <div
             key={a.role}
             style={{ display: 'flex', alignItems: 'center', padding: '6px 0' }}

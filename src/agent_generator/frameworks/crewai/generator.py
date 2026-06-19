@@ -12,8 +12,40 @@ _CREWAI_TEMPLATE = Template(
     textwrap.dedent('''
         """Auto-generated CrewAI project (crewai 1.x)."""
 
-        from crewai import Agent as CrewAgent, Task as CrewTask, Crew, Process
+        import os
+
+        from crewai import Agent as CrewAgent, Task as CrewTask, Crew, Process, LLM as CrewLLM
         from typing import Any
+
+        # ─────────────────────────────────────────────────────────
+        # Model — OpenAI-compatible (OllaBridge / Ollama / OpenAI), from env
+        # ─────────────────────────────────────────────────────────
+
+        def _build_llm() -> CrewLLM:
+            """Configure the crew's model from the environment.
+
+            OLLABRIDGE_URL / OPENAI_API_BASE      base URL (default: public OllaBridge)
+            OLLABRIDGE_MODEL / OPENAI_MODEL_NAME  model id (default: qwen2.5:1.5b)
+            OLLABRIDGE_TOKEN / OPENAI_API_KEY     bearer token (optional)
+            """
+            base = (
+                os.getenv("OLLABRIDGE_URL")
+                or os.getenv("OPENAI_API_BASE")
+                or "https://ruslanmv-ollabridge.hf.space"
+            ).rstrip("/")
+            if not base.endswith("/v1"):
+                base += "/v1"
+            model = os.getenv("OLLABRIDGE_MODEL") or os.getenv("OPENAI_MODEL_NAME") or "qwen2.5:1.5b"
+            if not model.startswith("openai/"):
+                model = "openai/" + model
+            return CrewLLM(
+                model=model,
+                base_url=base,
+                api_key=os.getenv("OLLABRIDGE_TOKEN") or os.getenv("OPENAI_API_KEY") or "not-needed",
+            )
+
+
+        _LLM = _build_llm()
 
         # ─────────────────────────────────────────────────────────
         # Agents
@@ -23,6 +55,7 @@ _CREWAI_TEMPLATE = Template(
             role="{{ agent.role }}",
             goal="{{ agent.role }} - achieve assigned objectives efficiently",
             backstory="An experienced {{ agent.role | lower }} with deep domain expertise.",
+            llm=_LLM,
             verbose=True,
             allow_delegation=False,
             {%- if agent.tools %}

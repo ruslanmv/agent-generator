@@ -2,7 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { tokens } from '@/styles/tokens';
 import { Icon } from '@/components/icons/Icon';
 import { Button } from '@/components/primitives/Button';
-import { RUN_EVENTS, RUN_FILTERS, type EventKind, type RunFilter } from '@/lib/run-data';
+import {
+  RUN_EVENTS,
+  RUN_FILTERS,
+  type EventKind,
+  type RunEvent,
+  type RunFilter,
+} from '@/lib/run-data';
 
 const COLOR_OF: Record<EventKind, string> = {
   sys: tokens.termDim,
@@ -12,18 +18,28 @@ const COLOR_OF: Record<EventKind, string> = {
   msg: tokens.termInk,
 };
 
-export function Console() {
+interface ConsoleProps {
+  /** Events to render. Defaults to the bundled fixture for standalone use. */
+  events?: RunEvent[];
+  /** True while the run is actively streaming (shows the typing cursor). */
+  live?: boolean;
+  /** Elapsed label shown in the toolbar. */
+  elapsed?: string;
+}
+
+export function Console({ events: source = RUN_EVENTS, live = false, elapsed = '13.4s' }: ConsoleProps) {
   const [filter, setFilter] = useState<RunFilter>('All');
   const [paused, setPaused] = useState(false);
   const [draft, setDraft] = useState('');
   const streamRef = useRef<HTMLDivElement>(null);
 
+  const base = source.length ? source : RUN_EVENTS;
   const events = useMemo(() => {
-    if (filter === 'All') return RUN_EVENTS;
-    if (filter === 'Thoughts') return RUN_EVENTS.filter((e) => e.kind === 'thought');
-    if (filter === 'Tools') return RUN_EVENTS.filter((e) => e.kind === 'tool' || e.kind === 'result');
-    return RUN_EVENTS.filter((e) => e.kind === 'msg' || e.kind === 'sys');
-  }, [filter]);
+    if (filter === 'All') return base;
+    if (filter === 'Thoughts') return base.filter((e) => e.kind === 'thought');
+    if (filter === 'Tools') return base.filter((e) => e.kind === 'tool' || e.kind === 'result');
+    return base.filter((e) => e.kind === 'msg' || e.kind === 'sys');
+  }, [filter, base]);
 
   useEffect(() => {
     streamRef.current?.scrollTo({ top: streamRef.current.scrollHeight });
@@ -31,7 +47,13 @@ export function Console() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-      <Toolbar filter={filter} onFilter={setFilter} paused={paused} onTogglePause={() => setPaused((p) => !p)} />
+      <Toolbar
+        filter={filter}
+        onFilter={setFilter}
+        paused={paused}
+        onTogglePause={() => setPaused((p) => !p)}
+        elapsed={elapsed}
+      />
 
       <div
         ref={streamRef}
@@ -54,12 +76,12 @@ export function Console() {
             <span style={{ color: COLOR_OF[e.kind] }}>{e.message}</span>
           </div>
         ))}
-        {!paused && (
+        {!paused && (live || base === RUN_EVENTS) && (
           <div style={{ display: 'flex', gap: 12, color: tokens.termDim }}>
-            <span style={{ width: 44 }}>13.5s</span>
-            <span style={{ width: 110 }}>writer</span>
+            <span style={{ width: 44 }}>{live ? elapsed : '13.5s'}</span>
+            <span style={{ width: 110 }}>{live ? 'agent' : 'writer'}</span>
             <span style={{ color: tokens.termInk }}>
-              composing draft
+              {live ? 'streaming' : 'composing draft'}
               <span className="ag-cursor" style={{ background: tokens.termInk }} />
             </span>
           </div>
@@ -110,9 +132,10 @@ interface ToolbarProps {
   onFilter: (f: RunFilter) => void;
   paused: boolean;
   onTogglePause: () => void;
+  elapsed: string;
 }
 
-function Toolbar({ filter, onFilter, paused, onTogglePause }: ToolbarProps) {
+function Toolbar({ filter, onFilter, paused, onTogglePause, elapsed }: ToolbarProps) {
   return (
     <div
       style={{
@@ -155,7 +178,7 @@ function Toolbar({ filter, onFilter, paused, onTogglePause }: ToolbarProps) {
       })}
       <span style={{ flex: 1 }} />
       <span className="ag-mono ag-num" style={{ fontSize: 11, color: tokens.muted }}>
-        elapsed 13.4s
+        elapsed {elapsed}
       </span>
     </div>
   );

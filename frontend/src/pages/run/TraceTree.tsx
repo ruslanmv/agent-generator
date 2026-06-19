@@ -1,6 +1,6 @@
 import { tokens } from '@/styles/tokens';
 import { Icon, type IconName } from '@/components/icons/Icon';
-import { TRACE_ROWS, type TraceStatus } from '@/lib/run-data';
+import { TRACE_ROWS, type TraceRow, type TraceStatus } from '@/lib/run-data';
 
 const ICON_FOR_DEPTH: Record<number, IconName> = {
   0: 'flow',
@@ -8,7 +8,8 @@ const ICON_FOR_DEPTH: Record<number, IconName> = {
   2: 'tool',
 };
 
-export function TraceTree() {
+export function TraceTree({ rows = TRACE_ROWS }: { rows?: TraceRow[] }) {
+  const traceRows = rows.length ? rows : TRACE_ROWS;
   return (
     <aside
       style={{
@@ -21,7 +22,7 @@ export function TraceTree() {
     >
       <div style={{ padding: 16 }}>
         <div className="ag-cap" style={{ marginBottom: 8 }}>Trace</div>
-        {TRACE_ROWS.map((row, i) => (
+        {traceRows.map((row, i) => (
           <div
             key={i}
             style={{

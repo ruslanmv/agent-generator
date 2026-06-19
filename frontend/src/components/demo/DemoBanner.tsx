@@ -10,7 +10,7 @@
 //   </DemoBanner>
 
 import type { ReactNode } from 'react';
-import { IS_DEMO } from '@/lib/build-channel';
+import { useIsDemo } from '@/lib/capabilities';
 import { tokens } from '@/styles/tokens';
 
 interface Props {
@@ -20,7 +20,8 @@ interface Props {
 }
 
 export function DemoBanner({ children, compact = false }: Props) {
-  if (!IS_DEMO) return null;
+  const isDemo = useIsDemo();
+  if (!isDemo) return null;
   return (
     <div
       role="status"

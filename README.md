@@ -81,6 +81,10 @@ cd team && crewai run
 
 # no credentials? generate deterministically with --dry-run
 agent-generator "Hello world agent" -f crewai --dry-run
+
+# plan with a real model through a local OllaBridge/Ollama gateway
+export AGENTGEN_PROVIDER=ollabridge OLLABRIDGE_URL=http://127.0.0.1:11435 OLLABRIDGE_MODEL=qwen2.5:1.5b
+agent-generator generate "Hello world agent that greets the user" -f crewai -p ollabridge --use-llm -o hello/
 ```
 
 ### B · Control an AI coder (the Matrix engine)
@@ -164,8 +168,8 @@ Built-in tools available to generated agents: `web_search`, `pdf_reader`, `http_
 `sql_query`, `file_writer`, `vector_search`. Runs on **WatsonX** by default, **OpenAI** with one
 flag, or local models via **Ollama / OllaBridge**.
 
-Key CLI flags: `-f <framework>` · `-o <path>` · `--dry-run` (no LLM) · `-p openai` ·
-`--show-cost` · `--mcp`.
+Key CLI flags: `-f <framework>` · `-o <path>` · `--dry-run` (no LLM) · `--use-llm` (plan via the provider) · `-p openai` ·
+`--show-cost` · `--mcp`. Generated CrewAI / LangGraph / ReAct agents call an OpenAI-compatible endpoint from the env (`OLLABRIDGE_URL`/`OPENAI_API_BASE`), defaulting to OllaBridge.
 
 ---
 
@@ -228,6 +232,20 @@ Full docs (MkDocs) live in [`docs/`](docs). Highlights:
 - **Operations** — [Platform](docs/platform.md) · [Production readiness](docs/production-readiness.md) · [Release process](docs/release-process.md)
 
 Build the docs site locally: `mkdocs serve`.
+
+---
+
+## The web workspace
+
+Prefer a UI? The same engine ships a React workspace — describe an agent in plain
+English, pick the framework/model, generate, run, and publish. It talks to the real
+backend (auth, projects, compatibility, runs, marketplace, OllaBridge) and degrades
+gracefully to the public demo.
+
+![agent-generator web workspace](docs/assets/screenshots/generate.png)
+
+See the **[Frontend guide](docs/frontend-guide.md)** for a screenshot tour of every
+screen and how to run it locally.
 
 ---
 

@@ -187,15 +187,15 @@ export const SAMPLE_PROJECTS: ProjectVm[] = [
 ];
 
 export async function listProjects(): Promise<ProjectVm[]> {
+  // Reads real projects from GET /api/projects (the wizard's Generate persists them
+  // server-side via POST /api/generate). Fail-open: when the store is empty or the
+  // backend is unreachable we show the curated samples so the workspace (Projects,
+  // History) is never a blank page on a fresh backend — the same fail-open pattern the
+  // marketplace, run console, and pipeline use. Real projects always take precedence.
   try {
     const rows = await api.get<ProjectSummary[]>('/api/projects');
-    if (rows.length === 0) return SAMPLE_PROJECTS;
-    const live = rows.map((r, i) => projectSummaryToVm(r, i));
-    // Mix live entries first, then sample entries so visitors see the
-    // demo workspace populated even when the in-memory store is small.
-    const liveIds = new Set(live.map((p) => p.id));
-    const padding = SAMPLE_PROJECTS.filter((p) => !liveIds.has(p.id));
-    return [...live, ...padding].slice(0, 12);
+    const vms = rows.map((r, i) => projectSummaryToVm(r, i));
+    return vms.length ? vms : SAMPLE_PROJECTS;
   } catch {
     return SAMPLE_PROJECTS;
   }

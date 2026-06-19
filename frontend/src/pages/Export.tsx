@@ -7,7 +7,7 @@
 // router-level deep links land in Batch 8.
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { tokens } from '@/styles/tokens';
 import { Icon } from '@/components/icons/Icon';
 import { Button } from '@/components/primitives/Button';
@@ -18,13 +18,26 @@ import { PublishValidation } from './export/PublishValidation';
 import { PublishVisibility } from './export/PublishVisibility';
 import { RuntimeAdapterModal } from './export/RuntimeAdapterModal';
 import { ADAPTER_PRESETS, type ExportAdapter } from '@/lib/export-data';
+import { publishProject } from '@/lib/marketplace-api';
 
 type Phase = 'done' | 'validation' | 'visibility' | 'published';
 
 export function ExportPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const projectId = params.get('project');
   const [phase, setPhase] = useState<Phase>('done');
   const [adapterId, setAdapterId] = useState<string | null>(null);
+
+  // Batch 6: MatrixHub publish via the marketplace endpoint. The demo has no
+  // /publish route (and no project id), so this fails open and still advances
+  // to the Published confirmation; the full backend persists the listing.
+  const handlePublish = async () => {
+    if (projectId) {
+      await publishProject({ project_id: projectId });
+    }
+    setPhase('published');
+  };
 
   const handlePickAdapter = (adapter: ExportAdapter) => {
     // HomePilot has a tailored preset; everything else also opens the
@@ -50,7 +63,7 @@ export function ExportPage() {
     return (
       <PublishVisibility
         onBack={() => setPhase('validation')}
-        onPublish={() => setPhase('published')}
+        onPublish={() => void handlePublish()}
       />
     );
   }

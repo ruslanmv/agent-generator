@@ -5,7 +5,7 @@
 // The component renders nothing in non-demo builds, so callers can
 // drop it inline without an `if` at every call site.
 
-import { IS_DEMO } from '@/lib/build-channel';
+import { useIsDemo } from '@/lib/capabilities';
 import { tokens } from '@/styles/tokens';
 
 interface Props {
@@ -17,7 +17,8 @@ const DEFAULT_TITLE =
   'Running on Hugging Face Spaces. Sign-in and project history are disabled in demo mode.';
 
 export function DemoBadge({ title = DEFAULT_TITLE }: Props) {
-  if (!IS_DEMO) return null;
+  const isDemo = useIsDemo();
+  if (!isDemo) return null;
   return (
     <span
       title={title}

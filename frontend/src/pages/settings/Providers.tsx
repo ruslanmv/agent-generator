@@ -19,6 +19,7 @@ import { Pill, StagePillBadge } from '@/components/primitives/Pill';
 import { OllaBridgeMark } from '@/components/icons/Logo';
 import { Segmented } from '@/pages/wizard/components/Segmented';
 import { SettingsRow, SettingSection } from '@/pages/wizard/review/SettingsRow';
+import { ollabridge } from '@/lib/ollabridge';
 
 type ProviderId =
   | 'ollabridge'
@@ -98,21 +99,38 @@ export function ProvidersSettings() {
   const [fetching, setFetching] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  // Pairing (auth mode `pairing_code`): exchange a device code for a token via
+  // POST /api/ollabridge/pair, then reflect GET /api/ollabridge/status.
+  const [pairingCode, setPairingCode] = useState('');
+  const [pairing, setPairing] = useState(false);
+  const [pairError, setPairError] = useState<string | null>(null);
+  const [paired, setPaired] = useState(false);
+  const [pairedUrl, setPairedUrl] = useState<string | null>(null);
 
-  // Best-effort fetch of the available OllaBridge models on mount,
-  // mirroring the 3D-Avatar-Chatbot's "fetch models after entering
-  // the key" flow. Proxies through the Space's existing
-  // /api/ollabridge/models route which carries the paired token.
+  // Best-effort fetch of the pairing status + available OllaBridge models on
+  // mount, mirroring the "fetch models after connecting" flow. Both go through
+  // the Space's /api/ollabridge/* routes which carry the paired token.
   useEffect(() => {
-    runFetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void refreshStatus();
+    void runFetch();
   }, []);
+
+  async function refreshStatus() {
+    try {
+      const s = await ollabridge.status();
+      setPaired(s.paired);
+      setPairedUrl(s.server_url);
+      if (s.server_url) setEndpoint(`${s.server_url}/v1`);
+    } catch {
+      // Status route unavailable (e.g. older backend) — leave the prior state.
+    }
+  }
 
   async function runFetch() {
     setFetching(true);
     try {
-      const r = await fetch('/api/ollabridge/models').then((x) => x.json());
-      setModels(r?.models ?? []);
+      const r = await ollabridge.models();
+      setModels(r.models ?? []);
       setLastFetch(new Date().toISOString());
     } catch {
       // Keep prior list; the status pill below shows the result.
@@ -125,14 +143,44 @@ export function ProvidersSettings() {
     setTesting(true);
     setTestResult(null);
     try {
-      const r = await fetch('/api/ollabridge/models').then((x) => x.json());
-      const count = (r?.models ?? []).length;
+      const r = await ollabridge.models();
+      const count = (r.models ?? []).length;
       setTestResult(count > 0 ? `ok · ${count} models reachable` : 'no models returned');
     } catch (e) {
       setTestResult((e as Error).message || 'request failed');
     } finally {
       setTesting(false);
     }
+  }
+
+  async function runPair() {
+    const code = pairingCode.trim();
+    if (!code) return;
+    setPairing(true);
+    setPairError(null);
+    try {
+      const override = endpoint.replace(/\/v1\/?$/, '');
+      const r = await ollabridge.pair(code, override || undefined);
+      setPaired(r.paired);
+      setPairedUrl(r.server_url);
+      setPairingCode('');
+      await runFetch();
+    } catch (e) {
+      setPairError((e as Error).message || 'pairing failed');
+    } finally {
+      setPairing(false);
+    }
+  }
+
+  async function runUnpair() {
+    try {
+      await ollabridge.unpair();
+    } catch {
+      /* best effort */
+    }
+    setPaired(false);
+    setPairedUrl(null);
+    setModels([]);
   }
 
   return (
@@ -208,23 +256,25 @@ export function ProvidersSettings() {
                 One OpenAI-compatible gateway for local, remote, and cloud LLMs.
               </div>
             </div>
-            <Pill variant={models.length > 0 ? 'ok' : 'default'}>
+            <Pill variant={paired || models.length > 0 ? 'ok' : 'default'}>
               <span
                 aria-hidden
                 style={{
                   width: 6,
                   height: 6,
-                  background: models.length > 0 ? tokens.ok : tokens.muted,
+                  background: paired || models.length > 0 ? tokens.ok : tokens.muted,
                   borderRadius: '50%',
                   display: 'inline-block',
                   marginRight: 4,
                 }}
               />
-              {models.length > 0
-                ? `connected · ${models.length} models`
-                : fetching
-                  ? 'connecting…'
-                  : 'not connected'}
+              {paired
+                ? `paired · ${models.length} models`
+                : models.length > 0
+                  ? `connected · ${models.length} models`
+                  : fetching
+                    ? 'connecting…'
+                    : 'not connected'}
             </Pill>
           </div>
 
@@ -261,7 +311,49 @@ export function ProvidersSettings() {
                   onChange={setAuthMode}
                 />
               }
+              hint="Use a pairing code to connect OllaBridge Cloud or a local node without pasting a key."
             />
+            {authMode === 'pairing_code' && (
+              <SettingsRow
+                label="Pairing code"
+                control={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <Input
+                      value={pairingCode}
+                      onChange={(e) => setPairingCode(e.target.value)}
+                      placeholder="ABC-123"
+                      style={{ fontFamily: tokens.mono, maxWidth: 160 }}
+                    />
+                    {paired ? (
+                      <Button variant="ghost" size="sm" onClick={() => void runUnpair()}>
+                        <Icon name="x" size={11} /> Unpair
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => void runPair()}
+                        disabled={pairing || pairingCode.trim().length < 4}
+                      >
+                        <Icon name="wand" size={11} stroke="#fff" />{' '}
+                        {pairing ? 'Pairing…' : 'Pair device'}
+                      </Button>
+                    )}
+                    {pairError && (
+                      <span className="ag-mono ag-small" style={{ color: tokens.err }}>
+                        {pairError}
+                      </span>
+                    )}
+                    {paired && pairedUrl && (
+                      <span className="ag-mono ag-small" style={{ color: tokens.ok }}>
+                        paired · {pairedUrl}
+                      </span>
+                    )}
+                  </div>
+                }
+                hint="Enter the code shown in the OllaBridge app or Cloud dashboard. The token is stored server-side; the SPA never sees it."
+              />
+            )}
             <SettingsRow
               label="Models"
               control={

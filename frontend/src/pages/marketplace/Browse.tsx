@@ -20,18 +20,23 @@ import {
 
 interface BrowseProps {
   onOpen: (id: string) => void;
+  /** Catalogue entries to render. Defaults to the bundled fixture so the
+   *  component still works standalone; the page passes the live catalogue. */
+  items?: MarketplaceItem[];
+  /** True when `items` came from the live hub (drives the catalog status pill). */
+  live?: boolean;
 }
 
-export function MarketplaceBrowse({ onOpen }: BrowseProps) {
+export function MarketplaceBrowse({ onOpen, items = MH_ITEMS, live = false }: BrowseProps) {
   const [type, setType] = useState<AssetType>('any');
-  const [q, setQ] = useState('summarize pdfs');
-  const [caps, setCaps] = useState<string[]>(['pdf']);
+  const [q, setQ] = useState('');
+  const [caps, setCaps] = useState<string[]>([]);
   const [frameworks, setFrameworks] = useState<string[]>([]);
   const [mode, setMode] = useState<SearchMode>('hybrid');
 
   const filtered = useMemo<MarketplaceItem[]>(
     () =>
-      MH_ITEMS.filter(
+      items.filter(
         (it) =>
           (type === 'any' || it.type === type) &&
           (caps.length === 0 || caps.some((c) => it.capabilities.includes(c))) &&
@@ -42,7 +47,7 @@ export function MarketplaceBrowse({ onOpen }: BrowseProps) {
             it.name.toLowerCase().includes(q.toLowerCase()) ||
             it.summary.toLowerCase().includes(q.toLowerCase())),
       ),
-    [type, q, caps, frameworks],
+    [items, type, q, caps, frameworks],
   );
 
   const toggle = (arr: string[], setArr: (v: string[]) => void, v: string) =>
@@ -59,6 +64,7 @@ export function MarketplaceBrowse({ onOpen }: BrowseProps) {
         onToggleFramework={(f) => toggle(frameworks, setFrameworks, f)}
         mode={mode}
         onMode={setMode}
+        live={live}
       />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -118,6 +124,7 @@ interface FacetRailProps {
   onToggleFramework: (f: string) => void;
   mode: SearchMode;
   onMode: (m: SearchMode) => void;
+  live: boolean;
 }
 
 function FacetRail({
@@ -125,6 +132,7 @@ function FacetRail({
   caps, onToggleCap,
   frameworks, onToggleFramework,
   mode, onMode,
+  live,
 }: FacetRailProps) {
   return (
     <aside
@@ -229,11 +237,13 @@ function FacetRail({
       >
         <div className="ag-cap" style={{ marginBottom: 6 }}>Catalog</div>
         <div className="ag-mono ag-small" style={{ color: tokens.muted, lineHeight: 1.5 }}>
-          api.matrixhub.io
+          /api/marketplace/agents
           <br />
-          indexed 4 min ago
+          {live ? 'live catalogue' : 'offline fixture'}
           <br />
-          <span style={{ color: tokens.ok }}>● connected</span>
+          <span style={{ color: live ? tokens.ok : tokens.muted }}>
+            {live ? '● connected' : '○ cached'}
+          </span>
         </div>
       </div>
     </aside>
