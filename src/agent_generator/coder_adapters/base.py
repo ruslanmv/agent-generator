@@ -30,6 +30,12 @@ CONTROL_CONTRACT_FILES = (
     "MATRIX_ACCEPTANCE_CRITERIA.md",
 )
 
+# The canonical Ruslan Magana Definitions (RMD) pack: the full *text* of the rules the
+# bundle's MATRIX_STANDARDS.lock only pins by id, plus the approved technology baseline.
+# The prompt hands the coder a fetchable URL so it can read the rules it must obey — not
+# just cite their numbers.
+DEFINITIONS_URL = "https://agent-matrix.github.io/matrix-definitions/definitions/"
+
 # RMD rules every controlled prompt cites, regardless of coder.
 _UNIVERSAL_RULES = ("RMD-101", "RMD-103", "RMD-105", "RMD-107", "RMD-108", "RMD-118", "RMD-119")
 
@@ -163,6 +169,12 @@ class CoderAdapter:
         command_block = "\n".join(f"- `{c}`" for c in commands)
         contract_block = "\n".join(f"- {f}" for f in CONTROL_CONTRACT_FILES)
         fetch_line = f"Fetch the Matrix Bundle first: `GET {fetch_url}`\n\n" if fetch_url else ""
+        definitions_line = (
+            "Download the Ruslan Definitions (the standards you must obey): "
+            f"`GET {DEFINITIONS_URL}` — the full RMD pack (RMD-001…RMD-120) and the approved "
+            "technology baseline (stacks, security, CI). MATRIX_STANDARDS.lock in the bundle "
+            "pins the exact version; read the definitions before you write code.\n\n"
+        )
         rules_line = ", ".join(rules)
         batch_line = ""
         if ctx.batch_label:
@@ -180,6 +192,7 @@ class CoderAdapter:
             "\n"
             f"{batch_line}"
             f"{fetch_line}"
+            f"{definitions_line}"
             f"{self.workflow.strip()} ({self.coder_rule})\n"
             "\n"
             f"## Read the contract first\n\n{contract_block}\n"
@@ -209,4 +222,4 @@ class CoderAdapter:
         )
 
 
-__all__ = ["PromptContext", "CoderAdapter", "CONTROL_CONTRACT_FILES"]
+__all__ = ["PromptContext", "CoderAdapter", "CONTROL_CONTRACT_FILES", "DEFINITIONS_URL"]
